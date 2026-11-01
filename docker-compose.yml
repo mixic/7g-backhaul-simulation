@@ -1,0 +1,9 @@
+version: "3.9"
+
+services:
+  simulator:
+    build: .
+    container_name: 7g-backhaul-sim
+    command: python main.py
+    volumes:
+      - .:/app
