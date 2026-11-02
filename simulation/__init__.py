@@ -23,6 +23,7 @@ from .telemetry import INTCollector, InBandTelemetry, TelemetryFrame
 from .analytics import CSVNetworkLogger
 from .carrier_bonding import BondedCarrierScheduler, CarrierAllocation
 from .congestion import AIMDCongestionController
+from .link_queue import DEFAULT_QUEUE_LIMIT_PACKETS, DropTailQueue, QueueOutcome
 from .continuity import (
     AdaptiveMTULearner,
     FragmentReassembler,
@@ -85,6 +86,9 @@ __all__ = [
     "BondedCarrierScheduler",
     "CSVNetworkLogger",
     "CarrierAllocation",
+    "DEFAULT_QUEUE_LIMIT_PACKETS",
+    "DropTailQueue",
+    "QueueOutcome",
     "CachePlacementLearner",
     "CacheAdmissionDecision",
     "CloudPlacementError",

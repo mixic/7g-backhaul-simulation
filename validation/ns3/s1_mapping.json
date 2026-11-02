@@ -1,0 +1,27 @@
+{
+  "scenario": "scenario",
+  "policy": "policy",
+  "seed": "seed",
+  "metrics": {
+    "packet_delivery_percent": {
+      "column": "packet_delivery_percent",
+      "unit": "percent"
+    },
+    "one_way_delay_p95_ms": {
+      "column": "one_way_delay_p95_ms",
+      "unit": "ms"
+    },
+    "goodput_mbps": {
+      "column": "goodput_mbps",
+      "unit": "Mbps"
+    },
+    "active_paths_mean": {
+      "column": "active_paths_mean",
+      "unit": "paths"
+    },
+    "primary_share_percent": {
+      "column": "primary_share_percent",
+      "unit": "percent"
+    }
+  }
+}

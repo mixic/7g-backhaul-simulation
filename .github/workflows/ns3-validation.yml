@@ -1,0 +1,79 @@
+name: ns-3 cross-validation (scenario S1)
+
+# Runs the external cross-validation experiment described in
+# docs/external-validation.md: builds an ns-3.49 reference implementation of
+# scenario S1, runs both implementations over eight paired seeds, and publishes
+# the comparison report as a build artifact.
+#
+# It is deliberately not part of the pull-request path: a full ns-3 build takes
+# roughly ten minutes, and the comparison is meaningful only when the scenario
+# or the transport model changes. Trigger it manually after such a change.
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 3 * * 1'
+
+jobs:
+  scenario-s1:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Install build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends cmake g++ make
+
+      - name: Restore ns-3 source and build cache
+        uses: actions/cache@v4
+        with:
+          path: ~/ns-3-dev
+          key: ns-3.49-${{ runner.os }}-${{ hashFiles('validation/ns3/s1-multipath-handover.cc') }}
+          restore-keys: |
+            ns-3.49-${{ runner.os }}-
+
+      - name: Configure and build ns-3
+        run: |
+          if [ ! -d "$HOME/ns-3-dev" ]; then
+            git clone --depth 1 --branch ns-3.49 \
+              https://gitlab.com/nsnam/ns-3-dev.git "$HOME/ns-3-dev"
+          fi
+          cd "$HOME/ns-3-dev"
+          if [ ! -d cmake-cache ]; then
+            ./ns3 configure \
+              --enable-modules=core,network,internet,point-to-point,csma,applications,traffic-control \
+              --disable-examples --disable-tests --disable-python \
+              -- -DNS3_WARNINGS_AS_ERRORS=OFF
+          fi
+          ./ns3 build -j "$(nproc)"
+
+      - name: Run ns-3 reference (8 seeds, both scenarios)
+        run: |
+          NS3_DIR="$HOME/ns-3-dev" SEEDS=8 ./validation/ns3/run-s1.sh
+
+      - name: Compare with the Python model
+        run: |
+          python -m validation.run_s1_experiment \
+            --ns3-csv output/validation/ns3_s1.csv \
+            --seeds 1 2 3 4 5 6 7 8 \
+            --output-dir output/validation
+
+      - name: Upload comparison artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: s1-ns3-cross-validation
+          path: |
+            output/validation/ns3_s1.csv
+            output/validation/s1_comparison.csv
+            output/validation/python_*.csv

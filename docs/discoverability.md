@@ -2,7 +2,7 @@
 
 Suggested GitHub repository description:
 
-> Educational simulator for seamless multi-medium transport, adaptive MTU, mobility, bonded links, and self-scaling content delivery.
+> Research prototype and simulator for multi-medium backhaul continuity, multipath scheduling and self-scaling content delivery, with an ns-3 cross-validation of its transport model.
 
 Suggested GitHub topics (lowercase, hyphenated):
 
@@ -24,9 +24,15 @@ Suggested GitHub topics (lowercase, hyphenated):
 - `network-telemetry`
 - `wireless-networks`
 - `satellite-communications`
+- `ns-3`
+- `cross-validation`
+- `mptcp`
+- `reproducible-research`
 - `python`
 
-These are metadata suggestions; GitHub repository topics need to be set in repository settings. Prefer the most relevant subset rather than adding every tag if the project focus changes.
+These are metadata suggestions; GitHub repository topics need to be set in repository settings. Prefer the most relevant subset rather than adding every tag if the project focus changes. The topics `ns-3`, `cross-validation`, `mptcp` and `reproducible-research` are supported by
+[docs/external-validation.md](external-validation.md),
+[`validation/`](../validation) and [`REPLICATION.md`](../REPLICATION.md).
 
 ## Historical network KPI data
 

@@ -1,0 +1,106 @@
+name: Validation challenge
+description: Challenge the fidelity of one simulator submodel with expected and observed behaviour plus a reference.
+title: "[validation] "
+labels: ["validation"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form to report a specific, technically grounded challenge to a
+        simulator submodel. This is not a general feature request.
+
+        **Current status:** as of version 0.1.0, this project has received no
+        external issue, pull request, fork contribution, or citation, and it has
+        not been peer reviewed. This form is for future reports; it does not
+        imply that any challenge has already been filed.
+
+        Please do not fabricate measurements. If you have not run a reference
+        implementation, say so and describe the expected behaviour analytically.
+  - type: dropdown
+    id: submodel
+    attributes:
+      label: Submodel
+      description: Which part of the simulator does this challenge concern?
+      options:
+        - transport (fragmentation, MTU adaptation, reassembly, pacing)
+        - queueing (event-driven media queue, finite buffers, delay/jitter/loss)
+        - mobility (handover, make-before-break, IP anchor)
+        - CDN (cache placement, warming, eviction, scaling)
+        - quantum (key-resource and qubit-frame abstraction)
+        - other
+    validations:
+      required: true
+  - type: textarea
+    id: expected-behaviour
+    attributes:
+      label: Expected behaviour
+      description: What should the model do, and according to which reasoning or reference?
+      placeholder: "Under matched inputs ... the model should ..."
+    validations:
+      required: true
+  - type: textarea
+    id: observed-behaviour
+    attributes:
+      label: Observed behaviour
+      description: What does the simulator actually do? Include the commit, command, scenario, and seed.
+      placeholder: "At commit ... running ... produced ..."
+    validations:
+      required: true
+  - type: dropdown
+    id: reference-kind
+    attributes:
+      label: Reference type
+      description: What kind of reference supports the expected behaviour?
+      options:
+        - ns-3
+        - OMNeT++ / INET
+        - hardware testbed or emulator
+        - published paper, standard, or analytical model
+        - other
+    validations:
+      required: true
+  - type: input
+    id: reference
+    attributes:
+      label: Reference
+      description: Version, model or module, paper DOI/URL, or testbed description that supports the comparison.
+      placeholder: "ns-3.40 ... / paper DOI ... / testbed ..."
+    validations:
+      required: true
+  - type: textarea
+    id: minimal-reproduction
+    attributes:
+      label: Minimal reproduction
+      description: Smallest command, scenario, or patch that shows the discrepancy. Include the commit hash and seed.
+      placeholder: |
+        Commit:
+        Command:
+        Seed:
+        Observed output:
+    validations:
+      required: true
+  - type: dropdown
+    id: scenario-file
+    attributes:
+      label: Can you share a scenario file?
+      description: A scenario file or captured output makes the challenge reproducible.
+      options:
+        - "Yes"
+        - "No"
+        - "Partially - I can describe it but cannot share the file"
+    validations:
+      required: true
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional context
+      description: Optional links to logs, plots, or prior discussion.
+    validations:
+      required: false
+  - type: checkboxes
+    id: confirmation
+    attributes:
+      label: Confirmation
+      options:
+        - label: I have not fabricated measurements; any reference values are from an actual run or are explicitly labelled as illustrative.
+          required: true

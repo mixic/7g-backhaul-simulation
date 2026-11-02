@@ -1,0 +1,17 @@
+scenario,policy,seed,packet_delivery_percent,one_way_delay_p95_ms,goodput_mbps,active_paths_mean,primary_share_percent
+s0_nominal,capacity_weighted_swrr,1,99.812,26.23,11.9774,2,91.548
+s0_nominal,capacity_weighted_swrr,2,99.872,26.23,11.9846,2,91.548
+s0_nominal,capacity_weighted_swrr,3,99.88,26.23,11.9856,2,91.548
+s0_nominal,capacity_weighted_swrr,4,99.88,26.23,11.9856,2,91.548
+s0_nominal,capacity_weighted_swrr,5,99.876,26.23,11.9851,2,91.548
+s0_nominal,capacity_weighted_swrr,6,99.884,26.23,11.9861,2,91.548
+s0_nominal,capacity_weighted_swrr,7,99.828,26.23,11.9794,2,91.548
+s0_nominal,capacity_weighted_swrr,8,99.868,26.23,11.9842,2,91.548
+s1_handover,capacity_weighted_swrr,1,93.188,150.15,11.1826,1.8,73.24
+s1_handover,capacity_weighted_swrr,2,93.216,150.15,11.1859,1.8,73.24
+s1_handover,capacity_weighted_swrr,3,93.24,150.15,11.1888,1.8,73.24
+s1_handover,capacity_weighted_swrr,4,93.244,150.15,11.1893,1.8,73.24
+s1_handover,capacity_weighted_swrr,5,93.232,150.15,11.1878,1.8,73.24
+s1_handover,capacity_weighted_swrr,6,93.268,150.15,11.1922,1.8,73.24
+s1_handover,capacity_weighted_swrr,7,93.212,150.15,11.1854,1.8,73.24
+s1_handover,capacity_weighted_swrr,8,93.248,150.15,11.1898,1.8,73.24

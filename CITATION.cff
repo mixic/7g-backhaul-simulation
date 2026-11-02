@@ -1,0 +1,39 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it using the metadata below."
+type: software
+title: "7G Multi-Medium Backhaul and Self-Scaling CDN Simulator"
+abstract: >-
+  An early-stage, single-author research prototype that simulates
+  application-session continuity across heterogeneous microwave, HF, satellite,
+  mobile, Wi-Fi, and drone-relay links, together with adaptive MTU,
+  protocol-inspired mobility, carrier bonding, self-scaling CDN, edge
+  orchestration, and a quantum-key-resource abstraction. One transport scenario
+  (two-path handover with a constant-bit-rate UDP stream) has been
+  cross-validated against an independent ns-3.49 implementation: the queue-free
+  model agrees within 0.02 percent while links are lightly loaded, and its
+  6.5-point delivery overstatement under handover overload is corrected by a
+  bounded FIFO queue model (see docs/external-validation.md). Wireless PHY/MAC
+  behaviour, TCP/MPTCP transport, trace calibration, and the CDN/cloud
+  submodels remain unvalidated. A controlled ablation finds no goodput
+  advantage from predictive pressure forecasting. As of version 0.1.0 there
+  has been no external issue, pull request, fork contribution, or citation, and
+  the work has not been peer reviewed. The prototype is intended for hypothesis
+  generation, replication attempts, and methodological critique, not as evidence
+  of deployed-network performance.
+authors:
+  - family-names: Nikolic
+    given-names: Milan
+version: 0.1.0
+date-released: 2026-11-02
+license: GPL-3.0-or-later
+repository-code: "https://github.com/mixic/7g-backhaul-simulation"
+url: "https://github.com/mixic/7g-backhaul-simulation"
+keywords:
+  - 7G
+  - multi-medium backhaul
+  - multipath transport
+  - self-scaling CDN
+  - network simulation
+  - SimPy
+  - research prototype
+  - reproducibility

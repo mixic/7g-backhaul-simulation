@@ -54,6 +54,13 @@ METRIC_UNITS = {
     "duplicate_payload_percent": "percent",
     "secondary_region_capacity_mbps_seconds": "Mbps*s",
     "media_queue_drop_percent": "percent",
+    # Generic packet-level metrics used by the external cross-validation
+    # scenarios in validation/scenario_s1.py.
+    "packet_delivery_percent": "percent",
+    "one_way_delay_p95_ms": "ms",
+    "goodput_mbps": "Mbps",
+    "active_paths_mean": "paths",
+    "primary_share_percent": "percent",
 }
 
 
@@ -79,18 +86,28 @@ def export_simulation_replicates(
     input_path: Path,
     output_path: Path,
     source: str = "python_simpy",
+    metrics: tuple[str, ...] | None = None,
 ) -> int:
     fieldnames, records = _read_csv(input_path)
-    required = {"scenario", "policy", "seed", *METRIC_UNITS}
+    required = {"scenario", "policy", "seed"}
     missing = required - set(fieldnames)
     if missing:
         raise ValueError(
             "Simulation replicate CSV is missing columns: "
             + ", ".join(sorted(missing))
         )
+    selected = tuple(metrics) if metrics is not None else tuple(METRIC_UNITS)
+    unknown = [metric for metric in selected if metric not in METRIC_UNITS]
+    if unknown:
+        raise ValueError("Unknown metrics: " + ", ".join(sorted(unknown)))
+    present = tuple(metric for metric in selected if metric in fieldnames)
+    if not present:
+        raise ValueError(
+            "Simulation replicate CSV contains none of the requested metrics."
+        )
     normalized: list[dict[str, object]] = []
     for row_number, record in enumerate(records, start=2):
-        for metric, unit in METRIC_UNITS.items():
+        for metric in present:
             value = float(record[metric])
             if not math.isfinite(value):
                 raise ValueError(
@@ -104,7 +121,7 @@ def export_simulation_replicates(
                     "seed": record["seed"],
                     "metric": metric,
                     "value": value,
-                    "unit": unit,
+                    "unit": METRIC_UNITS[metric],
                 }
             )
     _write_normalized(output_path, normalized)

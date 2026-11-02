@@ -35,7 +35,15 @@ The modeled link MTU can shrink as load increases. `AdaptiveMTULearner` explores
 
 `AIMDCongestionController` applies a Reno-inspired additive-increase/multiplicative-decrease congestion window to each modeled medium. Acknowledgements grow the window; simulated losses reduce it. Its pacing rate feeds the bonded carrier scheduler, which can move subsequent fragments onto other paths.
 
+`CoupledCongestionGroup` adds multipath coupling options over the same window abstraction: uncoupled per-path Reno, LIA per RFC 6356, and OLIA using the published Khalili et al. increase rule. It is a window-level model with no ACK packets, slow start, retransmission or scheduler, used for the comparison in §10.4 of the paper; it is not an MPTCP implementation and its numbers are not conformance evidence.
+
 `TabularQRoutingAgent` is a small online Q-learning policy over quantized load and pressure state. It uses a safety mask to avoid unavailable links and adjusts the carrier allocation weights from observed delivery reward. This is genuine tabular RL in the simulated environment, but it is not deployment-grade: the state/action space, reward, training duration, and safety model are intentionally small and require validation before any real-world use.
+
+## Link queue model
+
+`DropTailQueue` in [`simulation/link_queue.py`](../simulation/link_queue.py) is a single-server, finite-buffer FIFO queue driven by caller-supplied time. It was added after external cross-validation showed that the queue-free transport abstraction is optimistic under overload: when a handover moved 12 Mbit/s onto an 8 Mbit/s path, the queue-free model over-reported delivery by 6.5 percentage points and under-reported p95 delay by a factor of 5.7 relative to an ns-3 reference. With the queue model the same scenario matches the reference to 0.01 points of delivery and 1.8 % of p95 delay. See [external-validation.md](external-validation.md) for the experiment, the shared scenario definition and the remaining gaps.
+
+The queue model is opt-in and time-driven by the caller, so tick-based benchmarks and the validation harness can use the same code path as the event-driven simulator.
 
 ## Session authentication model
 

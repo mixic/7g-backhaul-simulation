@@ -41,10 +41,20 @@ application-session continuity from an unattainable guarantee of zero packet
 delay or loss. A second synthetic experiment compares reactive multipath with
 forecast-assisted path activation and multicloud replica preparation under
 link and cloud failures; its results are conditional on explicitly modeled
-controller delays and resource assumptions. This is an early-stage, single-author
-research vision and synthetic prototype, not a peer-reviewed or independently
-validated network simulator. The experiments generate hypotheses and do not
-establish real-network performance or scientific priority.
+controller delays and resource assumptions. A controlled re-evaluation
+replaces the original policy comparison with an independent-allocator
+ablation and finds that pressure forecasting yields no goodput advantage,
+whereas demand forecasting for cache scaling accounts for the measured gains;
+the predictive-goodput claim is withdrawn. The transport model has also been
+cross-validated against an independent ns-3.49 implementation for a two-path
+handover scenario: agreement is within 0.02 % while links are lightly loaded,
+and the queue-free abstraction's 6.5-point delivery overstatement under
+handover overload is corrected by a bounded FIFO queue model. This is an
+early-stage, single-author research vision and synthetic prototype, not a
+peer-reviewed or independently validated network simulator; as of this version
+there are no external issues, pull requests, or citations, and no independent
+replication. The experiments generate hypotheses and do not establish
+real-network performance or scientific priority.
 
 The paper argues for a mathematical, time-varying, multilayer topology model
 to coordinate services across heterogeneous networks. This model is proposed
@@ -95,8 +105,13 @@ demand and network conditions. “7G” is retained only as the project's
 speculative working label for research beyond IMT-2030. It is not an approved
 generation, specification, or forecast of a deployment date, and this work
 does not claim to represent the broader research agenda associated with
-possible post-6G systems, including THz or optical wireless links and
-AI-native air interfaces. ITU-R Recommendation M.2160 defines the framework
+possible post-6G systems, including THz communication, light-wave backhaul and
+AI-native air interfaces. The divergence is itemized in
+[`docs/positioning-7g.md`](../docs/positioning-7g.md): the simulator has no THz
+channel, beam or blockage model, no optical link budget or pointing model, and
+no air-interface learning; its links are stipulated rate/latency/loss tuples,
+and its learned components are a telemetry forecaster, a tabular router and a
+cache-admission score. ITU-R Recommendation M.2160 defines the framework
 and objectives for IMT-2030, providing a standards-oriented context for
 future system research [2].
 
@@ -659,29 +674,54 @@ hyperparameters, random seeds, software versions, baseline tuning, confidence
 intervals, and failure cases. Claims of lower cost or environmental impact
 require explicit and comparable accounting boundaries.
 
-The current Python/SimPy experiments have not completed these cross-simulator,
-trace-calibration, or testbed checks. ns-3, OMNeT++/INET, and Sionna are
-complementary modeling environments, not interchangeable gold standards.
-Agreement in one narrow scenario would validate only the matched behavior and
-assumptions, not the full prototype or its real-world accuracy.
+The first cross-simulator check is now complete. Scenario S1 — a two-path
+constant-bit-rate UDP stream (20 Mbit/s, 5 ms; 8 Mbit/s, 25 ms), a 100-packet
+FIFO buffer per path, and a four-second outage of the primary path — was
+implemented independently in ns-3.49 and compared with the simulator seed by
+seed. In the nominal case the queue-free transport model agreed with the
+reference to 0.02 % on delivery, goodput, one-way delay and path share, which
+is the kind of agreement that makes the scheduling, serialization and loss
+logic credible for this class of scenario. Under handover overload the same
+model over-reported delivery by 6.5 percentage points and under-reported the
+95th-percentile one-way delay by a factor of 5.7. Adding a bounded FIFO
+drop-tail queue per link — now part of the simulator as
+[`simulation/link_queue.py`](../simulation/link_queue.py) — reproduced the
+reference to within 0.01 points of delivery and 1.8 % of p95 delay. The
+experiment, including the ns-3 configuration, seeds and reproduction commands,
+is reported in [docs/external-validation.md](../docs/external-validation.md).
+
+Two findings from that work matter beyond the numbers. First, the reference's
+buffer configuration dominated the comparison: with ns-3's default FqCoDel
+queue disc (10 240 packets) the same workload yielded 97.10 % delivery and a
+1127 ms p95 delay, versus 93.23 % and 150 ms with a matched 100-packet FIFO.
+Any cross-validation claim is therefore a claim about a fully specified
+configuration, not about "the simulator". Second, the defect was invisible in
+the repository's own benchmarks because none of them overloaded a path while
+another path was unavailable.
+
+Wireless PHY behaviour, TCP/MPTCP transport, trace calibration, CDN/cloud
+semantics and testbed checks remain undone. ns-3, OMNeT++/INET and Sionna are
+complementary modeling environments, not interchangeable gold standards, and
+agreement in one narrow scenario validates only the matched behaviour.
 
 The repository includes measured-trace replay for the event-driven benchmark,
-a paired one-factor-at-a-time sensitivity runner, and CSV normalization and
+a paired one-factor-at-a-time sensitivity runner, CSV normalization and
 comparison tools for repeat-level results from external simulators or
-testbeds. Measured-trace replay accepts 240 contiguous one-second samples for
-critical and bulk traffic plus capacity, delay, and loss probability for each
-configured path. It still applies configured outage schedules and synthetic
-queue/jitter and cloud behavior; it is not packet-for-packet replay.
-Sensitivity intervals describe replicate variation at specified parameter
-values, not structural model uncertainty. The adapters do not run ns-3,
-OMNeT++/INET, Sionna, MPTCP, or a testbed.
+testbeds, and a complete ns-3.49 reference implementation of scenario S1 with
+its comparison pipeline. Measured-trace replay accepts 240 contiguous
+one-second samples for critical and bulk traffic plus capacity, delay, and
+loss probability for each configured path. It still applies configured outage
+schedules and synthetic queue/jitter and cloud behavior; it is not
+packet-for-packet replay. Sensitivity intervals describe replicate variation
+at specified parameter values, not structural model uncertainty. No
+OMNeT++/INET, Sionna or testbed adapter is implemented.
 
-The current simulator is not an MPTCP implementation. It does not model TCP
-congestion windows, acknowledgements, coupled subflow congestion control, or
-protocol schedulers. LIA [27], OLIA [28], and alternatives such as ECF [21]
-therefore remain external comparison baselines. Congestion-control algorithms
-must be evaluated separately from packet schedulers using compatible MPTCP
-endpoints or a simulator module that implements those semantics.
+The simulator now includes a coupled-window congestion-control model: uncoupled
+per-path Reno AIMD as a reference, plus LIA and OLIA using the coupling rules
+of RFC 6356 [27, 28]. This is a window-level model, not an implementation of
+TCP: there are no acknowledgements, retransmissions, SACK, or MPTCP schedulers,
+so a kernel MPTCP stack and scheduler families such as ECF [21] remain external
+baselines. The comparison is reported in §10.4 and is explicitly model-level.
 
 ## 10. Synthetic policy comparison
 
@@ -775,7 +815,7 @@ current model's limits explicit:
 
 | Synthetic comparison | Reactive 6G-oriented baseline | Proposed predictive/cooperative policy | Interpretation |
 |---|---:|---:|---|
-| Urban goodput | 298.1 Mbps | 297.5 Mbps | Essentially equal; both use the same path allocator |
+| Urban goodput | 298.1 Mbps | 297.5 Mbps | Retracted framing: near-equality is designed in by the shared allocator; the controlled ablation in §10.1 finds no predictive goodput gain |
 | Urban mean cache-hit fraction | 13.0% | 25.4% | Predictive cache warming is the clear modeled difference |
 | Urban modeled cost | $0.0321/GB | $0.0266/GB | Lower under the chosen synthetic transfer and replication prices |
 | Orbital service continuity | 95.0% | 100.0% | Improvement in the scheduled-contact scenario only |
@@ -808,10 +848,14 @@ These are synthetic policy experiments with hand-selected assumptions. In
 particular, the high single-path continuity failures are a consequence of the
 configured capacity constraints, not evidence about real 5G coverage; the
 reactive and predictive policies are abstractions rather than 6G/7G system
-implementations. Their near-identical goodput is expected because they share
-the same allocator and total path capacity. The tested proposal's primary
-differences are cache prediction, modeled cost, and selected orbital outcomes;
-it does not yet test the broader brain-inspired self-reorganization claim.
+implementations. Their near-identical goodput is a property of the shared
+allocator and equal total path capacity; the controlled re-evaluation in
+§10.1 shows that removing that confound does not turn the predictive arm into a
+winner — pressure prediction is mildly negative for goodput and cache
+prediction supplies the measured gains. The tested proposal's defensible
+differences are therefore cache prediction, modeled cost, and selected orbital
+outcomes; it does not test the broader brain-inspired self-reorganization
+claim, and it makes no predictive-goodput claim.
 The results are sensitive to cost weights, demand and
 outage schedules, cache limits, and policy parameters. They do not model
 transport retransmission, shared bottlenecks, packet reordering, radio
@@ -820,7 +864,67 @@ extension should begin with the benchmark code and CSV, then replace synthetic
 assumptions with documented traces and validated policy baselines before
 making operational claims.
 
-### 10.1 Public-safety handover and congestion-wave study
+### 10.1 Controlled re-evaluation of the predictive claim
+
+The comparison above contains a design flaw that earlier versions of the
+repository acknowledged and that this subsection corrects: every policy is
+evaluated with the same allocation function, and the predictive-cooperative arm
+uses larger cache gains than the reactive arm. A goodput difference between the
+arms therefore cannot be attributed to prediction, and equal goodput is
+expected by construction rather than measured.
+
+The replacement experiment ([`tools/benchmark_fair.py`](../tools/benchmark_fair.py))
+changes the design, not the physics:
+
+- every arm owns an **allocator instance with its own state**, so no arm's
+  result depends on another arm's predictor;
+- cache gains are held constant inside each comparison;
+- a 2×2 ablation separates the two mechanisms — arm A uses reactive pressure
+  and reactive cache, B predictive pressure with reactive cache, C reactive
+  pressure with predictive cache, and D both;
+- 30 paired seeds are reused across arms and scenarios, and differences are
+  reported with 95 % intervals and an exact paired sign test;
+- a fifth pair (E/F) deliberately shares one allocator between a reactive and a
+  predictive arm, reproducing the legacy artifact so that its magnitude can be
+  measured rather than assumed.
+
+Mean paired differences against arm A in delivered goodput (Mbit/s, 95 %
+interval, 30 paired seeds):
+
+| Comparison | Urban | Rural | Mobility | Orbital |
+|---|---:|---:|---:|---:|
+| B - A: predictive pressure only | -1.31 ± 0.01 | -0.11 ± 0.00 | -0.06 ± 0.00 | -0.00 ± 0.00 |
+| C - A: predictive cache only | +0.38 ± 0.01 | +0.27 ± 0.01 | +0.21 ± 0.01 | +1.06 ± 0.04 |
+| D - A: both predictive | -0.58 ± 0.04 | +0.26 ± 0.01 | +0.21 ± 0.01 | +1.04 ± 0.04 |
+
+Every interval excludes zero and the sign test agrees (p < $10^{-8}$, n = 30). The
+predictor's effect is negative in all four scenarios: forecasting pressure
+while holding the cache controller fixed slightly *reduces* delivered goodput.
+The gain is entirely attributable to cache prediction: C - A is positive in
+every scenario and also lowers modeled cost per delivered GB (-$0.004 to
+-$0.020) and, in the orbital scenario, lowers p95 latency (-174 ± 11 ms) and
+raises continuity (+4.96 ± 0.41 points).
+
+The shared-allocator pair E/F reproduces the independent-instance difference
+D - A to three decimal places in every scenario. For this model, allocator
+sharing is not the source of the earlier discrepancy — the unequal cache gains
+are. Both flaws had to be fixed, but only one of them mattered for the result.
+
+The paper therefore withdraws the claim that a predictive-cooperative policy
+improves goodput and reclassifies the finding as a **negative result**:
+second-order pressure forecasting, as implemented and as evaluated against the
+matched reactive controller, does not pay for itself under these synthetic
+dynamics, whereas demand forecasting for cache scaling does. A negative result
+of this kind is a usable contribution precisely because the design now supports
+it: the ablation isolates the mechanism, the paired statistics are reported,
+and the alternative explanations are measured. What the experiment still
+cannot establish is external validity — the demand, cost and outage schedules
+remain synthetic, so the finding is a property of the model, not of deployed
+networks. The summary and paired-difference CSVs are committed as
+[`figures/vision_fair_summary.csv`](../figures/vision_fair_summary.csv) and
+[`figures/vision_fair_paired.csv`](../figures/vision_fair_paired.csv).
+
+### 10.2 Public-safety handover and congestion-wave study
 
 A second experiment focuses on the stated continuity problem: an application
 moving between Wi-Fi, mobile, HF, and satellite while traffic demand accelerates
@@ -921,7 +1025,7 @@ operator-approved 3GPP mission-critical service requirements [13]. The CSV
 with replicate-level summary statistics is
 [`figures/public_safety_benchmark_summary.csv`](../figures/public_safety_benchmark_summary.csv).
 
-### 10.2 Cooperative path and multicloud reorganization experiment
+### 10.3 Cooperative path and multicloud reorganization experiment
 
 The prior coarse comparison mixed route forecasting, replica preparation,
 setup delay, and packet duplication in only two policies. Its bars therefore
@@ -1042,6 +1146,54 @@ not train or execute AI/RL, use NPU hardware, forward real packets, or run
 Kubernetes. A credible next validation stage would calibrate the model with
 measured traces, compare against standards-capable implementations, and test
 the same policy arms in a controlled network emulator.
+
+### 10.4 Coupled congestion control: Reno, LIA and OLIA
+
+The evaluation agenda lists fair comparison against MPTCP congestion control as
+open work, because the original simulator had no congestion window at all. The
+repository now contains a window-level coupling model
+(`simulation/congestion.py`) and a comparison benchmark
+(`tools/benchmark_congestion_control.py`) covering uncoupled Reno
+(RFC 5681 additive increase, multiplicative decrease), LIA (RFC 6356 eq. 1) and
+OLIA (the published Khalili et al. increase rule). It is a model, not a TCP
+implementation: there are no ACK packets, retransmission, slow start or MPTCP
+schedulers, the caller supplies the RTT estimate, and a loss halves only the
+affected subflow. Those simplifications bound what the result can mean.
+
+The scenario is a two-path flow with 20 Mbit/s and 5 ms RTT on path A and
+8 Mbit/s and 25 ms RTT on path B, 1460-byte segments, 60 simulated seconds,
+8 paired seeds, one drop-tail queue of 2×BDP per path, and at most one
+congestion response per RTT. Means with 95 % Student-t intervals:
+
+| Algorithm | Total (Mbit/s) | Path A (Mbit/s) | Path B (Mbit/s) | Jain index | Coupled ACKs |
+|---|---:|---:|---:|---:|---:|
+| Reno | 27.9935 ± 0.0023 | 19.99999 ± 0.00003 | 7.99348 ± 0.00230 | 0.8446 | 0.0 % |
+| LIA | 27.9927 ± 0.0028 | 19.99996 ± 0.00004 | 7.99272 ± 0.00283 | 0.8446 | 67.3 % |
+| OLIA | 26.6480 ± 0.0084 | 19.99999 ± 0.00003 | 6.64797 ± 0.00843 | 0.7993 | 100.0 % |
+
+Reno and LIA both saturate both paths and are statistically indistinguishable
+in practice: the paired difference is -0.0008 Mbit/s
+(95 % CI [-0.0013, -0.0003]), 0.003 % of the 28 Mbit/s combined capacity.
+OLIA reaches 1.345 Mbit/s (4.8 % of capacity) less than LIA. The mechanism is
+visible in the model state rather than assumed: path B's mean window is
+14.2 segments against a 17.1-segment bandwidth-delay product, so B's goodput
+falls to 6.65 Mbit/s. In the published OLIA rule, the long-RTT path needs the
+largest window and therefore stays in the `max_w_paths` set; the `collected`
+set is then usually empty, its coupling term is zero, and B grows only through
+the slower Kelly/Voice term while drop-tail halving keeps it below BDP. A
+300-second diagnostic run held the same steady rate, so this is an equilibrium
+of the model, not slow convergence.
+
+The convergence-time metric is uninformative here (every run was already inside
+the ±10 % band within the first two seconds), so no convergence claim is made.
+Nor is this a conformance test: the Linux out-of-tree OLIA implementation uses
+a different inter-loss statistic, and a kernel MPTCP stack with pacing, slow
+start and real ACK clocks would not necessarily reproduce these numbers. The
+defensible statement is conditional: in this stipulated model, coupling
+provides no total-throughput gain over capacity saturation, and the published
+OLIA increase is penalised for long-RTT paths behind shallow buffers. That is a
+testable hypothesis for a real stack, not evidence about MPTCP. Summary,
+replicate and paired-difference CSVs are committed under `figures/`.
 
 ## 11. From multipath handover to multicloud Kubernetes
 
@@ -1298,14 +1450,19 @@ budget, not peak goodput in isolation.
 The accompanying [repository](../README.md) provides starting artifacts, not
 experimental evidence for planetary-scale operation. It is an early-stage
 single-author research prototype. This paper has not undergone peer review,
-and no external validation or independent replication is claimed. Its
-literature review provides technical context, not evidence of community
-endorsement, adoption, or novelty of the integrated design.
+and no independent replication is claimed. Its literature review provides
+technical context, not evidence of community endorsement, adoption, or novelty
+of the integrated design. As of this version there are no external issues,
+pull requests, forks, or citations; the validation, replication and citation
+artifacts ([`docs/external-validation.md`](../docs/external-validation.md),
+[`REPLICATION.md`](../REPLICATION.md), [`CITATION.cff`](../CITATION.cff) and
+the issue forms under `.github/ISSUE_TEMPLATE/`) exist so that such engagement
+can be recorded when it happens, not as evidence that it has happened.
 
 | Capability | Current prototype | Research gap |
 |---|---|---|
 | Multi-path mesh | In-process allocation plan using configured link attributes | Real forwarding, shared bottlenecks, transport behavior, and network testbed |
-| Network simulator fidelity | Custom Python/SimPy event and queue abstractions with CSV KPI interchange | Scenario-level cross-check against a suitably configured ns-3 or OMNeT++/INET model; validate wireless PHY separately when relevant |
+| Network simulator fidelity | Custom Python/SimPy event and queue abstractions with CSV KPI interchange; scenario S1 (two-path handover, CBR UDP, 100-packet FIFO) cross-validated against ns-3.49 seed by seed | Wireless PHY/MAC validation (ns-3 Wi-Fi/mmWave or Sionna), TCP/MPTCP transport, OMNeT++/INET replication, and trace calibration of the remaining parameters |
 | UDP packet path | Actual socket datagrams over local IPv4 loopback | Multi-host/NIC transmission, physical media, loss/reorder emulation, and scale |
 | Forecasting | Finite-difference velocity/acceleration extrapolation in the policy benchmarks; a separate small MLP pretrained on deterministic synthetic data | Compare against persistence and statistical/learned baselines using measured, temporally separated traces; quantify uncertainty and regime-shift behavior |
 | NPU execution | Optional ONNX provider path with profile checks | Vendor hardware/runtime validation and physical-device evidence |
@@ -1332,14 +1489,15 @@ tests cover trace validation and replay, parameter scaling, sensitivity
 outputs, external-result normalization, paired comparisons, and rejection of
 undersized comparisons.
 
-On 2 November 2026, the full local Python test suite completed with **66
-tests passing** (`py -m pytest`); the focused validation-workflow tests
-completed with **4 tests passing**. A measured-trace smoke run using generated
-temporary input, two replicates, and one custom scenario completed and
-produced the expected outputs for all six policies. These results establish
-software behavior for the tested code paths only. They are not external
-simulator cross-checks, operational-trace calibration, MPTCP experiments, or
-testbed evidence, and they do not validate physical-network fidelity.
+On 2 November 2026, the full local Python test suite completed with **93 tests
+passing** (plus 7 parameterised subtests; `py -m pytest`), including the
+validation-workflow, link-queue, controlled-benchmark and coupled
+congestion-control tests. A measured-trace smoke run using generated temporary
+input, two replicates, and one custom scenario completed and produced the
+expected outputs for all six policies. These results establish software
+behaviour for the tested code paths only. They are not wireless PHY validation,
+operational-trace calibration, MPTCP conformance, or testbed evidence, and they
+do not validate physical-network fidelity.
 
 The policy benchmark uses a simple second-order extrapolation,
 \(\hat{x}(t+H)=x(t)+vH+\tfrac{1}{2}aH^2\), with finite-difference estimates
@@ -1354,21 +1512,30 @@ The current benchmark set also remains narrower than the proposed system.
 Its path allocator and failure schedules are abstractions; its cooperative
 failure study tests deterministic path activation, cloud pre-warming, and
 selective duplication, not trained distributed-AI reorganization or live
-multicloud Kubernetes. The earlier vision benchmark shares an allocator
-between reactive and predictive policies, so similar delivered goodput is
-expected by design. These experiments support only conditional observations
-about their implemented mechanisms, not claims about a complete 6G/7G system.
+multicloud Kubernetes. The earlier vision benchmark shared an allocator
+between reactive and predictive policies and gave the predictive arm larger
+cache gains, so similar delivered goodput was expected by design. The
+controlled re-evaluation in §10.1 fixes both issues and changes the conclusion
+rather than rescuing it: with independent allocator instances and cache gains
+held constant, pressure prediction reduces delivered goodput in every scenario
+while cache prediction supplies the measured gains. These experiments support
+only conditional observations about their implemented mechanisms, not claims
+about a complete 6G/7G system, and the predictive-goodput claim is withdrawn.
 
-The next work should first cross-check one link/handover scenario in a
-network-level simulator and calibrate inputs against documented measurements.
-It should then add protocol-compatible MPTCP baselines, including LIA/OLIA
+The next work should first cross-check one wireless link/handover scenario in
+a network-level simulator with a real PHY/MAC model and calibrate inputs
+against documented measurements. It should then extend the transport
+comparison to protocol-compatible MPTCP baselines, including LIA/OLIA
 congestion control where appropriate and established schedulers, with matched
-workloads and resource accounting. The implemented one-factor sensitivity
-runner varies demand, capacity, delay, loss, setup/startup scaling, and
-forecast horizon; broader factorial or global analysis over correlated
-failures, forecast error, and cloud assumptions remains necessary. External
-review, independent replication, and controlled emulation/testbed evaluation
-remain future work, not completed project milestones.
+workloads and resource accounting; the repository now includes a coupled-window
+LIA/OLIA model and a comparison benchmark, but those results are model-level
+and not yet cross-checked against a kernel MPTCP implementation. The
+implemented one-factor sensitivity runner varies demand, capacity, delay, loss,
+setup/startup scaling, and forecast horizon; broader factorial or global
+analysis over correlated failures, forecast error, and cloud assumptions
+remains necessary. External review, independent replication, and controlled
+emulation/testbed evaluation remain future work, not completed project
+milestones.
 
 ## 16. Conclusion
 
@@ -1386,12 +1553,17 @@ cost, and sustainability limits must be treated as architecture inputs rather
 than future details.
 
 This paper frames the idea as a research program, not a claim of a finished
-“7G” system. The path forward is measurement: validate the predictor, test
-multipath behavior under realistic impairments, quantify content-placement
-tradeoffs, establish safe control boundaries, and evaluate orbital scenarios
-against terrestrial alternatives. Progress on those questions, not terminology
-alone, will determine whether this vision can contribute to more resilient and
-widely accessible communication.
+“7G” system. The path forward is measurement, and the first steps are now
+taken rather than promised: the transport model has been cross-checked against
+ns-3 for a bounded handover scenario, the queue defect that check exposed has
+been fixed, and the predictive goodput claim has been tested with a controlled
+ablation and withdrawn. What remains is harder and more valuable: validate the
+model against wireless PHY behaviour and measured traces, test multipath
+transport against protocol-compatible MPTCP baselines, quantify
+content-placement tradeoffs, establish safe control boundaries, and evaluate
+orbital scenarios against terrestrial alternatives. Progress on those
+questions, not terminology alone, will determine whether this vision can
+contribute to more resilient and widely accessible communication.
 
 ## References
 

@@ -1,0 +1,91 @@
+name: Replication report
+description: Report an independent replication attempt, including partial or failed runs, with environment, commit, and exact commands.
+title: "[replication] "
+labels: ["replication"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form to report what happened when you tried to reproduce the
+        test suite, a benchmark, or a validation comparison.
+
+        **Current status:** as of version 0.1.0, this project has received no
+        external issue, pull request, fork contribution, or citation, and it has
+        not been peer reviewed. This form is for future reports; it does not
+        imply that any replication has already been submitted.
+
+        Partial, negative, and failed replications are useful. Please report
+        them honestly rather than omitting deviations.
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Operating system, Python version, dependency versions, container or VM, and any hardware relevant to the run.
+      placeholder: |
+        OS:
+        Python:
+        Dependencies (pip freeze):
+        Container or VM:
+    validations:
+      required: true
+  - type: input
+    id: commit
+    attributes:
+      label: Commit hash
+      description: Exact commit used. Run `git rev-parse HEAD` in the repository.
+      placeholder: "Full commit SHA"
+    validations:
+      required: true
+  - type: textarea
+    id: commands
+    attributes:
+      label: Exact commands
+      description: Every command run, in order, including the test suite and at least one benchmark or validation comparison.
+      placeholder: |
+        py -3 -m pytest
+        py -3 tools\benchmark_vision.py --output-dir figures --replicates 30 --seed 2026
+    validations:
+      required: true
+  - type: dropdown
+    id: results-matched
+    attributes:
+      label: Did the results match?
+      options:
+        - "Yes, within the reported intervals"
+        - "Partially"
+        - "No"
+        - "Could not complete the run"
+    validations:
+      required: true
+  - type: textarea
+    id: deviations
+    attributes:
+      label: Deviations
+      description: Output differences, missing dependencies, timing failures, or reasons the comparison was not exact.
+    validations:
+      required: true
+  - type: textarea
+    id: results-artifacts
+    attributes:
+      label: Results and artifacts
+      description: Summary numbers, CSV or plot paths or links, and the mapping JSON if you used tools/validation_io.py.
+    validations:
+      required: false
+  - type: dropdown
+    id: listing-permission
+    attributes:
+      label: May this replication be listed publicly?
+      description: Listing is optional and does not imply endorsement. It may appear in a future REPLICATIONS.md or in the "Published external validations" section of REPLICATION.md.
+      options:
+        - "Yes"
+        - "No"
+        - "Ask me first before publishing"
+    validations:
+      required: true
+  - type: checkboxes
+    id: confirmation
+    attributes:
+      label: Confirmation
+      options:
+        - label: I have not fabricated measurements; the reported commands and results come from an actual run.
+          required: true

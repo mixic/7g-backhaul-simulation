@@ -10,11 +10,35 @@ readme = "README.md"
 requires-python = ">=3.10"
 authors = [{ name = "Milan Nikolic" }]
 license = "GPL-3.0-or-later"
+keywords = [
+    "network simulation",
+    "multipath",
+    "multi-medium backhaul",
+    "content delivery network",
+    "handover",
+    "congestion control",
+    "ns-3",
+    "cross-validation",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering",
+    "Topic :: System :: Networking",
+]
 dependencies = [
     "numpy>=1.24.0",
     "simpy>=4.0.0",
     "matplotlib>=3.7.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/mixic/7g-backhaul-simulation"
+Repository = "https://github.com/mixic/7g-backhaul-simulation"
+"Cross-validation report" = "https://github.com/mixic/7g-backhaul-simulation/blob/main/docs/external-validation.md"
+"Replication guide" = "https://github.com/mixic/7g-backhaul-simulation/blob/main/REPLICATION.md"
 
 [project.optional-dependencies]
 model-export = ["onnx>=1.16"]

@@ -20,6 +20,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from tools.benchmark_brain_inspired import Metrics
 from tools.benchmark_sensitivity import run_sensitivity
 from tools.validation_io import (
     METRIC_UNITS,
@@ -42,7 +43,8 @@ class ValidationWorkflowTests(unittest.TestCase):
             )
             self.assertTrue(output_path.is_file())
 
-        self.assertEqual(len(rows), 3 * len(METRIC_UNITS))
+        # The sensitivity sweep reports its own metric set, not METRIC_UNITS.
+        self.assertEqual(len(rows), 3 * len(Metrics.__dataclass_fields__))
         default = next(
             row
             for row in rows
