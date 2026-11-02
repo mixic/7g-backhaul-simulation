@@ -1,5 +1,5 @@
 ---
-title: "A Brain-Inspired Vision for Planetary-Scale Cooperative 7G Backhaul"
+title: "A Brain-Inspired Research Vision for Cooperative Multi-Medium Backhaul"
 subtitle: "Active-Active Multi-Medium Content Transport, Self-Scaling Content, and Orbital AI Edge Infrastructure"
 author: "Milan Nikolic"
 affiliation: "Independent researcher"
@@ -41,7 +41,10 @@ application-session continuity from an unattainable guarantee of zero packet
 delay or loss. A second synthetic experiment compares reactive multipath with
 forecast-assisted path activation and multicloud replica preparation under
 link and cloud failures; its results are conditional on explicitly modeled
-controller delays and resource assumptions.
+controller delays and resource assumptions. This is an early-stage, single-author
+research vision and synthetic prototype, not a peer-reviewed or independently
+validated network simulator. The experiments generate hypotheses and do not
+establish real-network performance or scientific priority.
 
 The paper argues for a mathematical, time-varying, multilayer topology model
 to coordinate services across heterogeneous networks. This model is proposed
@@ -85,14 +88,17 @@ are placed. This is an allegory for coordinated feedback and adaptation. It
 does not imply that the thesis implemented modern AI, that the network is
 conscious, or that a biological brain is an engineering blueprint.
 
-This paper advances a vision of **cooperative 7G backhaul**: a planetary-scale
+This paper advances a vision of **cooperative multi-medium backhaul**: a planetary-scale
 service fabric in which terrestrial, aerial, and orbital nodes cooperate to
 deliver data and compute using available resources while adapting to changing
-demand and network conditions. Here, “7G” names a research vision beyond
-standardized 6G work; it is not an approved generation, specification, or
-forecast of a particular deployment date. ITU-R Recommendation M.2160 defines
-the framework and objectives for IMT-2030, providing a standards-oriented
-context for future system research [2].
+demand and network conditions. “7G” is retained only as the project's
+speculative working label for research beyond IMT-2030. It is not an approved
+generation, specification, or forecast of a deployment date, and this work
+does not claim to represent the broader research agenda associated with
+possible post-6G systems, including THz or optical wireless links and
+AI-native air interfaces. ITU-R Recommendation M.2160 defines the framework
+and objectives for IMT-2030, providing a standards-oriented context for
+future system research [2].
 
 The motivating principle comes from self-scalable content distribution:
 observe demand, learn where it is growing, and move capacity and content closer
@@ -619,8 +625,12 @@ The vision should be evaluated incrementally against reproducible baselines:
    prediction lead time, and degradation under missing or delayed telemetry.
 2. **Multipath transport:** compare single-path, static striping, and
    congestion-aware active-active policies under replayed path delay, capacity,
-   loss, and failure. Measure goodput, p50/p95/p99 completion time, reordering,
-   retransmissions, continuity success, and energy/cost per delivered byte.
+   loss, and failure. Where the transport is MPTCP, compare compatible
+   congestion-control algorithms such as LIA [27] and OLIA [28], and
+   schedulers such as ECF [21], without conflating congestion control with
+   packet scheduling.
+   Measure goodput, p50/p95/p99 completion time, reordering, retransmissions,
+   continuity success, and energy/cost per delivered byte.
 3. **Cache placement:** compare no-cache, reactive LRU, demand-only, and
    forecast-aware admission. Measure hit ratio, origin load, replication bytes,
    cache churn, freshness errors, and cost. Include high-cardinality and
@@ -632,14 +642,46 @@ The vision should be evaluated incrementally against reproducible baselines:
    link-budget assumptions. Compare orbital compute against terrestrial and
    aerial alternatives, including power, thermal limits, storage, downlink,
    launch and replacement assumptions, and end-of-life constraints.
-6. **Testbed progression:** move from simulation to a controlled network
-   emulation, then a small authorized multi-node testbed. Verify interoperability
-   and operator controls before any public-network experiment.
+6. **Simulator cross-check:** reproduce one bounded, documented scenario,
+   such as link impairment and handover timing, in a network-level simulator
+   such as ns-3 [29] or an OMNeT++ model framework such as INET [30]. Compare
+   event timing, packet delivery, delay, and loss under matched inputs. Use
+   Sionna [31] only for communication-system, channel, or PHY questions that
+   require its models; it is not a substitute for end-to-end routing or cloud
+   orchestration validation. Document model versions and the scope of any
+   agreement.
+7. **Testbed progression:** move from validated simulation to controlled
+   network emulation, then a small authorized multi-node testbed. Verify
+   interoperability and operator controls before any public-network experiment.
 
 Every evaluation should disclose topology, trace provenance, model
 hyperparameters, random seeds, software versions, baseline tuning, confidence
 intervals, and failure cases. Claims of lower cost or environmental impact
 require explicit and comparable accounting boundaries.
+
+The current Python/SimPy experiments have not completed these cross-simulator,
+trace-calibration, or testbed checks. ns-3, OMNeT++/INET, and Sionna are
+complementary modeling environments, not interchangeable gold standards.
+Agreement in one narrow scenario would validate only the matched behavior and
+assumptions, not the full prototype or its real-world accuracy.
+
+The repository includes measured-trace replay for the event-driven benchmark,
+a paired one-factor-at-a-time sensitivity runner, and CSV normalization and
+comparison tools for repeat-level results from external simulators or
+testbeds. Measured-trace replay accepts 240 contiguous one-second samples for
+critical and bulk traffic plus capacity, delay, and loss probability for each
+configured path. It still applies configured outage schedules and synthetic
+queue/jitter and cloud behavior; it is not packet-for-packet replay.
+Sensitivity intervals describe replicate variation at specified parameter
+values, not structural model uncertainty. The adapters do not run ns-3,
+OMNeT++/INET, Sionna, MPTCP, or a testbed.
+
+The current simulator is not an MPTCP implementation. It does not model TCP
+congestion windows, acknowledgements, coupled subflow congestion control, or
+protocol schedulers. LIA [27], OLIA [28], and alternatives such as ECF [21]
+therefore remain external comparison baselines. Congestion-control algorithms
+must be evaluated separately from packet schedulers using compatible MPTCP
+endpoints or a simulator module that implements those semantics.
 
 ## 10. Synthetic policy comparison
 
@@ -904,6 +946,15 @@ fails with fiber, demand is 10% higher, and modeled path/cloud setup times are
 50% longer. They are explicitly synthetic stress profiles, not calibrated
 representations of 5G or 6G systems.
 
+This is a custom discrete-event abstraction, not a calibrated physical-layer,
+radio-access, or standards-complete protocol simulator. The paired arms help
+attribute effects to modeled policy components, but they do not establish
+fidelity against ns-3, OMNeT++/INET, Sionna, a protocol implementation, or
+field measurements. In particular, the modeled capacity, delay, loss,
+correlation, queue service, and cloud startup distributions are scenario
+inputs. No external simulator comparison or independent replication has been
+performed.
+
 The transport portion is implemented with SimPy. Each link has a bounded
 256-packet queue, a packet serialization rate derived from its time-varying
 capacity, propagation delay, jitter, and a configured base/congestion loss
@@ -932,16 +983,12 @@ For each scenario and policy, the CSV reports the mean and normal-approximation
 relative to the reactive baseline. Paired intervals reflect seed-to-seed
 variation under these fixed assumptions only. They do not include uncertainty
 in path capacities, delay/loss distributions, failure schedules, deadlines,
-controller tuning, or the choice of scenario. The outputs are
-[`brain_inspired_cooperative_benchmark.csv`](../figures/brain_inspired_cooperative_benchmark.csv),
-the QoS comparison
-[`brain_inspired_cooperative_benchmark.png`](../figures/brain_inspired_cooperative_benchmark.png),
-the resource tradeoffs
-[`brain_inspired_cooperative_resources.png`](../figures/brain_inspired_cooperative_resources.png),
-the paired effect-size plot
-[`brain_inspired_cooperative_effects.png`](../figures/brain_inspired_cooperative_effects.png),
-and the paired-seed time series
-[`brain_inspired_cooperative_timeseries.png`](../figures/brain_inspired_cooperative_timeseries.png).
+controller tuning, or the choice of scenario. The outputs are the
+[benchmark CSV](../figures/brain_inspired_cooperative_benchmark.csv),
+[QoS comparison](../figures/brain_inspired_cooperative_benchmark.png),
+[resource tradeoffs](../figures/brain_inspired_cooperative_resources.png),
+[paired effect-size plot](../figures/brain_inspired_cooperative_effects.png),
+and [paired-seed time series](../figures/brain_inspired_cooperative_timeseries.png).
 
 Selected 20-seed mean results make the separate contributions clearer:
 
@@ -1249,16 +1296,21 @@ budget, not peak goodput in isolation.
 ## 15. Prototype status and limitations
 
 The accompanying [repository](../README.md) provides starting artifacts, not
-experimental evidence for planetary-scale operation:
+experimental evidence for planetary-scale operation. It is an early-stage
+single-author research prototype. This paper has not undergone peer review,
+and no external validation or independent replication is claimed. Its
+literature review provides technical context, not evidence of community
+endorsement, adoption, or novelty of the integrated design.
 
 | Capability | Current prototype | Research gap |
 |---|---|---|
 | Multi-path mesh | In-process allocation plan using configured link attributes | Real forwarding, shared bottlenecks, transport behavior, and network testbed |
+| Network simulator fidelity | Custom Python/SimPy event and queue abstractions with CSV KPI interchange | Scenario-level cross-check against a suitably configured ns-3 or OMNeT++/INET model; validate wireless PHY separately when relevant |
 | UDP packet path | Actual socket datagrams over local IPv4 loopback | Multi-host/NIC transmission, physical media, loss/reorder emulation, and scale |
-| Congestion predictor | Small MLP pretrained on deterministic synthetic data | Training and calibration on measured, representative traces |
+| Forecasting | Finite-difference velocity/acceleration extrapolation in the policy benchmarks; a separate small MLP pretrained on deterministic synthetic data | Compare against persistence and statistical/learned baselines using measured, temporally separated traces; quantify uncertainty and regime-shift behavior |
 | NPU execution | Optional ONNX provider path with profile checks | Vendor hardware/runtime validation and physical-device evidence |
 | CDN adaptation | Simulated demand forecasting, cache, and replica decisions | Production cache integration, freshness, privacy, and economic evaluation |
-| Cooperative recovery | Deterministic paired path/cloud failure benchmark | Trained distributed AI, calibrated failure behavior, and real Kubernetes/cloud integration |
+| Cooperative recovery | Deterministic paired path/cloud failure benchmark and one-factor sensitivity runner | Trained distributed AI, calibrated failure behavior, and real Kubernetes/cloud integration |
 | Orbital infrastructure | Architectural concept only | Orbital dynamics, spacecraft subsystem model, mission cost, and field data |
 | Quantum resource | Illustrative key-buffer abstraction | Protocol-accurate quantum network and security analysis |
 
@@ -1267,6 +1319,56 @@ real-network accuracy. Likewise, a local UDP benchmark is not a measurement of
 wireless, satellite, microwave, or wide-area performance. The system has not
 been shown to improve global coverage, affordability, latency, resilience, or
 environmental impact.
+
+### Implementation and software-test status
+
+The local validation workflow is implemented in the repository. It includes
+measured-trace replay with explicit input checks, run-level replicate exports,
+paired one-factor-at-a-time sensitivity sweeps, and CSV adapters for
+normalizing and comparing simulator or testbed results by scenario, policy,
+metric, and seed. The comparison tool requires at least two matched seed pairs
+to report a paired uncertainty interval and rejects unit mismatches. Automated
+tests cover trace validation and replay, parameter scaling, sensitivity
+outputs, external-result normalization, paired comparisons, and rejection of
+undersized comparisons.
+
+On 2 November 2026, the full local Python test suite completed with **66
+tests passing** (`py -m pytest`); the focused validation-workflow tests
+completed with **4 tests passing**. A measured-trace smoke run using generated
+temporary input, two replicates, and one custom scenario completed and
+produced the expected outputs for all six policies. These results establish
+software behavior for the tested code paths only. They are not external
+simulator cross-checks, operational-trace calibration, MPTCP experiments, or
+testbed evidence, and they do not validate physical-network fidelity.
+
+The policy benchmark uses a simple second-order extrapolation,
+\(\hat{x}(t+H)=x(t)+vH+\tfrac{1}{2}aH^2\), with finite-difference estimates
+of velocity and acceleration. This is an interpretable baseline, not a
+learned forecasting method and not evidence that traffic follows constant
+acceleration. The synthetic ONNX MLP is a separate prototype artifact; it is
+trained on synthetic telemetry and is not the predictor used to establish the
+paired benchmark results. Neither model has been validated on representative
+operational traces.
+
+The current benchmark set also remains narrower than the proposed system.
+Its path allocator and failure schedules are abstractions; its cooperative
+failure study tests deterministic path activation, cloud pre-warming, and
+selective duplication, not trained distributed-AI reorganization or live
+multicloud Kubernetes. The earlier vision benchmark shares an allocator
+between reactive and predictive policies, so similar delivered goodput is
+expected by design. These experiments support only conditional observations
+about their implemented mechanisms, not claims about a complete 6G/7G system.
+
+The next work should first cross-check one link/handover scenario in a
+network-level simulator and calibrate inputs against documented measurements.
+It should then add protocol-compatible MPTCP baselines, including LIA/OLIA
+congestion control where appropriate and established schedulers, with matched
+workloads and resource accounting. The implemented one-factor sensitivity
+runner varies demand, capacity, delay, loss, setup/startup scaling, and
+forecast horizon; broader factorial or global analysis over correlated
+failures, forecast error, and cloud assumptions remains necessary. External
+review, independent replication, and controlled emulation/testbed evaluation
+remain future work, not completed project milestones.
 
 ## 16. Conclusion
 
@@ -1377,3 +1479,16 @@ widely accessible communication.
     “FluidRAN: Optimized vRAN/MEC Orchestration,” in *IEEE INFOCOM 2018*,
     pp. 2366–2374.
     [https://doi.org/10.1109/INFOCOM.2018.8486243](https://doi.org/10.1109/INFOCOM.2018.8486243).
+27. C. Raiciu, M. Handley, and D. Wischik, “Coupled Congestion Control for
+    Multipath Transport Protocols,” RFC 6356, IETF, Oct. 2011.
+    [https://www.rfc-editor.org/rfc/rfc6356.html](https://www.rfc-editor.org/rfc/rfc6356.html).
+28. R. Khalili, N. Gast, M. Popovic, and J.-Y. Le Boudec, “MPTCP Is Not
+    Pareto-Optimal: Performance Issues and a Possible Solution,”
+    *IEEE/ACM Transactions on Networking*, vol. 21, no. 5, pp. 1651–1665,
+    2013. [https://doi.org/10.1109/TNET.2013.2274462](https://doi.org/10.1109/TNET.2013.2274462).
+29. The ns-3 Consortium, “About ns-3.”
+    [https://www.nsnam.org/about/](https://www.nsnam.org/about/).
+30. OMNeT++ Community, “What is OMNeT++?”
+    [https://omnetpp.org/intro/](https://omnetpp.org/intro/).
+31. NVIDIA, “Sionna Documentation.”
+    [https://nvlabs.github.io/sionna/](https://nvlabs.github.io/sionna/).

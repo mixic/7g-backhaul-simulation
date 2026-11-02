@@ -18,9 +18,17 @@ import tempfile
 import unittest
 from pathlib import Path
 
+import numpy as np
+
 from tools.benchmark_brain_inspired import (
     POLICIES,
+    PATHS,
     SCENARIOS,
+    Scenario,
+    _demand,
+    _path_capacity,
+    _simulate,
+    load_measured_trace,
     run_benchmark,
     simulate,
 )
@@ -92,6 +100,33 @@ class BrainInspiredBenchmarkTests(unittest.TestCase):
             self.assertGreaterEqual(metric, 0.0)
             self.assertLessEqual(metric, 100.0)
 
+    def test_trace_input_and_sensitivity_parameters_are_applied(self):
+        with tempfile.TemporaryDirectory() as directory:
+            trace_path = Path(directory) / "measured.csv"
+            with trace_path.open("w", newline="", encoding="utf-8") as file:
+                file.write(
+                    "second,critical_mbps,bulk_mbps,path,capacity_mbps,"
+                    "delay_ms,loss_probability\n"
+                )
+                for second in range(240):
+                    for path, capacity, delay, loss in PATHS:
+                        file.write(
+                            f"{second},10,20,{path},{capacity},{delay},{loss}\n"
+                        )
+            trace = load_measured_trace(trace_path)
+
+        scenario = Scenario("trace", measured_trace=trace, demand_scale=1.5)
+        self.assertEqual(
+            _demand(0, np.random.default_rng(1), scenario),
+            (15.0, 30.0),
+        )
+        _, trace_values = _simulate(POLICIES[0], seed=2, scenario=scenario)
+        self.assertEqual(trace_values["demand_mbps"][0], 45.0)
+        self.assertEqual(
+            _path_capacity(0, 0, Scenario("scaled", path_capacity_scale=0.5)),
+            75.0,
+        )
+
     def test_benchmark_generates_summary_and_figure(self):
         with tempfile.TemporaryDirectory() as directory:
             output_dir = Path(directory)
@@ -112,6 +147,9 @@ class BrainInspiredBenchmarkTests(unittest.TestCase):
             )
             self.assertTrue(
                 (output_dir / "brain_inspired_cooperative_timeseries.png").is_file()
+            )
+            self.assertTrue(
+                (output_dir / "brain_inspired_cooperative_replicates.csv").is_file()
             )
 
 

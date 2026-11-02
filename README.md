@@ -30,6 +30,36 @@ The CDN direction is inspired by Milan Nikolic's University of Bern master's the
 
 “No handover or break” is the goal at the application-session abstraction, not a guarantee of zero packet delay or loss in real mobile networks. Radio handover, carrier bonding, IP mobility, congestion control, and authentication are represented by protocol-inspired simulator models; they do not interoperate with live radio/carrier infrastructure or provide production-grade security. The quantum link is only a simulated key-resource abstraction: it does not carry classical bytes or implement QKD. The Q-learning implementation is a real tabular RL algorithm in this toy environment, not deployment-grade RL. Practical seamlessness requires standards-based integrations, compatible endpoints, and field testing.
 
+## Scientific status
+
+This repository is an early-stage, single-author research prototype for
+hypothesis generation. It is not a peer-reviewed contribution, an
+independently validated network simulator, or evidence that the proposed
+architecture outperforms deployed 6G systems. “7G” is a speculative project
+label, not a standardized generation or a claim to cover the full scope of
+post-6G research.
+
+The Python/SimPy benchmarks use stipulated link, traffic, queue, and failure
+models. They have not been calibrated against operational traces or
+cross-validated against ns-3 or OMNeT++/INET. Sionna may be relevant to
+communication-system, channel, or PHY submodels, but is not a replacement
+for validating end-to-end routing, transport, or cloud behavior. The
+deterministic policy benchmarks use finite-difference velocity and
+acceleration extrapolation. A separate ONNX MLP is trained on synthetic
+telemetry; it is not the predictor used for the paired cooperative benchmark
+and neither predictor has been validated on operational traces.
+
+The cooperative path/cloud benchmark tests deterministic activation,
+pre-warming, and selective-duplication policies. It does not implement
+trained distributed AI or live Kubernetes/multicloud control. The vision
+benchmark shares an allocator across reactive and predictive policies, so it
+does not establish an independent goodput advantage. Research directions
+include simulator cross-checks, measured-trace calibration, sensitivity
+analysis, fair comparisons with MPTCP congestion-control algorithms such as
+LIA and OLIA and established schedulers, and independent review and
+replication. See the [vision paper](docs/7g-backhaul-vision-paper.md) for the
+limitations and staged evaluation plan.
+
 ## Repository structure
 
 ```text
@@ -37,35 +67,92 @@ The CDN direction is inspired by Milan Nikolic's University of Bern master's the
 ├── .github/
 │   ├── ISSUE_TEMPLATE/bug_report.md
 │   └── workflows/ci.yml
-├── backhaul_sim/                 # Graph scenarios and Tomahawk CDN example
-├── docs/                         # Architecture, cloud/edge design, and research notes
-├── figures/                      # Generated PNG dashboard frames
-├── models/                       # Synthetic congestion forecast ONNX and weights
+├── backhaul_sim/
+│   ├── __init__.py
+│   ├── __main__.py
+│   ├── cli.py
+│   ├── engine.py
+│   └── models.py
+├── docs/
+│   ├── 7g-backhaul-author.tex    # Paper author and formatting metadata
+│   ├── 7g-backhaul-vision-paper.md  # Research vision, methods, results, and limitations
+│   ├── 7g-backhaul-vision-paper.tex # Generated LaTeX source
+│   ├── 7g-backhaul-vision-paper.pdf # Generated paper
+│   ├── architecture.md           # System model and assumptions
+│   ├── discoverability.md        # KPI definitions and repository topics
+│   ├── multicloud-kubernetes.md  # Cloud and Kubernetes model boundaries
+│   ├── peer-mesh.md              # Mesh routing and cache-defense model
+│   ├── quantum-cooperative-backhaul.md # Quantum-resource abstraction
+│   └── real-packet-and-npu.md    # UDP demo and optional inference guide
+├── figures/
+│   ├── 7g_fabric_tick_0.png
+│   ├── 7g_fabric_tick_1.0.png
+│   ├── 7g_fabric_tick_2.0.png
+│   ├── 7g_fabric_tick_3.0.png
+│   ├── 7g_fabric_tick_4.0.png
+│   ├── 7g_fabric_tick_5.0.png
+│   ├── 7g_fabric_tick_6.0.png
+│   ├── 7g_fabric_tick_7.0.png
+│   ├── 7g_fabric_tick_8.0.png
+│   ├── 7g_fabric_tick_9.0.png
+│   ├── brain_inspired_cooperative_benchmark.csv
+│   ├── brain_inspired_cooperative_benchmark.png
+│   ├── brain_inspired_cooperative_effects.png
+│   ├── brain_inspired_cooperative_replicates.csv
+│   ├── brain_inspired_cooperative_resources.png
+│   ├── brain_inspired_cooperative_timeseries.png
+│   ├── public_safety_benchmark_summary.csv
+│   ├── public_safety_multimedia_qos.png
+│   ├── public_safety_overflow_timeseries.png
+│   ├── telemetry_dashboard.png
+│   ├── vision_benchmark_cache.png
+│   ├── vision_benchmark_continuity.png
+│   ├── vision_benchmark_cost.png
+│   ├── vision_benchmark_goodput.png
+│   ├── vision_benchmark_latency.png
+│   ├── vision_benchmark_summary.csv
+│   └── vision_benchmark_urban_timeseries.png
+├── models/
+│   ├── congestion_forecast.npz   # Synthetic model weights
+│   └── congestion_forecast.onnx  # Exported congestion forecaster
 ├── simulation/
+│   ├── analytics.py              # Historical KPI CSV logger
+│   ├── carrier_bonding.py        # Byte allocation over available media
 │   ├── cdn.py                    # Demand learning and regional caches
-│   ├── orchestration.py         # Simulated edge scaling and AI site placement
-│   ├── mesh.py                   # Peer mesh, congestion forecasts, and cache defenses
+│   ├── channels.py               # Heterogeneous link definitions
+│   ├── congestion.py             # Per-link AIMD congestion control
+│   ├── continuity.py             # MTU adaptation and fragment reassembly
+│   ├── cooperative.py            # Coordinated mesh, demand, and quantum policy
+│   ├── environment.py            # Link conditions and stochastic disasters
+│   ├── learning.py               # Masked tabular Q-learning
+│   ├── mesh.py                   # Peer mesh and cache defenses
+│   ├── mobility.py               # Handover and stable simulated IP binding
+│   ├── npu_inference.py          # Optional ONNX provider inference checks
+│   ├── orchestration.py          # Simulated edge scaling and AI site placement
 │   ├── packet_io.py              # Real UDP loopback framing and payload verification
 │   ├── packet_demo.py            # Local packet transfer and optional inference CLI
-│   ├── npu_inference.py          # Optional ONNX provider inference/profile checks
 │   ├── pretraining.py            # Synthetic congestion forecaster training and ONNX export
 │   ├── quantum.py                # Quantum resource and qubit-frame capacity model
-│   ├── cooperative.py            # Coordinated mesh, demand, and quantum-resource policy
-│   ├── channels.py               # Heterogeneous link definitions
-│   ├── continuity.py             # MTU adaptation and fragment reassembly
-│   ├── mobility.py               # Handover and stable simulated IP binding
-│   ├── carrier_bonding.py        # Byte allocation over available media
-│   ├── congestion.py             # Per-link AIMD congestion control
-│   ├── security.py               # HMAC session credential model
-│   ├── learning.py               # Masked tabular Q-learning
-│   ├── analytics.py              # Historical KPI CSV logger
-│   ├── environment.py            # Link conditions and stochastic disasters
 │   ├── router.py                 # Soft path allocation
+│   ├── security.py               # HMAC session credential model
 │   ├── telemetry.py              # INT-style telemetry
 │   └── trends.py                 # Velocity/acceleration forecasting
 ├── tools/
-│   └── benchmark_vision.py       # Reproducible synthetic policy comparison
+│   ├── benchmark_brain_inspired.py # Event-driven multipath and multicloud study
+│   ├── benchmark_sensitivity.py  # Paired one-factor-at-a-time sensitivity sweeps
+│   ├── benchmark_vision.py       # CDN, handover, and backhaul policy studies
+│   └── validation_io.py          # Normalize and compare simulator/testbed results
 ├── tests/
+│   ├── test_backhaul_sim.py
+│   ├── test_brain_inspired_benchmark.py
+│   ├── test_cloud_orchestration.py
+│   ├── test_continuity.py
+│   ├── test_mesh.py
+│   ├── test_packet_io.py
+│   ├── test_protocol_models.py
+│   ├── test_quantum_backhaul.py
+│   ├── test_validation_workflow.py
+│   └── test_vision_benchmark.py
 ├── Ni10.pdf
 ├── LICENSE
 ├── CONTRIBUTING.md
@@ -73,7 +160,9 @@ The CDN direction is inspired by Milan Nikolic's University of Bern master's the
 ├── docker-compose.yml
 ├── main.py
 ├── pyproject.toml
-└── requirements.txt
+├── requirements.txt
+├── .gitattributes
+└── .gitignore
 ```
 
 ## Installation
@@ -179,6 +268,93 @@ evidence of deployed-network superiority. The zero-recovery points are
 explicitly marked; they mean the modeled QoS target was already met at the
 failure instant. Capacity-time and duplicate payload are resource costs, not
 benefits by themselves.
+
+The simulator can replay a measured, one-second demand and path-telemetry
+trace from a CSV with exactly 240 samples for each configured path. Required
+columns are `second,critical_mbps,bulk_mbps,path,capacity_mbps,delay_ms,loss_probability`.
+Each second must have one row for `fiber`, `cellular`, `microwave`, and
+`satellite`; traffic values must agree across the four rows. Rates and
+capacities are Mbps, delay is milliseconds, and loss is a probability from
+0 to 1. This replays sampled demand, capacity, delay, and loss, but still
+applies the benchmark's configured outage schedule, synthetic queue/jitter
+model, cloud behavior, and media workload. It is not packet-for-packet trace
+replay or a measured testbed emulation.
+
+```powershell
+py tools\benchmark_brain_inspired.py --measured-trace data\measured_network.csv --output-dir figures\trace_run --replicates 20 --seed 2026
+```
+
+Every benchmark run also writes `brain_inspired_cooperative_replicates.csv`
+with paired-seed, run-level metrics. Explore one-factor-at-a-time sensitivity
+to demand, link capacity/delay/loss, setup/startup delay, and forecast horizon:
+
+```powershell
+py tools\benchmark_sensitivity.py --scenario nominal --parameter path_capacity_scale --replicates 20 --seed 2026 --output figures\sensitivity.csv
+```
+
+The sensitivity CSV reports per-case means and normal-approximation 95%
+intervals plus paired deltas against each parameter's default setting. It
+does not quantify uncertainty in the model form and is not a substitute for
+global sensitivity analysis. Expand `--scenario` and `--parameter` to cover
+additional conditions; runtime grows with the number of cases and replicates.
+
+For comparison with ns-3, OMNeT++/INET, Linux MPTCP, or an authorized
+testbed, normalize run-level metrics to the same units and align scenario,
+policy, and seed. Export simulator replicates, then normalize external
+measurements with a JSON mapping:
+
+```powershell
+py -m tools.validation_io export-simulation --input figures\brain_inspired_cooperative_replicates.csv --output figures\python_normalized.csv
+py -m tools.validation_io normalize-external --input results\external_runs.csv --mapping results\mapping.json --source ns3 --output figures\ns3_normalized.csv
+py -m tools.validation_io compare --left figures\python_normalized.csv --right figures\ns3_normalized.csv --output figures\crosscheck.csv
+```
+
+The mapping JSON names the external CSV columns for `scenario`, `policy`,
+and `seed`; `metrics` maps canonical metric names to `{ "column": "...",
+"unit": "..." }`. Optional `policy_values` maps external policy labels to
+the corresponding simulator label. The comparison only includes matched
+scenario/policy/seed/metric tuples, requires at least two matched seed pairs,
+reports unmatched rows, and rejects unit mismatches. MPTCP
+congestion controls such as LIA and OLIA must be exercised by an actual
+MPTCP-capable implementation or simulator module; the current media-queue
+abstraction does not implement TCP congestion windows, ACK behavior, or
+MPTCP schedulers.
+
+Example `mapping.json` for an external run that implements the same reactive
+policy:
+
+```json
+{
+  "scenario": "scenario_name",
+  "policy": "policy_name",
+  "seed": "run_id",
+  "metrics": {
+    "video_frames_on_time_percent": {
+      "column": "video_ontime_percent",
+      "unit": "percent"
+    },
+    "p95_video_frame_delay_ms": {
+      "column": "p95_frame_delay_ms",
+      "unit": "ms"
+    }
+  }
+}
+```
+
+Only map policy labels when they represent the same policy. To compare LIA
+with OLIA, compare the separate externally normalized policy records directly:
+
+```powershell
+py -m tools.validation_io compare --left results\lia_normalized.csv --right results\olia_normalized.csv --left-policy LIA --right-policy OLIA --output results\lia_vs_olia.csv
+```
+
+Do not relabel either algorithm as the Python reactive policy.
+
+For testbed runs, record the same scenario and policy identifiers, random
+seed or run identifier, KPI definitions, and units. Preserve raw timestamped
+measurements separately; summarize repeat-level values into the mapped
+external CSV before normalization. The adapters enable analysis, but do not
+configure routers, launch external simulators, or provide a live testbed.
 
 The default 20-seed results attribute most nominal video-QoS improvement to
 prepared cloud capacity: prepared-cloud-only gains 8.24 percentage points in

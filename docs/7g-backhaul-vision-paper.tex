@@ -90,7 +90,7 @@
 \@ifundefined{xmpquote}{\newcommand{\xmpquote}[1]{#1}}{}
 \makeatother
 \hypersetup{
-  pdftitle={A Brain-Inspired Vision for Planetary-Scale Cooperative 7G Backhaul},
+  pdftitle={A Brain-Inspired Research Vision for Cooperative Multi-Medium Backhaul},
   pdfauthor={Milan Nikolic},
   pdflang={en-US},
   pdfkeywords={\xmpquote{heterogeneous backhaul}, \xmpquote{multipath
@@ -105,7 +105,7 @@ sustainability}},
   urlcolor={blue},
   pdfcreator={LaTeX via pandoc}}
 
-\title{A Brain-Inspired Vision for Planetary-Scale Cooperative 7G
+\title{A Brain-Inspired Research Vision for Cooperative Multi-Medium
 Backhaul}
 \usepackage{etoolbox}
 \makeatletter
@@ -146,7 +146,7 @@ delivery, jitter, freeze duration, and interruption during medium
 changes primary service outcomes rather than relying on throughput
 alone. Orbital compute is considered as a possible edge tier for
 selected workloads, not as a presumed replacement for terrestrial data
-centers. The design is a distributed engineering architecture---not a
+centers. The design is a distributed engineering architecture, not a
 biological brain, sentient system, or demonstrated autonomous global
 network. It treats quantum networking as a separate resource plane
 rather than a byte-carrying IP path, and distinguishes
@@ -154,12 +154,16 @@ application-session continuity from an unattainable guarantee of zero
 packet delay or loss. A second synthetic experiment compares reactive
 multipath with forecast-assisted path activation and multicloud replica
 preparation under link and cloud failures; its results are conditional
-on explicitly modeled controller delays and resource assumptions.
+on explicitly modeled controller delays and resource assumptions. This
+is an early-stage, single-author research vision and synthetic
+prototype, not a peer-reviewed or independently validated network
+simulator. The experiments generate hypotheses and do not establish
+real-network performance or scientific priority.
 
 The paper argues for a mathematical, time-varying, multilayer topology
 model to coordinate services across heterogeneous networks. This model
 is proposed as a cross-layer coordination and assurance plane alongside
-OSI and existing protocol stacks---not as a replacement for their
+OSI and existing protocol stacks, not as a replacement for their
 standardized interfaces or encapsulation. Its hypothesized benefits in
 predictability, security, and interoperability require formal
 specification and comparative validation. The paper connects this
@@ -201,13 +205,16 @@ placed. This is an allegory for coordinated feedback and adaptation. It
 does not imply that the thesis implemented modern AI, that the network
 is conscious, or that a biological brain is an engineering blueprint.
 
-This paper advances a vision of \textbf{cooperative 7G backhaul}: a
-planetary-scale service fabric in which terrestrial, aerial, and orbital
-nodes cooperate to deliver data and compute using available resources
-while adapting to changing demand and network conditions. Here, ``7G''
-names a research vision beyond standardized 6G work; it is not an
-approved generation, specification, or forecast of a particular
-deployment date. ITU-R Recommendation M.2160 defines the framework and
+This paper advances a vision of \textbf{cooperative multi-medium
+backhaul}: a planetary-scale service fabric in which terrestrial,
+aerial, and orbital nodes cooperate to deliver data and compute using
+available resources while adapting to changing demand and network
+conditions. ``7G'' is retained only as the project's speculative working
+label for research beyond IMT-2030. It is not an approved generation,
+specification, or forecast of a deployment date, and this work does not
+claim to represent the broader research agenda associated with possible
+post-6G systems, including THz or optical wireless links and AI-native
+air interfaces. ITU-R Recommendation M.2160 defines the framework and
 objectives for IMT-2030, providing a standards-oriented context for
 future system research {[}2{]}.
 
@@ -331,9 +338,9 @@ The allegory also emphasizes decentralization. A planetary system cannot
 assume continuous control-plane connectivity, so local nodes should
 sense and act safely using local state. Coordination among nodes may
 improve global efficiency, but must tolerate delayed, missing, or
-conflicting information. This leads to testable properties---response
-time, stability, continuity, resource efficiency, and safe
-fallback---rather than anthropomorphic claims.
+conflicting information. This leads to testable properties, including
+response time, stability, continuity, resource efficiency, and safe
+fallback, rather than anthropomorphic claims.
 
 \subsection{2.2 Comparison with 6G mobile plus
 backhaul}\label{comparison-with-6g-mobile-plus-backhaul}
@@ -834,7 +841,7 @@ mitigation, post-mission disposal, servicing, and long-term orbital
 capacity. UNOOSA documents international space-debris mitigation work
 and guidelines {[}7{]}. Energy and environmental comparisons must use a
 full lifecycle boundary: manufacture, launch, operation, replacement,
-downlink, and end-of-life---not orbital operating power alone.
+downlink, and end-of-life, not orbital operating power alone.
 
 Accordingly, the proposed scheduler treats orbital nodes as optional,
 failure-prone resources. It should select them only when their expected
@@ -878,9 +885,12 @@ baselines:
 \item
   \textbf{Multipath transport:} compare single-path, static striping,
   and congestion-aware active-active policies under replayed path delay,
-  capacity, loss, and failure. Measure goodput, p50/p95/p99 completion
-  time, reordering, retransmissions, continuity success, and energy/cost
-  per delivered byte.
+  capacity, loss, and failure. Where the transport is MPTCP, compare
+  compatible congestion-control algorithms such as LIA {[}27{]} and OLIA
+  {[}28{]}, and schedulers such as ECF {[}21{]}, without conflating
+  congestion control with packet scheduling. Measure goodput,
+  p50/p95/p99 completion time, reordering, retransmissions, continuity
+  success, and energy/cost per delivered byte.
 \item
   \textbf{Cache placement:} compare no-cache, reactive LRU, demand-only,
   and forecast-aware admission. Measure hit ratio, origin load,
@@ -898,10 +908,20 @@ baselines:
   storage, downlink, launch and replacement assumptions, and end-of-life
   constraints.
 \item
-  \textbf{Testbed progression:} move from simulation to a controlled
-  network emulation, then a small authorized multi-node testbed. Verify
-  interoperability and operator controls before any public-network
-  experiment.
+  \textbf{Simulator cross-check:} reproduce one bounded, documented
+  scenario, such as link impairment and handover timing, in a
+  network-level simulator such as ns-3 {[}29{]} or an OMNeT++ model
+  framework such as INET {[}30{]}. Compare event timing, packet
+  delivery, delay, and loss under matched inputs. Use Sionna {[}31{]}
+  only for communication-system, channel, or PHY questions that require
+  its models; it is not a substitute for end-to-end routing or cloud
+  orchestration validation. Document model versions and the scope of any
+  agreement.
+\item
+  \textbf{Testbed progression:} move from validated simulation to
+  controlled network emulation, then a small authorized multi-node
+  testbed. Verify interoperability and operator controls before any
+  public-network experiment.
 \end{enumerate}
 
 Every evaluation should disclose topology, trace provenance, model
@@ -909,6 +929,33 @@ hyperparameters, random seeds, software versions, baseline tuning,
 confidence intervals, and failure cases. Claims of lower cost or
 environmental impact require explicit and comparable accounting
 boundaries.
+
+The current Python/SimPy experiments have not completed these
+cross-simulator, trace-calibration, or testbed checks. ns-3,
+OMNeT++/INET, and Sionna are complementary modeling environments, not
+interchangeable gold standards. Agreement in one narrow scenario would
+validate only the matched behavior and assumptions, not the full
+prototype or its real-world accuracy.
+
+The repository includes measured-trace replay for the event-driven
+benchmark, a paired one-factor-at-a-time sensitivity runner, and CSV
+normalization and comparison tools for repeat-level results from
+external simulators or testbeds. Measured-trace replay accepts 240
+contiguous one-second samples for critical and bulk traffic plus
+capacity, delay, and loss probability for each configured path. It still
+applies configured outage schedules and synthetic queue/jitter and cloud
+behavior; it is not packet-for-packet replay. Sensitivity intervals
+describe replicate variation at specified parameter values, not
+structural model uncertainty. The adapters do not run ns-3,
+OMNeT++/INET, Sionna, MPTCP, or a testbed.
+
+The current simulator is not an MPTCP implementation. It does not model
+TCP congestion windows, acknowledgements, coupled subflow congestion
+control, or protocol schedulers. LIA {[}27{]}, OLIA {[}28{]}, and
+alternatives such as ECF {[}21{]} therefore remain external comparison
+baselines. Congestion-control algorithms must be evaluated separately
+from packet schedulers using compatible MPTCP endpoints or a simulator
+module that implements those semantics.
 
 \section{10. Synthetic policy
 comparison}\label{synthetic-policy-comparison}
@@ -1292,136 +1339,185 @@ replicate-level summary statistics is
 \subsection{10.2 Cooperative path and multicloud reorganization
 experiment}\label{cooperative-path-and-multicloud-reorganization-experiment}
 
-To test more of the proposed system than the earlier routing/cache
-benchmark, a separate Python experiment compares a \textbf{6G-oriented
-reactive multipath baseline} with a \textbf{proposed cooperative
-recovery policy}. Both use the same heterogeneous paths, workload trace
-seeds, traffic demand, and failure schedule. The scenario lasts 240
-seconds and includes a degrading/failing fiber path (degradation begins
-at second 70; outage from seconds 95--114), a mobile-path outage later
-in the run, an accelerating congestion wave, and a cloud-region failure.
-The path controller activates standby routes at a reactive 82\%
-threshold with a three-second modeled setup delay. The cooperative
-policy uses an eight-second linear demand forecast, a 72\% activation
-margin, and a one-second modeled setup delay; local path health
-deterioration can also trigger pre-activation. In this experiment,
-reactive multipath sends one copy of each media packet; selective
-duplication is enabled only for the proposed cooperative policy when its
-local risk conditions are met.
-
-The cloud portion represents two Kubernetes-managed regions at an
-abstract capacity level, not by running Kubernetes. Region A degrades
-before becoming unavailable from seconds 155--179. The reactive baseline
-begins a cold standby-region start only after the failure and models a
-20-second delay. The cooperative policy starts a 240 Mbps secondary
-region when region-A health begins declining; its assumed eight-second
-startup completes before the outage. Its secondary-region capacity-time
-is counted so this is not treated as free. Both policies use the same
-path and cloud capacities; they differ in forecast horizon, trigger
-margin, route setup, and replica preparation. Thirty paired demand seeds
-are used (root seed 2026).
+The prior coarse comparison mixed route forecasting, replica
+preparation, setup delay, and packet duplication in only two policies.
+Its bars therefore could not identify which change caused an apparent
+gain, and its one-packet video-frame abstraction was not a
+frame-completion QoS metric. The revised experiment uses six matched
+policy arms and three paired scenario profiles to separate those
+mechanisms:
 
 {\def\LTcaptype{none} % do not increment counter
 \begin{longtable}[]{@{}
-  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.2727}}
-  >{\raggedleft\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3636}}
-  >{\raggedleft\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3636}}@{}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2000}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2667}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2667}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2667}}@{}}
 \toprule\noalign{}
 \begin{minipage}[b]{\linewidth}\raggedright
-Metric (synthetic mean, 30 replicates)
+Policy arm
 \end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
-Reactive multipath baseline
+Predictive path activation
 \end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
-Proposed cooperative policy
+Early cloud preparation
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Selective media duplication
 \end{minipage} \\
 \midrule\noalign{}
 \endhead
 \bottomrule\noalign{}
 \endlastfoot
-Demand delivered & 89.21\% & 98.79\% \\
-Critical-service availability & 91.67\% & 100.00\% \\
-Video frames on time & 91.47\% & 99.80\% \\
-Audio packets on time & 91.47\% & 99.80\% \\
-p95 received video delay & 9.88 ms & 9.64 ms \\
-Service recovery after primary-path disruption & 0.00 s & 0.00 s \\
-Recovery after cloud-region failure & 20.00 s & 0.00 s \\
-Mean active paths & 3.28 & 3.35 \\
-Duplicate media packets & 0.00\% & 1.90\% \\
-Secondary-region capacity-time & 1,200 Mbps·s & 7,440 Mbps·s \\
+Reactive baseline & No & No & No \\
+Reactive with selective duplication & No & No & Yes \\
+Predictive paths only & Yes & No & No \\
+Prepared cloud only & No & Yes & No \\
+Predictive paths and prepared cloud & Yes & Yes & No \\
+Full cooperative & Yes & Yes & Yes \\
 \end{longtable}
 }
 
-Under these exact assumptions, the proposed policy improves modeled
-application delivery chiefly because the prepared cloud replica avoids
-the baseline's 20-second region-recovery interval. Both policies already
-meet the 95\% delivery threshold at the instant the primary path fails,
-so the corrected path-service recovery interval is zero for both; there
-is no path-recovery advantage in this run. The cooperative policy uses
-more secondary-region capacity and a small amount of media duplication.
-The reported capacity-time is a resource exposure, not a monetary cost.
-These outcomes depend on the assumed warning lead time, startup delays,
-controller thresholds, and resource budget. A 6G deployment could also
-implement pre-warmed multicloud replicas or faster setup; the comparison
-tests these policies, not a limitation of 6G as a technology.
+All arms use the same link/cloud capacities, event schedules,
+application workload, and paired demand seeds within each scenario. The
+scenarios are nominal; 25\% higher offered load; and a correlated outage
+in which cellular fails with fiber, demand is 10\% higher, and modeled
+path/cloud setup times are 50\% longer. They are explicitly synthetic
+stress profiles, not calibrated representations of 5G or 6G systems.
 
-The zero-duplication baseline is an explicit experiment setting,
-\textbf{not a statement that 6G networks cannot duplicate packets or
-provide multipath redundancy}. It makes the chart a comparison of these
-two configured policies; the proposed policy's 1.90\% is a modeled
-overhead cost, not by itself evidence of an advantage. A stronger
-media-specific study should add a reactive baseline with the same
-duplication budget and compare selective prediction against that
-baseline on identical traces.
+This is a custom discrete-event abstraction, not a calibrated
+physical-layer, radio-access, or standards-complete protocol simulator.
+The paired arms help attribute effects to modeled policy components, but
+they do not establish fidelity against ns-3, OMNeT++/INET, Sionna, a
+protocol implementation, or field measurements. In particular, the
+modeled capacity, delay, loss, correlation, queue service, and cloud
+startup distributions are scenario inputs. No external simulator
+comparison or independent replication has been performed.
 
-The paired-seed differences were also recomputed directly from the 30
-seeded runs. Cooperative minus reactive demand delivery was +9.58
-percentage points (normal 95\% paired interval +9.57 to +9.59),
-critical-service availability was +8.33 points, and video on-time
-delivery was +8.33 points (interval +8.32 to +8.34). Cloud recovery was
-20 seconds shorter under the configured startup assumptions; service
-recovery at the fiber failure was zero for both. These narrow intervals
-quantify only the small randomized demand variation around one fixed
-synthetic scenario. They do not cover uncertainty in capacities, failure
-timing, warning lead, startup time, model error, or baseline tuning, and
-therefore are not evidence of real-network effect size.
+The transport portion is implemented with SimPy. Each link has a bounded
+256-packet queue, a packet serialization rate derived from its
+time-varying capacity, propagation delay, jitter, and a configured
+base/congestion loss probability. Audio packets have priority over video
+segments in each link's queue. Video runs at 30 frames/s, each frame
+consists of four required segments, and a frame is counted successful
+only if every segment arrives within 150 ms; audio runs at 50 packets/s
+with a 50 ms deadline. Per-copy loss, frame reconstruction, interarrival
+variation, stalls, and recovery after the two modeled faults are
+measured separately. Selective duplication uses the same risk rule in
+the reactive-duplication and cooperative arms, and duplicate bytes enter
+the same path queues, so redundancy consumes modeled capacity rather
+than being free.
 
-This benchmark is a controlled software experiment, not an empirically
-validated network model. Its policies change several factors at once:
-forecasting, activation threshold, setup delay, replica preparation, and
-media duplication. The cloud benefit is directly conditional on an
-eight-second prepared-replica startup before the modeled outage versus a
-twenty-second reactive cold start. In this experiment, each video frame
-is represented by one sampled packet rather than a segmented encoded
-frame; duplicate traffic can affect modeled media utilization/delay but
-is not fed back into bulk allocation or the system-capacity delivery
-metric. Consequently, the results support only the statement that this
-particular cooperative rule set performs better under its specified
-assumptions. They do not isolate an AI effect, prove a brain-inspired
-mechanism, establish a 6G limitation, or show superiority over a real 6G
-deployment.
+Bulk traffic is still a per-second fluid approximation. It influences
+link service rate and total capacity delivery but is not represented as
+individual packets. Cloud region A has a health/capacity schedule;
+region B has an abstract startup delay and capacity-time budget. A cloud
+service recovery measurement is based on the first one-second interval
+after region-A failure in which at least 95\% of generated video frames
+meet their deadline. Runs without recovery before the horizon are marked
+as censored in the CSV. This does not simulate a Kubernetes API,
+application state replication, cloud queues, or provider-specific
+failover.
 
-The experiment is intentionally a \textbf{functional abstraction}, not a
-full distributed-AI or Kubernetes simulation. The ``agents'' are
-represented by local link/cloud health observations coordinated by
-deterministic forecast-and-threshold logic; no trained neural
-controller, reinforcement learning, inter-agent messaging, NPU
-execution, live Kubernetes API, or measured 6G trace is used. It models
-failover, not savant-like cognitive mechanisms. The 95\% confidence
-intervals and all per-policy values are in the
+For each scenario and policy, the CSV reports the mean and
+normal-approximation 95\% interval across 20 seeds, plus paired mean
+differences and intervals relative to the reactive baseline. Paired
+intervals reflect seed-to-seed variation under these fixed assumptions
+only. They do not include uncertainty in path capacities, delay/loss
+distributions, failure schedules, deadlines, controller tuning, or the
+choice of scenario. The outputs are the
 \href{../figures/brain_inspired_cooperative_benchmark.csv}{benchmark
-CSV}; the comparison chart is shown below.
+CSV}, \href{../figures/brain_inspired_cooperative_benchmark.png}{QoS
+comparison},
+\href{../figures/brain_inspired_cooperative_resources.png}{resource
+tradeoffs},
+\href{../figures/brain_inspired_cooperative_effects.png}{paired
+effect-size plot}, and
+\href{../figures/brain_inspired_cooperative_timeseries.png}{paired-seed
+time series}.
 
-\begin{figure}
-\centering
-\pandocbounded{\includegraphics[keepaspectratio,alt={Synthetic reactive
-multipath versus cooperative path/cloud
-recovery}]{../figures/brain_inspired_cooperative_benchmark.png}}
-\caption{Synthetic reactive multipath versus cooperative path/cloud
-recovery}
-\end{figure}
+Selected 20-seed mean results make the separate contributions clearer:
 
-The default script settings reproduce the 30-replicate run with root
-seed 2026; the README gives the full command.
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}lrr@{}}
+\toprule\noalign{}
+Policy & Video on time & Cloud recovery \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Reactive baseline & 90.11\% & 20.00 s \\
+Full cooperative & 98.46\% & 0.00 s \\
+Reactive + selective duplication & 90.18\% & 20.00 s \\
+Predictive paths only & 90.23\% & 20.00 s \\
+Prepared cloud only & 98.35\% & 0.05 s \\
+Predictive paths + prepared cloud, no duplication & 98.46\% & 0.00 s \\
+\end{longtable}
+}
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2000}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2667}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2667}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2667}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Correlated-outage policy
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Video on time
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+p95 frame delay
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Duplicate payload
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Reactive baseline & 87.70\% & 129.46 ms & 0.00\% \\
+Full cooperative & 98.56\% & 32.60 ms & 5.52\% \\
+Reactive + selective duplication & 88.25\% & 32.75 ms & 7.25\% \\
+Predictive paths only & 87.87\% & 129.47 ms & 0.00\% \\
+Prepared cloud only & 98.00\% & 128.94 ms & 0.00\% \\
+Predictive paths + prepared cloud, no duplication & 98.16\% & 128.95 ms
+& 0.00\% \\
+\end{longtable}
+}
+
+Under nominal and peak demand, cloud pre-warming accounts for nearly all
+of the video on-time increase: the paired nominal gain is 8.24
+percentage points for prepared-cloud-only versus reactive, while
+predictive paths alone gain 0.13 points. Adding predictive paths to
+prepared cloud does not improve the rounded nominal on-time result. In
+the correlated-outage scenario, prepared cloud alone increases video
+on-time from 87.70\% to 98.00\%, but its p95 delay remains about 129 ms.
+Selective duplication in the full cooperative arm cuts that conditional
+p95 to 32.60 ms while adding 5.52\% duplicate payload; its video on-time
+advantage over prepared-cloud-only is only 0.56 percentage points.
+Reactive selective duplication also lowers conditional p95 delay, but
+does not repair the cloud recovery gap or materially improve on-time
+delivery. Thus, this model supports a specific, assumption-dependent
+cloud-readiness effect and a duplication/tail-delay tradeoff, not a
+demonstrated benefit from predictive routing by itself.
+
+The p95 frame-delay statistic is calculated only for frames that
+reconstruct; it must be read alongside the on-time percentage and is not
+a standalone continuity measure. Duplicate payload is the duplicated
+media bytes as a percentage of original media payload. The plotted
+confidence intervals quantify replicate variability for these fixed
+assumptions, not uncertainty about whether those assumptions match a
+real network.
+
+This is a more detailed synthetic experiment, not yet an empirically
+validated network simulator. Queue discipline, source traffic, path
+loss, cloud startup, and fault timing remain stipulated. Its results can
+show how the implemented rules behave under these explicit assumptions;
+they cannot establish real-network effect size, prove a brain-inspired
+mechanism, or show superiority over a deployed or fully specified 6G
+system. The model also does not train or execute AI/RL, use NPU
+hardware, forward real packets, or run Kubernetes. A credible next
+validation stage would calibrate the model with measured traces, compare
+against standards-capable implementations, and test the same policy arms
+in a controlled network emulator.
 
 \section{11. From multipath handover to multicloud
 Kubernetes}\label{from-multipath-handover-to-multicloud-kubernetes}
@@ -1547,16 +1643,16 @@ are often conflated by the word ``NPU'':
 \def\labelenumi{\arabic{enumi}.}
 \tightlist
 \item
-  \textbf{Packet-forwarding hardware}---a switch/router ASIC or network
+  \textbf{Packet-forwarding hardware:} a switch/router ASIC or network
   processing unit (NPU) classifies, queues, schedules, filters, and
   forwards packets at line rate according to installed policy.
 \item
-  \textbf{Neural inference hardware}---a neural NPU, GPU, or CPU
+  \textbf{Neural inference hardware:} a neural NPU, GPU, or CPU
   evaluates a compact model over summarized telemetry. It recommends
   path weights, a standby activation, a pacing envelope, or selective
   media protection.
 \item
-  \textbf{Endpoint transport}---the TCP sender and receiver retain
+  \textbf{Endpoint transport:} the TCP sender and receiver retain
   sequence, acknowledgement, retransmission, and congestion-control
   state. A network controller may configure supported endpoint or
   multipath behavior, but it does not silently replace endpoint
@@ -1576,8 +1672,8 @@ checks authorization, topology, congestion, capacity, and service
 constraints before programming the forwarding hardware or a supported
 endpoint API.
 
-\subsection{Where AI may help---and where it must
-not}\label{where-ai-may-helpand-where-it-must-not}
+\subsection{Where AI may help and where it must
+not}\label{where-ai-may-help-and-where-it-must-not}
 
 Prediction may help distinguish a rising queue from a transient sample,
 anticipate a path outage, rank eligible paths by deadline risk and cost,
@@ -1650,7 +1746,7 @@ in the packet recovery loop. Kubernetes schedules the control-plane
 services and manages their lifecycle; router forwarding hardware
 performs the time-critical packet actions. Hardware accelerators must be
 explicitly inventoried and exposed through validated vendor drivers or
-device plugins---an NPU cannot be assumed merely because a cluster is
+device plugins. An NPU cannot be assumed merely because a cluster is
 Kubernetes-managed.
 
 \subsection{Evaluation criteria}\label{evaluation-criteria}
@@ -1729,13 +1825,18 @@ retransmissions or redundant bytes, energy, cost, and Kubernetes
 scale/placement delay. Include cases where duplication harms congestion,
 policies prohibit a route, or a cloud region is unavailable. The
 decision criterion is sustained application QoS within a resource and
-policy budget---not peak goodput in isolation.
+policy budget, not peak goodput in isolation.
 
 \section{15. Prototype status and
 limitations}\label{prototype-status-and-limitations}
 
 The accompanying \href{../README.md}{repository} provides starting
-artifacts, not experimental evidence for planetary-scale operation:
+artifacts, not experimental evidence for planetary-scale operation. It
+is an early-stage single-author research prototype. This paper has not
+undergone peer review, and no external validation or independent
+replication is claimed. Its literature review provides technical
+context, not evidence of community endorsement, adoption, or novelty of
+the integrated design.
 
 {\def\LTcaptype{none} % do not increment counter
 \begin{longtable}[]{@{}
@@ -1757,19 +1858,26 @@ Research gap
 Multi-path mesh & In-process allocation plan using configured link
 attributes & Real forwarding, shared bottlenecks, transport behavior,
 and network testbed \\
+Network simulator fidelity & Custom Python/SimPy event and queue
+abstractions with CSV KPI interchange & Scenario-level cross-check
+against a suitably configured ns-3 or OMNeT++/INET model; validate
+wireless PHY separately when relevant \\
 UDP packet path & Actual socket datagrams over local IPv4 loopback &
 Multi-host/NIC transmission, physical media, loss/reorder emulation, and
 scale \\
-Congestion predictor & Small MLP pretrained on deterministic synthetic
-data & Training and calibration on measured, representative traces \\
+Forecasting & Finite-difference velocity/acceleration extrapolation in
+the policy benchmarks; a separate small MLP pretrained on deterministic
+synthetic data & Compare against persistence and statistical/learned
+baselines using measured, temporally separated traces; quantify
+uncertainty and regime-shift behavior \\
 NPU execution & Optional ONNX provider path with profile checks & Vendor
 hardware/runtime validation and physical-device evidence \\
 CDN adaptation & Simulated demand forecasting, cache, and replica
 decisions & Production cache integration, freshness, privacy, and
 economic evaluation \\
 Cooperative recovery & Deterministic paired path/cloud failure benchmark
-& Trained distributed AI, calibrated failure behavior, and real
-Kubernetes/cloud integration \\
+and one-factor sensitivity runner & Trained distributed AI, calibrated
+failure behavior, and real Kubernetes/cloud integration \\
 Orbital infrastructure & Architectural concept only & Orbital dynamics,
 spacecraft subsystem model, mission cost, and field data \\
 Quantum resource & Illustrative key-buffer abstraction &
@@ -1782,6 +1890,61 @@ real-network accuracy. Likewise, a local UDP benchmark is not a
 measurement of wireless, satellite, microwave, or wide-area performance.
 The system has not been shown to improve global coverage, affordability,
 latency, resilience, or environmental impact.
+
+\subsection{Implementation and software-test
+status}\label{implementation-and-software-test-status}
+
+The local validation workflow is implemented in the repository. It
+includes measured-trace replay with explicit input checks, run-level
+replicate exports, paired one-factor-at-a-time sensitivity sweeps, and
+CSV adapters for normalizing and comparing simulator or testbed results
+by scenario, policy, metric, and seed. The comparison tool requires at
+least two matched seed pairs to report a paired uncertainty interval and
+rejects unit mismatches. Automated tests cover trace validation and
+replay, parameter scaling, sensitivity outputs, external-result
+normalization, paired comparisons, and rejection of undersized
+comparisons.
+
+On 2 November 2026, the full local Python test suite completed with
+\textbf{66 tests passing} (\texttt{py\ -m\ pytest}); the focused
+validation-workflow tests completed with \textbf{4 tests passing}. A
+measured-trace smoke run using generated temporary input, two
+replicates, and one custom scenario completed and produced the expected
+outputs for all six policies. These results establish software behavior
+for the tested code paths only. They are not external simulator
+cross-checks, operational-trace calibration, MPTCP experiments, or
+testbed evidence, and they do not validate physical-network fidelity.
+
+The policy benchmark uses a simple second-order extrapolation,
+\(\hat{x}(t+H)=x(t)+vH+\tfrac{1}{2}aH^2\), with finite-difference
+estimates of velocity and acceleration. This is an interpretable
+baseline, not a learned forecasting method and not evidence that traffic
+follows constant acceleration. The synthetic ONNX MLP is a separate
+prototype artifact; it is trained on synthetic telemetry and is not the
+predictor used to establish the paired benchmark results. Neither model
+has been validated on representative operational traces.
+
+The current benchmark set also remains narrower than the proposed
+system. Its path allocator and failure schedules are abstractions; its
+cooperative failure study tests deterministic path activation, cloud
+pre-warming, and selective duplication, not trained distributed-AI
+reorganization or live multicloud Kubernetes. The earlier vision
+benchmark shares an allocator between reactive and predictive policies,
+so similar delivered goodput is expected by design. These experiments
+support only conditional observations about their implemented
+mechanisms, not claims about a complete 6G/7G system.
+
+The next work should first cross-check one link/handover scenario in a
+network-level simulator and calibrate inputs against documented
+measurements. It should then add protocol-compatible MPTCP baselines,
+including LIA/OLIA congestion control where appropriate and established
+schedulers, with matched workloads and resource accounting. The
+implemented one-factor sensitivity runner varies demand, capacity,
+delay, loss, setup/startup scaling, and forecast horizon; broader
+factorial or global analysis over correlated failures, forecast error,
+and cloud assumptions remains necessary. External review, independent
+replication, and controlled emulation/testbed evaluation remain future
+work, not completed project milestones.
 
 \section{16. Conclusion}\label{conclusion}
 
@@ -1804,7 +1967,7 @@ finished ``7G'' system. The path forward is measurement: validate the
 predictor, test multipath behavior under realistic impairments, quantify
 content-placement tradeoffs, establish safe control boundaries, and
 evaluate orbital scenarios against terrestrial alternatives. Progress on
-those questions---not terminology alone---will determine whether this
+those questions, not terminology alone, will determine whether this
 vision can contribute to more resilient and widely accessible
 communication.
 
@@ -1842,11 +2005,11 @@ communication.
   Debris Mitigation Guidelines.''
   \url{https://www.unoosa.org/unoosa/oosadoc/data/documents/2010/stspace/stspace49_0.html}.
 \item
-  ITU-T, ``Information technology---Open Systems Interconnection---Basic
+  ITU-T, ``Information technology: Open Systems Interconnection: Basic
   Reference Model: The basic model,'' Recommendation X.200, 1994.
   \url{https://www.itu.int/rec/T-REC-X.200/en}.
 \item
-  R. Braden, ed., ``Requirements for Internet Hosts---Communication
+  R. Braden, ed., ``Requirements for Internet Hosts: Communication
   Layers,'' RFC 1122, IETF, Oct.~1989.
   \url{https://www.rfc-editor.org/rfc/rfc1122.html}.
 \item
@@ -1927,6 +2090,26 @@ communication.
   ``FluidRAN: Optimized vRAN/MEC Orchestration,'' in \emph{IEEE INFOCOM
   2018}, pp.~2366--2374.
   \url{https://doi.org/10.1109/INFOCOM.2018.8486243}.
+\item
+  C. Raiciu, M. Handley, and D. Wischik, ``Coupled Congestion Control
+  for Multipath Transport Protocols,'' RFC 6356, IETF, Oct.~2011.
+  \url{https://www.rfc-editor.org/rfc/rfc6356.html}.
+\item
+  R. Khalili, N. Gast, M. Popovic, and J.-Y. Le Boudec, ``MPTCP Is Not
+  Pareto-Optimal: Performance Issues and a Possible Solution,''
+  \emph{IEEE/ACM Transactions on Networking}, vol.~21, no. 5,
+  pp.~1651--1665,
+
+  2013. \url{https://doi.org/10.1109/TNET.2013.2274462}.
+\item
+  The ns-3 Consortium, ``About ns-3.''
+  \url{https://www.nsnam.org/about/}.
+\item
+  OMNeT++ Community, ``What is OMNeT++?''
+  \url{https://omnetpp.org/intro/}.
+\item
+  NVIDIA, ``Sionna Documentation.''
+  \url{https://nvlabs.github.io/sionna/}.
 \end{enumerate}
 
 \end{document}

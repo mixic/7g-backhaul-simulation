@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import math
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
@@ -83,6 +84,11 @@ class Scenario:
     correlated_cell_failure: bool = False
     setup_delay_scale: float = 1.0
     cloud_startup_scale: float = 1.0
+    path_capacity_scale: float = 1.0
+    path_delay_scale: float = 1.0
+    path_loss_scale: float = 1.0
+    forecast_horizon_seconds: int = 8
+    measured_trace: MeasuredTrace | None = None
 
 
 SCENARIOS = (
@@ -101,6 +107,15 @@ PATHS = (
     ("cellular", 100.0, 28.0, 0.008),
     ("microwave", 95.0, 16.0, 0.004),
     ("satellite", 140.0, 125.0, 0.012),
+)
+MEASURED_TRACE_COLUMNS = (
+    "second",
+    "critical_mbps",
+    "bulk_mbps",
+    "path",
+    "capacity_mbps",
+    "delay_ms",
+    "loss_probability",
 )
 
 
@@ -130,6 +145,105 @@ class Metrics:
 class Packet:
     bits: float
     result: simpy.Event
+
+
+@dataclass(frozen=True)
+class MeasuredTrace:
+    demand_mbps: tuple[tuple[float, float], ...]
+    capacity_mbps: tuple[tuple[float, ...], ...]
+    delay_ms: tuple[tuple[float, ...], ...]
+    loss_probability: tuple[tuple[float, ...], ...]
+
+
+def load_measured_trace(path: Path) -> MeasuredTrace:
+    with path.open(newline="", encoding="utf-8-sig") as file:
+        reader = csv.DictReader(file)
+        if reader.fieldnames is None:
+            raise ValueError(f"Measured trace is missing a CSV header: {path}")
+        missing = set(MEASURED_TRACE_COLUMNS) - set(reader.fieldnames)
+        if missing:
+            raise ValueError(
+                "Measured trace is missing required columns: "
+                + ", ".join(sorted(missing))
+            )
+        seconds = SIMULATION_SECONDS
+        path_names = [path[0] for path in PATHS]
+        demand_samples: list[tuple[float, float] | None] = [None] * seconds
+        capacities = [[math.nan] * seconds for _ in PATHS]
+        delays = [[math.nan] * seconds for _ in PATHS]
+        losses = [[math.nan] * seconds for _ in PATHS]
+        seen: set[tuple[int, int]] = set()
+        for row_number, row in enumerate(reader, start=2):
+            try:
+                second = int(row["second"])
+                critical = float(row["critical_mbps"])
+                bulk = float(row["bulk_mbps"])
+                capacity = float(row["capacity_mbps"])
+                delay = float(row["delay_ms"])
+                loss = float(row["loss_probability"])
+            except (TypeError, ValueError) as error:
+                raise ValueError(
+                    f"Invalid measured trace values on row {row_number}."
+                ) from error
+            path_name = row["path"]
+            if not 0 <= second < seconds:
+                raise ValueError(
+                    f"Measured trace row {row_number} has second {second}; "
+                    f"expected a value from 0 to {seconds - 1}."
+                )
+            if path_name not in path_names:
+                raise ValueError(
+                    f"Unknown path {path_name!r} on measured trace row "
+                    f"{row_number}; expected one of {', '.join(path_names)}."
+                )
+            path_index = path_names.index(path_name)
+            key = (second, path_index)
+            if key in seen:
+                raise ValueError(
+                    f"Duplicate second/path pair on measured trace row {row_number}."
+                )
+            seen.add(key)
+            values = (critical, bulk, capacity, delay, loss)
+            if not all(math.isfinite(value) and value >= 0.0 for value in values):
+                raise ValueError(
+                    f"Measured trace rates, capacities, delays, and losses "
+                    f"on row {row_number} must be finite and non-negative."
+                )
+            if loss > 1.0:
+                raise ValueError(
+                    f"Loss probability on row {row_number} must be in [0, 1]."
+                )
+            demand = (critical, bulk)
+            if demand_samples[second] not in (None, demand):
+                raise ValueError(
+                    f"Traffic rates differ between paths at second {second}."
+                )
+            demand_samples[second] = demand
+            capacities[path_index][second] = capacity
+            delays[path_index][second] = delay
+            losses[path_index][second] = loss
+    expected_pairs = seconds * len(PATHS)
+    if len(seen) != expected_pairs:
+        raise ValueError(
+            f"Measured trace must contain exactly {expected_pairs} unique "
+            f"second/path rows; got {len(seen)}."
+        )
+    missing_seconds = [
+        second for second, demand in enumerate(demand_samples) if demand is None
+    ]
+    if missing_seconds:
+        raise ValueError(
+            "Measured trace is missing seconds: "
+            + ", ".join(str(second) for second in missing_seconds[:10])
+        )
+    return MeasuredTrace(
+        demand_mbps=tuple(
+            demand for demand in demand_samples if demand is not None
+        ),
+        capacity_mbps=tuple(tuple(path_values) for path_values in capacities),
+        delay_ms=tuple(tuple(path_values) for path_values in delays),
+        loss_probability=tuple(tuple(path_values) for path_values in losses),
+    )
 
 
 class PathQueue:
@@ -202,7 +316,15 @@ class PathQueue:
                 self._finish(packet, None)
                 continue
 
-            _, _, base_delay, base_loss = PATHS[self.path_index]
+            sample_second = min(
+                SIMULATION_SECONDS - 1,
+                int(self.env.now // 1000),
+            )
+            base_delay, base_loss = _path_delay_and_loss(
+                self.path_index,
+                self.scenario,
+                sample_second,
+            )
             congestion_loss = max(0.0, utilization - 0.65) * 0.06
             if self.rng.random() < min(0.20, base_loss + congestion_loss):
                 self._finish(packet, None)
@@ -216,7 +338,14 @@ class PathQueue:
             self.env.process(self._arrive(packet, propagation_ms))
 
 
-def _demand(second: int, rng: np.random.Generator, scale: float) -> tuple[float, float]:
+def _demand(
+    second: int,
+    rng: np.random.Generator,
+    scenario: Scenario,
+) -> tuple[float, float]:
+    if scenario.measured_trace is not None:
+        critical, bulk = scenario.measured_trace.demand_mbps[second]
+        return critical * scenario.demand_scale, bulk * scenario.demand_scale
     critical = 18.0
     growth = 0.28 * min(second, 150)
     congestion_wave = 85.0 * np.exp(-((second - 95.0) / 13.0) ** 2)
@@ -230,13 +359,33 @@ def _demand(second: int, rng: np.random.Generator, scale: float) -> tuple[float,
             + second_wave
             + float(rng.normal(0.0, 2.0))
         )
-        * scale,
+        * scenario.demand_scale,
     )
-    return critical * scale, bulk
+    return critical * scenario.demand_scale, bulk
+
+
+def _path_delay_and_loss(
+    index: int,
+    scenario: Scenario,
+    second: int,
+) -> tuple[float, float]:
+    if scenario.measured_trace is None:
+        base_delay = PATHS[index][2]
+        base_loss = PATHS[index][3]
+    else:
+        base_delay = scenario.measured_trace.delay_ms[index][second]
+        base_loss = scenario.measured_trace.loss_probability[index][second]
+    base_delay *= scenario.path_delay_scale
+    base_loss = min(1.0, base_loss * scenario.path_loss_scale)
+    return base_delay, base_loss
 
 
 def _path_capacity(index: int, second: int, scenario: Scenario) -> float:
-    capacity = PATHS[index][1]
+    capacity = (
+        PATHS[index][1]
+        if scenario.measured_trace is None
+        else scenario.measured_trace.capacity_mbps[index][second]
+    ) * scenario.path_capacity_scale
     if index == 0:
         if 70 <= second < 95:
             return capacity * (95 - second) / 25.0
@@ -366,7 +515,7 @@ def _simulate(
         nonlocal critical_ticks, critical_available_ticks
         nonlocal secondary_capacity_time
         for second in range(SIMULATION_SECONDS):
-            critical, bulk = _demand(second, demand_rng, scenario.demand_scale)
+            critical, bulk = _demand(second, demand_rng, scenario)
             demand = critical + bulk
             demand_requested += demand
             demand_history.append(demand)
@@ -382,7 +531,10 @@ def _simulate(
             capacity_history.append(measured_capacity)
             capacity_history[:] = capacity_history[-5:]
             if policy.predictive_paths:
-                forecast_demand = _linear_forecast(demand_history, 8)
+                forecast_demand = _linear_forecast(
+                    demand_history,
+                    scenario.forecast_horizon_seconds,
+                )
                 forecast_capacity = (
                     max(1.0, min(capacity_history))
                     if len(capacity_history) >= 3
@@ -479,7 +631,11 @@ def _simulate(
             capacity = _path_capacity(index, current_second, scenario)
             if capacity <= 0.0:
                 continue
-            _, _, base_delay, base_loss = PATHS[index]
+            base_delay, _ = _path_delay_and_loss(
+                index,
+                scenario,
+                current_second,
+            )
             effective_capacity = capacity * max(
                 0.05,
                 1.0 - 0.75 * background_utilization(),
@@ -542,7 +698,12 @@ def _simulate(
                 )
                 if index == primary
             )
-            _, _, _, primary_loss = PATHS[primary]
+            current_second = min(SIMULATION_SECONDS - 1, int(env.now // 1000))
+            _, primary_loss = _path_delay_and_loss(
+                primary,
+                scenario,
+                current_second,
+            )
             route_events = [
                 env.process(transmit_packet(primary, frame_segment_bits, 1))
             ]
@@ -599,7 +760,12 @@ def _simulate(
         if candidates:
             primary = candidates[0]
             events.append(env.process(transmit_packet(primary, packet_bits, 0)))
-            _, _, _, primary_loss = PATHS[primary]
+            current_second = min(SIMULATION_SECONDS - 1, int(env.now // 1000))
+            _, primary_loss = _path_delay_and_loss(
+                primary,
+                scenario,
+                current_second,
+            )
             estimated_delay = next(
                 score
                 for score, index in _ranked_path_scores(
@@ -772,7 +938,7 @@ def _ranked_path_scores(
         capacity = _path_capacity(index, second, scenario)
         if capacity <= 0.0:
             continue
-        _, _, base_delay, _ = PATHS[index]
+        base_delay, _ = _path_delay_and_loss(index, scenario, second)
         effective_capacity = capacity * max(0.05, 1.0 - 0.75 * utilization)
         service_ms = packet_bits / (effective_capacity * 1000.0)
         score = base_delay + service_ms * (path_queues[index].backlog + 1)
@@ -803,9 +969,12 @@ def run_benchmark(
     output_dir: Path,
     replicates: int = 20,
     seed: int = 2026,
+    scenarios: tuple[Scenario, ...] = SCENARIOS,
 ) -> list[dict[str, object]]:
     if replicates < 2:
         raise ValueError("At least two independent replicates are required.")
+    if not scenarios:
+        raise ValueError("At least one scenario is required.")
     output_dir.mkdir(parents=True, exist_ok=True)
     seed_rng = np.random.default_rng(seed)
     seeds = [
@@ -816,18 +985,26 @@ def run_benchmark(
     observations: dict[tuple[str, str, str], list[float]] = {}
     trace_observations: dict[tuple[str, str, str], list[np.ndarray]] = {}
     rows: list[dict[str, object]] = []
-    for scenario in SCENARIOS:
+    replicate_rows: list[dict[str, object]] = []
+    for scenario in scenarios:
         for policy in POLICIES:
             policy_observations = {name: [] for name in metric_names}
             for replicate_seed in seeds:
                 metrics, trace = _simulate(policy, replicate_seed, scenario)
+                replicate_row: dict[str, object] = {
+                    "scenario": scenario.name,
+                    "policy": policy,
+                    "seed": replicate_seed,
+                }
                 for name in metric_names:
                     value = float(getattr(metrics, name))
                     policy_observations[name].append(value)
+                    replicate_row[name] = value
                     observations.setdefault(
                         (scenario.name, policy, name),
                         [],
                     ).append(value)
+                replicate_rows.append(replicate_row)
                 for name, values in trace.items():
                     trace_observations.setdefault(
                         (scenario.name, policy, name),
@@ -859,12 +1036,18 @@ def run_benchmark(
         writer = csv.DictWriter(file, fieldnames=list(rows[0]))
         writer.writeheader()
         writer.writerows(rows)
-    _plot(rows, output_dir)
-    _plot_timeseries(trace_observations, output_dir, replicates)
+    replicate_path = output_dir / "brain_inspired_cooperative_replicates.csv"
+    with replicate_path.open("w", newline="", encoding="utf-8") as file:
+        writer = csv.DictWriter(file, fieldnames=list(replicate_rows[0]))
+        writer.writeheader()
+        writer.writerows(replicate_rows)
+    _plot(rows, output_dir, scenarios)
+    _plot_timeseries(trace_observations, output_dir, replicates, scenarios)
     print(f"Replicates per policy and scenario: {replicates}; seed: {seed}")
     print(f"Summary CSV: {csv_path}")
+    print(f"Replicate-level CSV: {replicate_path}")
     for row in rows:
-        if row["scenario"] == SCENARIOS[0].name:
+        if row["scenario"] == scenarios[0].name:
             print(
                 f"{row['policy']} | video on-time="
                 f"{row['video_frames_on_time_percent']:.2f}% | "
@@ -878,16 +1061,17 @@ def _plot_metric_grid(
     rows: list[dict[str, object]],
     output_path: Path,
     metrics: tuple[tuple[str, str, bool], ...],
+    scenarios: tuple[Scenario, ...],
 ) -> None:
     figure, axes = plt.subplots(
-        len(SCENARIOS),
+        len(scenarios),
         len(metrics),
-        figsize=(5.0 * len(metrics), 4.1 * len(SCENARIOS)),
+        figsize=(5.0 * len(metrics), 4.1 * len(scenarios)),
         squeeze=False,
         layout="constrained",
     )
     colors = ("#4C78A8", "#F58518", "#54A24B", "#E45756", "#72B7B2", "#B279A2")
-    for row_index, scenario in enumerate(SCENARIOS):
+    for row_index, scenario in enumerate(scenarios):
         scenario_rows = [
             row for row in rows if row["scenario"] == scenario.name
         ]
@@ -976,7 +1160,11 @@ def _plot_metric_grid(
     plt.close(figure)
 
 
-def _plot(rows: list[dict[str, object]], output_dir: Path) -> None:
+def _plot(
+    rows: list[dict[str, object]],
+    output_dir: Path,
+    scenarios: tuple[Scenario, ...] = SCENARIOS,
+) -> None:
     _plot_metric_grid(
         rows,
         output_dir / "brain_inspired_cooperative_benchmark.png",
@@ -998,6 +1186,7 @@ def _plot(rows: list[dict[str, object]], output_dir: Path) -> None:
             ),
             ("cloud_recovery_seconds", "Cloud QoS recovery (s)", True),
         ),
+        scenarios,
     )
     _plot_metric_grid(
         rows,
@@ -1012,14 +1201,20 @@ def _plot(rows: list[dict[str, object]], output_dir: Path) -> None:
                 True,
             ),
         ),
+        scenarios,
     )
     _plot_paired_effects(
         rows,
         output_dir / "brain_inspired_cooperative_effects.png",
+        scenarios,
     )
 
 
-def _plot_paired_effects(rows: list[dict[str, object]], output_path: Path) -> None:
+def _plot_paired_effects(
+    rows: list[dict[str, object]],
+    output_path: Path,
+    scenarios: tuple[Scenario, ...],
+) -> None:
     metrics = (
         ("video_frames_on_time_percent", "Video on-time (percentage points)"),
         ("audio_packets_on_time_percent", "Audio on-time (percentage points)"),
@@ -1027,7 +1222,7 @@ def _plot_paired_effects(rows: list[dict[str, object]], output_path: Path) -> No
         ("cloud_recovery_seconds", "Cloud QoS recovery (s)"),
     )
     figure, axes = plt.subplots(
-        len(SCENARIOS),
+        len(scenarios),
         len(metrics),
         figsize=(5.0 * len(metrics), 4.1 * len(SCENARIOS)),
         squeeze=False,
@@ -1035,7 +1230,7 @@ def _plot_paired_effects(rows: list[dict[str, object]], output_path: Path) -> No
     )
     labels = POLICY_LABELS[1:]
     colors = ("#E45756", "#54A24B", "#F58518", "#B279A2", "#72B7B2")
-    for row_index, scenario in enumerate(SCENARIOS):
+    for row_index, scenario in enumerate(scenarios):
         scenario_rows = [
             row
             for row in rows
@@ -1112,11 +1307,12 @@ def _plot_timeseries(
     traces: dict[tuple[str, str, str], list[np.ndarray]],
     output_dir: Path,
     replicates: int,
+    scenarios: tuple[Scenario, ...] = SCENARIOS,
 ) -> None:
     figure, axes = plt.subplots(
-        len(SCENARIOS),
+        len(scenarios),
         2,
-        figsize=(15, 4.0 * len(SCENARIOS)),
+        figsize=(15, 4.0 * len(scenarios)),
         squeeze=False,
         layout="constrained",
     )
@@ -1139,7 +1335,7 @@ def _plot_timeseries(
         interval = 1.96 * np.std(values, axis=0, ddof=1) / np.sqrt(values.shape[0])
         return mean, interval
 
-    for row_index, scenario in enumerate(SCENARIOS):
+    for row_index, scenario in enumerate(scenarios):
         capacity_axis, qos_axis = axes[row_index]
         demand_samples = traces[(scenario.name, POLICIES[0], "demand_mbps")]
         mean_demand, demand_interval = mean_and_interval(demand_samples)
@@ -1243,8 +1439,24 @@ def main() -> None:
     parser.add_argument("--output-dir", type=Path, default=Path("figures"))
     parser.add_argument("--replicates", type=int, default=20)
     parser.add_argument("--seed", type=int, default=2026)
+    parser.add_argument(
+        "--measured-trace",
+        type=Path,
+        help=(
+            "Replay a CSV with 240 samples per path containing measured "
+            "demand, capacity, delay, and loss."
+        ),
+    )
     args = parser.parse_args()
-    run_benchmark(args.output_dir, args.replicates, args.seed)
+    scenarios = SCENARIOS
+    if args.measured_trace is not None:
+        scenarios = (
+            Scenario(
+                name=f"measured_{args.measured_trace.stem}",
+                measured_trace=load_measured_trace(args.measured_trace),
+            ),
+        )
+    run_benchmark(args.output_dir, args.replicates, args.seed, scenarios)
 
 
 if __name__ == "__main__":
