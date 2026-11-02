@@ -25,12 +25,46 @@ threshold and clears only after two consecutive samples fall below the
 hysteresis boundary. Link telemetry snapshots expose both current and predicted
 pressure.
 
-For content available at multiple peers, the mesh compares the lowest-latency
-path with a congestion-aware path cost. Congested links carry a penalty; when
-an alternate path is preferable, the request uses it. If the unconstrained
-lowest-latency route was congested, the requesting peer may cache a replica
-after it receives the content, subject to integrity and cache-admission checks.
-Subsequent requests can then be served locally.
+For each request, the mesh can keep up to four available simple routes active
+at once (considering at most 256 candidate paths in this small-topology model).
+If a link is marked unavailable, paths containing it are removed and the
+remaining route set is recalculated, modeling failover/self-healing. It
+allocates payload bytes across the selected paths using path capacity,
+latency, configured cost, predicted pressure, and positive pressure velocity and
+acceleration. A rising pressure level or acceleration lowers a path's share
+before the congestion state fully activates; path availability and
+hysteresis prevent an unavailable or oscillating link from receiving traffic.
+This models active-active striping rather than selecting exactly one route.
+
+The transparent path score is:
+
+```text
+score =
+  path_capacity_mbps / (path_latency_ms + 1)
+  * exp(-risk)
+  / (1 + cost_weight * normalized_path_cost)
+
+risk =
+  2 * predicted_pressure
+  + velocity_weight * max(0, pressure_velocity)
+  + acceleration_weight * max(0, pressure_acceleration)
+```
+
+Scores are normalized into byte shares, with integer remainders assigned
+deterministically so allocations sum to the request size. Available alternative
+routes remain active unless limited by the configured maximum path count. The
+minimum usable classical payload MTU across the selected paths bounds the
+simulated fragment size.
+
+The result reports an allocation plan; the current model does not actually
+serialize and concurrently transmit payload fragments or model per-path
+completion/reordering time. The configured cost term influences shares but
+does not guarantee a globally optimal network bill.
+
+If the unconstrained lowest-latency route was congested, or predicted demand
+crosses the coordinator threshold, the requesting peer may cache a replica
+after receiving verified content, subject to pollution admission. Subsequent
+requests can then be served locally.
 
 ## Poisoning and pollution defenses
 

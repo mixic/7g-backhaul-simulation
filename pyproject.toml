@@ -16,5 +16,8 @@ dependencies = [
     "matplotlib>=3.7.0",
 ]
 
+[project.optional-dependencies]
+model-export = ["onnx>=1.16"]
+
 [tool.setuptools]
 packages = ["backhaul_sim", "simulation"]

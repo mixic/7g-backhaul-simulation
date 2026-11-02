@@ -74,6 +74,7 @@ class PeerMeshTests(unittest.TestCase):
         self.assertEqual(first.path, ("edge-a", "edge-b", "ai-core"))
         self.assertTrue(first.route_avoided_congestion)
         self.assertEqual(first.cache_action, "rejected_cache_pollution")
+        self.assertEqual(first.cache_trigger, "congestion")
         self.assertEqual(second.cache_action, "rejected_cache_pollution")
         self.assertEqual(third.cache_action, "replicated_for_congestion")
         self.assertIsNotNone(third.cache_admission_score)
@@ -137,6 +138,102 @@ class PeerMeshTests(unittest.TestCase):
             loss_rate=0,
         )
         self.assertFalse(telemetry.congestion_active)
+
+    def test_active_active_path_shares_shift_with_pressure_speed_and_acceleration(self):
+        baseline = self.mesh.plan_active_active_paths(
+            "edge-a",
+            "ai-core",
+            total_bytes=100_000,
+        )
+        direct_baseline = next(
+            allocation for allocation in baseline
+            if allocation.path == ("edge-a", "ai-core")
+        )
+        self.assertEqual(len(baseline), 2)
+        self.assertEqual(sum(item.allocated_bytes for item in baseline), 100_000)
+        self.assertTrue(all(item.allocated_bytes > 0 for item in baseline))
+
+        for utilization in (0.1, 0.3, 0.7):
+            telemetry = self.mesh.record_link_telemetry(
+                "edge-a",
+                "ai-core",
+                utilization=utilization,
+                queue_delay_ms=0,
+                loss_rate=0,
+            )
+        updated = self.mesh.plan_active_active_paths(
+            "edge-a",
+            "ai-core",
+            total_bytes=100_000,
+        )
+        direct_updated = next(
+            allocation for allocation in updated
+            if allocation.path == ("edge-a", "ai-core")
+        )
+
+        self.assertGreater(telemetry.pressure_velocity, 0)
+        self.assertGreater(telemetry.pressure_acceleration, 0)
+        self.assertGreater(direct_updated.pressure_velocity, 0)
+        self.assertGreater(direct_updated.pressure_acceleration, 0)
+        self.assertGreater(direct_updated.predicted_pressure, 0)
+        self.assertLess(direct_updated.traffic_share, direct_baseline.traffic_share)
+        self.assertEqual(sum(item.allocated_bytes for item in updated), 100_000)
+
+    def test_active_active_path_policy_accounts_for_configured_cost(self):
+        peers = [MeshPeer("a", 0), MeshPeer("b", 0), MeshPeer("c", 0)]
+        mesh = PeerMesh(
+            peers,
+            [
+                MeshLink("a", "c", 1000, 3, cost_per_gb=20),
+                MeshLink("a", "b", 1000, 8, cost_per_gb=0.1),
+                MeshLink("b", "c", 1000, 8, cost_per_gb=0.1),
+            ],
+            cost_weight=20,
+        )
+
+        allocations = mesh.plan_active_active_paths("a", "c", 10_000)
+        direct_share = next(
+            item.traffic_share for item in allocations
+            if item.path == ("a", "c")
+        )
+        indirect_share = next(
+            item.traffic_share for item in allocations
+            if item.path == ("a", "b", "c")
+        )
+
+        self.assertGreater(indirect_share, direct_share)
+        self.assertAlmostEqual(sum(item.traffic_share for item in allocations), 1.0)
+
+    def test_mesh_request_reports_concurrent_path_allocations(self):
+        self.congest_direct_link()
+
+        result = self.mesh.request("edge-a", "model-v1")
+
+        self.assertEqual(len(result.active_active_paths), 2)
+        self.assertEqual(
+            sum(item.allocated_bytes for item in result.active_active_paths),
+            len(self.payload),
+        )
+        self.assertGreater(
+            sum(item.traffic_share for item in result.active_active_paths),
+            0.99,
+        )
+        self.assertTrue(result.route_avoided_congestion)
+
+    def test_unavailable_link_is_removed_and_mesh_self_heals_to_remaining_route(self):
+        self.mesh.links[("ai-core", "edge-a")].available = False
+
+        result = self.mesh.request("edge-a", "model-v1")
+
+        self.assertEqual(result.path, ("edge-a", "edge-b", "ai-core"))
+        self.assertEqual(
+            [allocation.path for allocation in result.active_active_paths],
+            [("edge-a", "edge-b", "ai-core")],
+        )
+        self.assertEqual(
+            sum(allocation.allocated_bytes for allocation in result.active_active_paths),
+            len(self.payload),
+        )
 
 
 if __name__ == "__main__":

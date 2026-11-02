@@ -17,6 +17,9 @@ Suggested GitHub topics (lowercase, hyphenated):
 - `congestion-control`
 - `adaptive-mtu`
 - `reinforcement-learning`
+- `quantum-networking`
+- `multi-cloud`
+- `cooperative-networking`
 - `edge-computing`
 - `network-telemetry`
 - `wireless-networks`

@@ -26,6 +26,7 @@ import simpy
 from simulation.analytics import CSVNetworkLogger
 from simulation.channels import build_default_channels
 from simulation.cdn import SelfScalingContentNetwork
+from simulation.cooperative import CooperativeBackhaulCoordinator
 from simulation.continuity import SeamlessTransportSession
 from simulation.mobility import RadioCell
 from simulation.mesh import MeshLink, MeshPeer, PeerMesh
@@ -36,6 +37,7 @@ from simulation.orchestration import (
     KubernetesEdgeCluster,
     MultiCloudAIScheduler,
 )
+from simulation.quantum import QuantumResourceLink
 from simulation.router import SoftHandoverRouter
 from simulation.security import SessionAuthenticator
 from simulation.telemetry import InBandTelemetry, INTCollector
@@ -296,6 +298,19 @@ def main():
         ],
         trusted_publishers={"model-registry"},
     )
+    quantum_link = QuantumResourceLink(
+        "bern-edge",
+        "ai-core",
+        max_qubits_per_frame=128,
+        qubit_rate_per_second=2000,
+        fidelity=0.99,
+    )
+    quantum_generation = quantum_link.generate_key_material(1.0)
+    cooperative_backhaul = CooperativeBackhaulCoordinator(
+        mesh,
+        [quantum_link],
+        replica_demand_threshold=3,
+    )
     model_payload = b"demo AI model artifact"
     mesh.register_manifest(
         "edge-model-v1",
@@ -314,16 +329,35 @@ def main():
     print(
         f"Peer mesh predicted congestion: bern-edge/ai-core "
         f"pressure={mesh_telemetry.predicted_pressure:.2f}; "
-        f"active={mesh_telemetry.congestion_active}"
+        f"active={mesh_telemetry.congestion_active}; "
+        f"quantum_key_buffer={quantum_generation.buffered_key_bits} bits "
+        f"({quantum_generation.quantum_frames} frames, "
+        f"{quantum_link.max_qubits_per_frame} qubits/frame)"
     )
-    for request_number in range(1, 4):
-        mesh_result = mesh.request("bern-edge", "edge-model-v1")
+    for request_number in range(1, 5):
+        cooperative_result = cooperative_backhaul.request(
+            "bern-edge",
+            "edge-model-v1",
+            requires_quantum_key=True,
+            quantum_key_bits=256,
+        )
+        mesh_result = cooperative_result.delivery
         print(
             f"Mesh request {request_number}: path={' -> '.join(mesh_result.path)}, "
+            f"active-active_shares={[(allocation.path, round(allocation.traffic_share, 3)) for allocation in mesh_result.active_active_paths]}, "
             f"cache_action={mesh_result.cache_action}, "
+            f"classical_payload_MTU={cooperative_result.classical_path_payload_mtu_bytes}, "
+            f"fragments={cooperative_result.classical_fragment_count}, "
+            f"reserved_quantum_key_bits={cooperative_result.reserved_key_bits}, "
+            f"demand_forecast={cooperative_result.demand_forecast.forecast:.2f}, "
             f"NPU-inspired anomaly_score={mesh_result.cache_admission_score}"
         )
-    local_mesh_hit = mesh.request("bern-edge", "edge-model-v1")
+    local_mesh_hit = cooperative_backhaul.request(
+        "bern-edge",
+        "edge-model-v1",
+        requires_quantum_key=True,
+        quantum_key_bits=256,
+    ).delivery
     print(
         f"Mesh follow-up request: local_cache_hit={local_mesh_hit.cache_hit}, "
         f"path={' -> '.join(local_mesh_hit.path)}"

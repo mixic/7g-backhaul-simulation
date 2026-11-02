@@ -18,13 +18,17 @@ The CDN direction is inspired by Milan Nikolic's University of Bern master's the
 - **Acceleration-aware scaling:** the request-rate predictor uses velocity and acceleration to forecast demand and can provision a regional cache before the raw request-count threshold is reached.
 - **Kubernetes-inspired edge scaling:** a forecast-aware model computes bounded cache-pod replica targets and reports when modeled demand exceeds configured cluster capacity.
 - **Multicloud AI placement:** an explainable scheduler ranks configured AI datacenters by latency, egress estimate, accelerator load/capacity, availability, and optional latency SLO.
-- **Peer mesh:** independent peer caches and link telemetry drive forecast-congestion-aware path selection and selective cache replication.
+- **Active-active peer mesh:** traffic is proportionally distributed over multiple available paths using capacity, cost, congestion forecasts, and congestion velocity/acceleration.
 - **Cache defenses:** trusted content manifests reject digest mismatches; an NPU-inspired anomaly score blocks low-reuse, high-novelty cache admissions.
+- **Quantum-assisted resources:** a separate qubit-frame/key-buffer abstraction can supply modeled key material without treating quantum links as byte-carrying media.
+- **Cooperative multibackhaul policy:** coordinates classical mesh routing, per-route payload MTU, demand-driven cache placement, and optional quantum-resource reservations.
+- **Real local packet demo:** an opt-in UDP loopback command sends and verifies actual socket datagrams; it is separate from the network-medium simulation.
+- **Optional ONNX inference:** a caller-supplied model can run through an explicitly selected ONNX Runtime execution provider; inference fails if profiling detects CPU or other-provider fallback.
 - **Telemetry and crisis simulation:** environment load, pressure, losses, storms, and solar flares are surfaced in the simulation dashboard.
 
 ## Important limitation
 
-“No handover or break” is the goal at the application-session abstraction, not a guarantee of zero packet delay or loss in real mobile networks. Radio handover, carrier bonding, IP mobility, congestion control, and authentication are represented by protocol-inspired simulator models; they do not interoperate with live radio/carrier infrastructure or provide production-grade security. The Q-learning implementation is a real tabular RL algorithm in this toy environment, not deployment-grade RL. Practical seamlessness requires standards-based integrations, compatible endpoints, and field testing.
+“No handover or break” is the goal at the application-session abstraction, not a guarantee of zero packet delay or loss in real mobile networks. Radio handover, carrier bonding, IP mobility, congestion control, and authentication are represented by protocol-inspired simulator models; they do not interoperate with live radio/carrier infrastructure or provide production-grade security. The quantum link is only a simulated key-resource abstraction: it does not carry classical bytes or implement QKD. The Q-learning implementation is a real tabular RL algorithm in this toy environment, not deployment-grade RL. Practical seamlessness requires standards-based integrations, compatible endpoints, and field testing.
 
 ## Repository structure
 
@@ -36,10 +40,17 @@ The CDN direction is inspired by Milan Nikolic's University of Bern master's the
 ├── backhaul_sim/                 # Graph scenarios and Tomahawk CDN example
 ├── docs/                         # Architecture, cloud/edge design, and research notes
 ├── figures/                      # Generated PNG dashboard frames
+├── models/                       # Synthetic congestion forecast ONNX and weights
 ├── simulation/
 │   ├── cdn.py                    # Demand learning and regional caches
 │   ├── orchestration.py         # Simulated edge scaling and AI site placement
 │   ├── mesh.py                   # Peer mesh, congestion forecasts, and cache defenses
+│   ├── packet_io.py              # Real UDP loopback framing and payload verification
+│   ├── packet_demo.py            # Local packet transfer and optional inference CLI
+│   ├── npu_inference.py          # Optional ONNX provider inference/profile checks
+│   ├── pretraining.py            # Synthetic congestion forecaster training and ONNX export
+│   ├── quantum.py                # Quantum resource and qubit-frame capacity model
+│   ├── cooperative.py            # Coordinated mesh, demand, and quantum-resource policy
 │   ├── channels.py               # Heterogeneous link definitions
 │   ├── continuity.py             # MTU adaptation and fragment reassembly
 │   ├── mobility.py               # Handover and stable simulated IP binding
@@ -80,7 +91,7 @@ pip install -r requirements.txt
 python main.py
 ```
 
-The output includes a byte-stream transfer across media, CDN cache decisions, demand rate and acceleration, simulated edge scaling and AI datacenter placement, a predictive peer-mesh routing/cache example, and a live transport telemetry table. Dashboard PNGs are written to `figures/`.
+The output includes a byte-stream transfer across media, CDN cache decisions, demand rate and acceleration, simulated edge scaling and AI datacenter placement, an active-active peer-mesh routing/cache example, and a live transport telemetry table. Dashboard PNGs are written to `figures/`.
 Historical network and transfer metrics are appended to `output/network_history.csv`.
 
 The Kubernetes and multicloud features are simulation models, not deployment
@@ -88,6 +99,22 @@ adapters. See [docs/multicloud-kubernetes.md](docs/multicloud-kubernetes.md)
 for the modeled policies, cost assumptions, and integration boundaries.
 The mesh routing and cache security abstractions are described in
 [docs/peer-mesh.md](docs/peer-mesh.md).
+The quantum-assisted architecture and classical/quantum MTU distinction are
+described in [docs/quantum-cooperative-backhaul.md](docs/quantum-cooperative-backhaul.md).
+The loopback packet test and optional ONNX inference prerequisites and limits are
+documented in [docs/real-packet-and-npu.md](docs/real-packet-and-npu.md).
+
+Run the local UDP packet demonstration independently of the simulation:
+
+```bash
+python -m simulation.packet_demo --payload-size 64000 --max-datagram-bytes 1200
+```
+
+An optional hardware-provider inference run requires a compatible ONNX model,
+the vendor runtime, and an available NPU. A small congestion forecasting model
+can be pretrained from synthetic telemetry with the optional ONNX exporter; it
+must be calibrated using measured data before operational use. See the linked
+guide for instructions and limitations.
 
 ## Key performance indicators
 

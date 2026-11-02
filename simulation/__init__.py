@@ -33,6 +33,7 @@ from .continuity import (
 )
 from .cdn import CachePlacementLearner, SelfScalingContentNetwork
 from .learning import TabularQRoutingAgent
+from .cooperative import CooperativeBackhaulCoordinator, CooperativeBackhaulDecision
 from .mesh import (
     CacheAdmissionDecision,
     ContentManifest,
@@ -40,6 +41,7 @@ from .mesh import (
     MeshContentRejected,
     MeshLink,
     MeshLinkTelemetry,
+    MeshPathAllocation,
     MeshPeer,
     MeshPeerNotFound,
     MeshRequestResult,
@@ -65,6 +67,11 @@ from .orchestration import (
     MultiCloudAIScheduler,
     ReplicaDecision,
 )
+from .quantum import (
+    QuantumGenerationResult,
+    QuantumResourceLink,
+    QuantumResourceUnavailable,
+)
 from .trends import RequestDemandLearner, SecondOrderTrendEstimator, TrendEstimate
 
 __all__ = [
@@ -81,6 +88,8 @@ __all__ = [
     "CachePlacementLearner",
     "CacheAdmissionDecision",
     "CloudPlacementError",
+    "CooperativeBackhaulCoordinator",
+    "CooperativeBackhaulDecision",
     "ContentManifest",
     "FragmentReassembler",
     "HandoverDecision",
@@ -93,6 +102,7 @@ __all__ = [
     "MeshContentRejected",
     "MeshLink",
     "MeshLinkTelemetry",
+    "MeshPathAllocation",
     "MeshPeer",
     "MeshPeerNotFound",
     "MeshRequestResult",
@@ -103,6 +113,9 @@ __all__ = [
     "RadioCell",
     "RadioHandoverController",
     "ReplicaDecision",
+    "QuantumGenerationResult",
+    "QuantumResourceLink",
+    "QuantumResourceUnavailable",
     "RequestDemandLearner",
     "SecondOrderTrendEstimator",
     "SessionAuthenticator",

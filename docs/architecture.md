@@ -88,6 +88,18 @@ Publisher trust is configured out-of-band; manifests are not signed or
 distributed by a production trust service. See [`peer-mesh.md`](peer-mesh.md)
 for the model and security boundaries.
 
+## Quantum-assisted cooperative backhaul
+
+Quantum links are modeled as a separate resource for bounded qubit frames and
+simulated key-material generation; they do not carry the mesh's classical
+content bytes. Classical payload MTU is the minimum usable MTU across the
+selected classical route after per-link encapsulation overhead. Quantum frame
+capacity is measured in qubits and is not an IP MTU. The cooperative coordinator
+combines congestion-aware classical path selection, demand-driven cache
+replication, and optional key-resource reservations. It is an educational
+policy model, not distributed multi-agent learning or a QKD implementation.
+See [`quantum-cooperative-backhaul.md`](quantum-cooperative-backhaul.md).
+
 ## How to exercise it
 
 The test suite checks:
@@ -105,6 +117,8 @@ The test suite checks:
 - AI workload placement respects datacenter availability, accelerator capacity, and latency SLOs.
 - Congestion forecasts reroute mesh requests and trigger guarded peer-cache replication.
 - Mesh cache admission rejects untrusted or corrupted content and resists one-off cache pollution.
+- Quantum key-resource frames remain separate from per-route classical MTUs and fragmentation.
+- Cooperative requests use demand forecasts for guarded replication and reserve quantum resource only for remote responses.
 - Network snapshots and transfer KPIs are appended as CSV.
 
 Run the interactive simulation with `python main.py`; generated dashboard frames are saved in [`../figures/`](../figures/).
