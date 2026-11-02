@@ -19,10 +19,12 @@ import unittest
 from dataclasses import replace
 
 from simulation.role_fluid import (
+    CATALOG_GB,
     DEFAULT_WEIGHTS,
     POLICIES,
     SCENARIOS,
     FlowWeights,
+    build_nodes,
     RoleFluidSimulation,
     build_links,
     build_nodes,
@@ -125,6 +127,38 @@ class SimulationTests(unittest.TestCase):
             self.assertLessEqual(load, capacities[name] + 1e-9, name)
         for target, value in allocation.delivered_mbps.items():
             self.assertLessEqual(value, demand[target] + 1e-9, target)
+
+    def test_cache_warms_to_its_capacity_fraction(self):
+        simulation = RoleFluidSimulation(SCENARIOS["steady"], "static_design", 1)
+        simulation.run()
+        nodes = build_nodes()
+        # E2 and E3 serve in the static design and warm to capacity / catalog;
+        # the other nodes never serve and stay cold.
+        self.assertAlmostEqual(
+            simulation.cache_hit["E2"], nodes["E2"].cache_capacity_gb / CATALOG_GB
+        )
+        self.assertAlmostEqual(
+            simulation.cache_hit["E3"], nodes["E3"].cache_capacity_gb / CATALOG_GB
+        )
+        self.assertEqual(simulation.cache_hit["E1"], 0.0)
+        self.assertEqual(simulation.cache_hit["C1"], 0.0)
+
+    def test_serving_is_limited_by_cache_capacity(self):
+        nodes = build_nodes()
+        nodes["E2"] = replace(nodes["E2"], cache_capacity_gb=0.005)
+        simulation = RoleFluidSimulation(
+            SCENARIOS["steady"], "static_design", 1, nodes=nodes
+        )
+        simulation.run()
+        self.assertLessEqual(simulation.cache_hit["E2"], 0.005 / CATALOG_GB + 1e-9)
+
+    def test_freezing_roles_after_the_first_decision_limits_churn(self):
+        weights = replace(DEFAULT_WEIGHTS, min_role_dwell_ticks=10_000)
+        simulation = RoleFluidSimulation(
+            SCENARIOS["flash_crowd"], "local_fluid", 3, weights
+        )
+        metrics = simulation.run()
+        self.assertLessEqual(metrics.role_switches, 6)
 
     def test_weights_are_dimensionless_and_positive(self):
         self.assertGreater(FlowWeights().temperature, 0.0)

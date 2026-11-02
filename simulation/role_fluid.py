@@ -75,6 +75,12 @@ UNMET_PENALTY_PER_GB = 10.0
 CONGESTION_VALUE_USD_PER_TICK = 0.10
 GB_PER_MBPS_TICK = 1.0 / 8000.0
 
+#: Working set a cache can cover and the time it needs to warm from cold.
+#: Serving is bounded by the hit ratio, so "serve" is a finite resource with a
+#: warm-up cost rather than a free local termination.
+CATALOG_GB = 0.5
+WARM_SECONDS = 8.0
+
 POLICIES: tuple[str, ...] = (
     "static_design",
     "centralized_greedy",
@@ -104,8 +110,8 @@ class Node:
 
     name: str
     service_capacity_mbps: float = 0.0
+    cache_capacity_gb: float = 0.0
     serve_cost_per_gb: float = 6.0
-    fill_cost_per_gb: float = 3.0
     switch_cost_usd: float = 0.05
     balance_cost_usd_per_tick: float = 0.01
 
@@ -149,6 +155,9 @@ class FlowWeights:
     switch_horizon_ticks: int = 20
     serve_attraction: float = 0.9
     balance_impedance: float = 0.75
+    #: Minimum ticks a local controller must hold a role. Roles with warm-up
+    #: costs (a cold cache) cannot be evaluated by a one-tick potential.
+    min_role_dwell_ticks: int = 20
     w_balance_bonus: float = 0.15
 
 
@@ -165,7 +174,7 @@ class RunMetrics:
     role_switches: int
     oscillation_index: float
     local_serve_percent: float
-    cache_fill_gb: float
+    cache_hit_mean_percent: float
 
 
 @dataclass
@@ -187,7 +196,7 @@ class _Allocation:
     latency_samples: list[tuple[float, float]]
     link_cost: float
     serve_cost: float
-    fill_cost: float
+    cached_after: dict[str, float]
     unmet_gb: float
     unmet_fraction: dict[str, float]
     oscillation: float
@@ -202,11 +211,11 @@ def build_nodes() -> dict[str, Node]:
     """Six polymorphic nodes: one origin, two cores, three edge caches."""
     return {
         "O": Node("O"),
-        "C1": Node("C1", service_capacity_mbps=30.0),
-        "C2": Node("C2", service_capacity_mbps=30.0),
-        "E1": Node("E1", service_capacity_mbps=40.0),
-        "E2": Node("E2", service_capacity_mbps=60.0),
-        "E3": Node("E3", service_capacity_mbps=40.0),
+        "C1": Node("C1", service_capacity_mbps=30.0, cache_capacity_gb=0.10),
+        "C2": Node("C2", service_capacity_mbps=30.0, cache_capacity_gb=0.10),
+        "E1": Node("E1", service_capacity_mbps=40.0, cache_capacity_gb=0.20),
+        "E2": Node("E2", service_capacity_mbps=60.0, cache_capacity_gb=0.35),
+        "E3": Node("E3", service_capacity_mbps=40.0, cache_capacity_gb=0.20),
     }
 
 
@@ -348,10 +357,16 @@ class RoleFluidSimulation:
         )
         self.prev_link_load: dict[str, float] = {link.name: 0.0 for link in self.links}
         self.share: dict[tuple[str, int], float] = {}
-        self.previous_served_gb: dict[str, float] = {name: 0.0 for name in self.nodes}
         self.unmet_fraction: dict[str, float] = {name: 0.0 for name in self.nodes}
+        self.cache_hit: dict[str, float] = {name: 0.0 for name in self.nodes}
+        self.last_switch_tick: dict[str, int] = {name: -10**9 for name in self.nodes}
+        self.tick = 0
+        #: The reactive control arm has no memory: damping 1.0 means the split
+        #: ratio jumps straight to the instantaneous potential.
+        self.damping = 1.0 if policy == "local_reactive" else weights.damping
+        self.hit_sample_sum = 0.0
+        self.hit_samples = 0
         self.switches = 0
-        self.cache_fill_gb = 0.0
         self.oscillation_total = 0.0
         self.oscillation_ticks = 0
         self._incident_capacity = self._build_incident_capacity()
@@ -366,6 +381,7 @@ class RoleFluidSimulation:
         transit_gb_total = 0.0
 
         for tick in range(self.scenario.ticks):
+            self.tick = tick
             demand = self._demand(tick)
             capacities = {
                 link.name: link.capacity_mbps * self.scenario.link_scale(tick, link.name)
@@ -374,6 +390,8 @@ class RoleFluidSimulation:
             if tick % CONTROL_INTERVAL == 0:
                 decided = self._decide_roles(demand, capacities)
                 changed = [name for name in decided if decided[name] != self.roles[name]]
+                for name in changed:
+                    self.last_switch_tick[name] = tick
                 self.switches += len(changed)
                 total_cost += sum(self.nodes[name].switch_cost_usd for name in changed)
                 self.roles = decided
@@ -390,10 +408,12 @@ class RoleFluidSimulation:
             total_cost += (
                 allocation.link_cost
                 + allocation.serve_cost
-                + allocation.fill_cost
                 + allocation.unmet_gb * UNMET_PENALTY_PER_GB
                 + self._balance_cost(self.roles)
             )
+            if self.cache_hit:
+                self.hit_sample_sum += sum(self.cache_hit.values()) / len(self.cache_hit)
+                self.hit_samples += 1
 
         mean_delivered = sum(delivered_samples) / len(delivered_samples) if delivered_samples else 0.0
         total_gb = served_gb_total + transit_gb_total
@@ -408,7 +428,9 @@ class RoleFluidSimulation:
                 else 0.0
             ),
             local_serve_percent=100.0 * served_gb_total / max(1e-9, total_gb),
-            cache_fill_gb=self.cache_fill_gb,
+            cache_hit_mean_percent=(
+                100.0 * self.hit_sample_sum / self.hit_samples if self.hit_samples else 0.0
+            ),
         )
 
     # -- controllers ------------------------------------------------------
@@ -444,6 +466,12 @@ class RoleFluidSimulation:
             capacity = max(1e-9, self._incident_capacity.get(name, 0.0))
             utilization = min(1.0, self._incident_load(name) / capacity)
             best_role = self.roles[name]
+            if (
+                self.tick - self.last_switch_tick[name]
+                < self.weights.min_role_dwell_ticks
+            ):
+                chosen[name] = best_role
+                continue
             best_cost = self._local_role_cost(
                 best_role, utilization, node, capacity, name, use_unmet
             )
@@ -478,13 +506,20 @@ class RoleFluidSimulation:
                 1.0,
                 node.service_capacity_mbps / incident_capacity,
             )
-            operating = node.serve_cost_per_gb * node.service_capacity_mbps * GB_PER_MBPS_TICK
+            expected_hit = min(1.0, node.cache_capacity_gb / CATALOG_GB)
+            operating = (
+                node.serve_cost_per_gb
+                * node.service_capacity_mbps
+                * expected_hit
+                * GB_PER_MBPS_TICK
+            )
             avoided = 0.0
             if use_unmet:
                 avoided = (
                     self.unmet_fraction.get(name, 0.0)
                     * UNMET_PENALTY_PER_GB
                     * node.service_capacity_mbps
+                    * expected_hit
                     * GB_PER_MBPS_TICK
                 )
             return (
@@ -546,7 +581,6 @@ class RoleFluidSimulation:
         return (
             allocation.link_cost
             + allocation.serve_cost
-            + allocation.fill_cost
             + allocation.unmet_gb * UNMET_PENALTY_PER_GB
             + self._balance_cost(roles)
             + switch_cost
@@ -575,6 +609,8 @@ class RoleFluidSimulation:
         latency_entries: list[tuple[Path, _LatencyEntry]] = []
         unmet_gb = 0.0
         unmet_fraction: dict[str, float] = {name: 0.0 for name in self.nodes}
+        cached = dict(self.cache_hit)
+        warm_step = 1.0 / WARM_SECONDS
         oscillation = 0.0
 
         for target in sorted(demand):
@@ -590,8 +626,8 @@ class RoleFluidSimulation:
                 for index in range(len(paths))
             ]
             damped = [
-                (1.0 - self.weights.damping) * previous[index]
-                + self.weights.damping * target_weights[index]
+                (1.0 - self.damping) * previous[index]
+                + self.damping * target_weights[index]
                 for index in range(len(paths))
             ]
             damped_total = sum(damped)
@@ -605,11 +641,15 @@ class RoleFluidSimulation:
             target_demand = demand[target]
             local = 0.0
             if roles.get(target) == "serve":
-                room = max(0.0, self.nodes[target].service_capacity_mbps - served[target])
-                local = min(target_demand, room)
+                node = self.nodes[target]
+                hit = min(1.0, cached[target] / CATALOG_GB, 1.0)
+                room = max(0.0, node.service_capacity_mbps - served[target])
+                local = min(target_demand * hit, room)
                 served[target] += local
                 served_gb[target] += local * GB_PER_MBPS_TICK
                 delivered[target] += local
+                max_hit = min(1.0, node.cache_capacity_gb / CATALOG_GB)
+                cached[target] = min(max_hit, cached[target] + warm_step)
             remaining = target_demand - local
 
             order = sorted(range(len(paths)), key=lambda index: potentials[index])
@@ -654,18 +694,31 @@ class RoleFluidSimulation:
                         0.0,
                         self.nodes[node_name].service_capacity_mbps - served[node_name],
                     )
-                    served_part = min(amount, room)
+                    hit = min(1.0, cached[node_name] / CATALOG_GB, 1.0)
+                    served_part = min(amount * hit, room)
                     served[node_name] += served_part
                     served_gb[node_name] += served_part * GB_PER_MBPS_TICK
-                    for link in path.links[serve_index:]:
+                    max_hit = min(
+                        1.0,
+                        self.nodes[node_name].cache_capacity_gb / CATALOG_GB,
+                    )
+                    cached[node_name] = min(max_hit, cached[node_name] + warm_step)
+                    # A cached copy at this node still has to reach the demand
+                    # node: only the upstream links are avoided.
+                    for link in path.links[:serve_index]:
                         link_load[link.name] = max(0.0, link_load[link.name] - served_part)
                 transit = amount - served_part
 
                 if served_part > 0.0:
                     cut = serve_index or 0
-                    delivered[target] += served_part * _delivery(path, 0, cut)
+                    delivered[target] += served_part * _delivery(
+                        path, cut, len(path.links)
+                    )
                     latency_entries.append(
-                        (path, _LatencyEntry(0, cut, served_part, SERVE_LATENCY_MS))
+                        (
+                            path,
+                            _LatencyEntry(cut, len(path.links), served_part, SERVE_LATENCY_MS),
+                        )
                     )
                 if transit > 0.0:
                     delivered[target] += transit * _delivery(path, 0, len(path.links))
@@ -686,11 +739,6 @@ class RoleFluidSimulation:
         serve_cost = sum(
             served_gb[name] * self.nodes[name].serve_cost_per_gb for name in served_gb
         )
-        fill_cost = sum(
-            max(0.0, served_gb[name] - self.previous_served_gb.get(name, 0.0))
-            * self.nodes[name].fill_cost_per_gb
-            for name in served_gb
-        )
         return _Allocation(
             link_load=link_load,
             served_gb=served_gb,
@@ -699,7 +747,7 @@ class RoleFluidSimulation:
             latency_samples=latency_samples,
             link_cost=link_cost,
             serve_cost=serve_cost,
-            fill_cost=fill_cost,
+            cached_after=cached,
             unmet_gb=unmet_gb,
             unmet_fraction=unmet_fraction,
             oscillation=oscillation,
@@ -772,9 +820,8 @@ class RoleFluidSimulation:
     def _commit(self, allocation: _Allocation) -> None:
         self.prev_link_load = allocation.link_load
         self.share = allocation.share
-        self.previous_served_gb = dict(allocation.served_gb)
         self.unmet_fraction = dict(allocation.unmet_fraction)
-        self.cache_fill_gb += sum(allocation.served_gb.values())
+        self.cache_hit = dict(allocation.cached_after)
         self.oscillation_total += allocation.oscillation
         self.oscillation_ticks += 1
 

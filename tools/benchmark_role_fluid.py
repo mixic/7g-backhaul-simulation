@@ -61,7 +61,7 @@ METRIC_NAMES: tuple[str, ...] = (
     "role_switches",
     "oscillation_index",
     "local_serve_percent",
-    "cache_fill_gb",
+    "cache_hit_mean_percent",
 )
 
 #: Pairs reported as paired differences (left - right).

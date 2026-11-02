@@ -142,16 +142,26 @@ py tools\benchmark_role_fluid.py --output-dir figures --replicates 6 --seed 2026
 
 The first results are reported as a **negative result for the naive
 controller**: on a six-node heterogeneous topology the local rule delivers less
-and costs more than a sensible static role design (flash crowd: 91.7 % vs
-95.1 % delivery, $16.99 vs $14.79), because its potential mis-prices serving and
-transit. A centralised controller with the true objective is much cheaper
-($10.43) but delivers less under stress (88.7 %). What the experiment does
-establish is conditional: the local rule needs its own unmet-demand signal
-(+1.41 pp delivery), damping is mandatory (share oscillation falls from 0.190 to
-0.031), role churn is the paradigm's hidden cost (hysteresis: 33.8 switches and
-$17.30 at zero, 2.0 switches and $11.95 at 0.05 $), and instability peaks at
-*moderate* path heterogeneity rather than maximal. The paradigm is therefore not
-demonstrated — the conditions it needs are identified.
+and costs more than a sensible static role design (flash crowd: 95.90 % vs
+99.65 % delivery, $15.44 vs $12.48), because it keeps switching while the static
+design pre-warms two edge caches. A centralised controller with the true
+objective is much cheaper ($8.90) and delivers 99.34 % in that scenario, but in
+the steady and outage scenarios it delivers less than the static design
+(99.38 %/99.41 % vs 99.85 %) because it is myopic and will not invest in a cache
+it cannot foresee using.
+
+Serving is now a finite resource rather than a free local termination: each
+node has a 0.10–0.35 GB cache against a 0.5 GB working set, a hit ratio that
+warms over 8 s and caps what serving can deliver (3.9–20.1 % mean hit across arms), and a
+cached copy at a core node still traverses the downstream path. What the
+experiment establishes is conditional: damping is mandatory (undamped share
+oscillation 0.29–0.46 falls to 0.022–0.034 at λ = 0.5), a role **dwell timer**
+is required because a one-tick signal cannot evaluate a role with a warm-up
+cost, and churn trades against delivery (15.8 switches / 95.20 % / $15.83 at zero
+hysteresis, 6.8 switches / 97.90 % / $13.20 at 0.02 $, 1.0 switch / 91.66 % /
+$10.18 at 0.05 $). The earlier claim that instability peaks at *moderate* path
+heterogeneity was an artifact of the cache-free model and is withdrawn. The
+paradigm is therefore not demonstrated — the conditions it needs are identified.
 
 ### Protocol specification and ns-3 cross-validation
 
