@@ -856,6 +856,37 @@ class FabricNode : public Application
     std::uniform_real_distribution<double> m_uniform{0.0, 1.0};
     uint32_t m_nextSequence{0};
 };
+
+struct Sampler
+{
+    std::vector<double> time;
+    std::vector<double> queueMeanMs;
+    std::vector<uint64_t> transitions;
+    double lastQueueSum{0.0};
+    uint64_t lastQueueSamples{0};
+};
+
+void
+Sample(std::vector<Ptr<FabricNode>>* apps, Sampler* sampler)
+{
+    double queueSum = 0.0;
+    uint64_t queueSamples = 0;
+    uint64_t transitions = 0;
+    for (const auto& app : *apps)
+    {
+        queueSum += app->queueDelaySumMs;
+        queueSamples += app->queueDelaySamples;
+        transitions += app->roleTransitions;
+    }
+    const double deltaSum = queueSum - sampler->lastQueueSum;
+    const uint64_t deltaSamples = queueSamples - sampler->lastQueueSamples;
+    sampler->time.push_back(Simulator::Now().GetSeconds());
+    sampler->queueMeanMs.push_back(deltaSamples ? deltaSum / deltaSamples : 0.0);
+    sampler->transitions.push_back(transitions);
+    sampler->lastQueueSum = queueSum;
+    sampler->lastQueueSamples = queueSamples;
+    Simulator::Schedule(Seconds(1.0), &Sample, apps, sampler);
+}
 } // namespace
 
 int
@@ -977,8 +1008,27 @@ main(int argc, char* argv[])
         apps.push_back(app);
     }
 
+    Sampler sampler;
+    Simulator::Schedule(Seconds(1.0), &Sample, &apps, &sampler);
+
     Simulator::Stop(Seconds(duration));
     Simulator::Run();
+
+    {
+        const std::string tsPath = out + ".timeseries.csv";
+        const bool freshTs = std::ifstream(tsPath).peek() == std::ifstream::traits_type::eof();
+        std::ofstream ts(tsPath, std::ios::app);
+        if (freshTs)
+        {
+            ts << "scenario,seed,time_s,queue_mean_ms,transitions_cumulative\n";
+        }
+        for (size_t index = 0; index < sampler.time.size(); ++index)
+        {
+            ts << scenario << "," << seed << "," << sampler.time[index] << ","
+               << sampler.queueMeanMs[index] << "," << sampler.transitions[index] << "\n";
+        }
+        ts.close();
+    }
 
 
     uint64_t transitions = 0;
