@@ -1,0 +1,8 @@
+name_class,variant,acceptance_percent,ci95_percent,trials
+immutable,self-certifying digest (128-bit),0.0,0.0,20000
+service,"descriptor, strength 0",95.38499999999999,0.290781631025758,20000
+service,"descriptor, strength 1",14.935,0.4939911177966665,20000
+service,"descriptor, strength 2",1.965,0.1923591846052587,20000
+service,"descriptor, strength 3",0.18,0.05874705616454325,20000
+external,"dns cache, dnssec",0.0,0.0,20000
+external,"dns cache, no-dnssec",3.25,0.24575832641031717,20000

@@ -214,6 +214,47 @@ and failure detector (not exercised), wireless physics, and congestion control.
 The cache is a stipulated linear warm-up with no eviction or popularity curve.
 Closing the loop between the protocol and the controller is the next experiment.
 
+## The name fabric: DNS-independence as one operation
+
+The strongest version of the paradigm is not "no DNS". It is that **resolution
+and forwarding are one operation**: a request carries its name, and the same
+potential field that allocates flow and selects roles decides where it goes.
+Nothing completes before the first packet moves, so no TTL sits between a role
+change and the requests that follow it.
+
+`simulation/name_fabric.py` implements that fabric with two name classes:
+self-certifying digests for immutable content (poisoning structurally
+impossible) and signed service descriptors for role-fluid services (forgery
+risk that attestation reduces). Run it with:
+
+```powershell
+py tools\benchmark_name_fabric.py --output-dir figures
+```
+
+Five pre-registered experiments, and what they measured:
+
+- **The floor removed:** a service moving between edge nodes is observed by
+  clients in 28.7 s at a 30 s DNS TTL, versus 35.7 ms with gradient
+  resolution — link-limited, as predicted. The absolute 10 ms threshold
+  pre-registered for the gradient **failed** (the new instance sits behind a
+  saturated 80 Mbit/s link); it is reported as a failure rather than moved.
+- **Poisoning by name class:** immutable 0.000 %, service descriptors 95.4 %,
+  14.9 %, 2.0 %, 0.18 % as attestation strengthens, DNSSEC 0 % versus 3.25 %
+  without. The service curve is the honest residual — and its probabilities are
+  stipulated, not a measurement of a real signature scheme.
+- **Interest flooding versus query flooding:** the pending table sustains
+  ~25× the load of a 5 000 QPS resolver per node under these defaults, which
+  contradicts the "root tier is the weak point" narrative and is driven by
+  stipulated capacities, not by a structural advantage.
+- **Tail latency:** gradient p99 is 22.7 ms, a cached DNS answer 22.5 ms, and a
+  DHT 217 ms — the DHT lowers the mean and raises the floor.
+- **The gateway seam:** external requests cost ~2× an internal one even at an
+  idle gateway, and its p95 reaches 71 ms at a 50 % external share.
+
+What this does **not** establish: no packet-level cross-validation yet (the
+RFMP harness is the vehicle), no bootstrap model, no name-table memory bound,
+and no sensitivity analysis. See [docs/name-fabric.md](docs/name-fabric.md).
+
 ### Community status
 
 As of this release there are no external issues, pull requests, forks or
@@ -254,6 +295,7 @@ plan.
 │   ├── discoverability.md        # KPI definitions and repository topics
 │   ├── external-validation.md    # ns-3 cross-validation report (scenario S1)
 │   ├── multicloud-kubernetes.md  # Cloud and Kubernetes model boundaries
+│   ├── name-fabric.md            # DNS-independence: resolution as forwarding
 │   ├── peer-mesh.md              # Mesh routing and cache-defense model
 │   ├── positioning-7g.md         # What the "7G" codename does and does not claim
 │   ├── quantum-cooperative-backhaul.md # Quantum-resource abstraction
@@ -281,6 +323,11 @@ plan.
 │   ├── congestion_benchmark_paired_differences.csv # Reno/LIA/OLIA paired contrasts
 │   ├── congestion_benchmark_replicates.csv # Per-seed congestion-control runs
 │   ├── congestion_benchmark_summary.csv  # Reno/LIA/OLIA arm means
+│   ├── name_fabric_flooding.csv  # Flooding thresholds
+│   ├── name_fabric_gateway.csv   # Gateway seam cost
+│   ├── name_fabric_latency.csv   # Strategy latency distributions
+│   ├── name_fabric_poisoning.csv # Poisoning acceptance by name class
+│   ├── name_fabric_transition.csv # Transition observation floor
 │   ├── ns3_s1_replicates.csv     # ns-3 runs for cross-validation scenario S1
 │   ├── public_safety_benchmark_summary.csv
 │   ├── public_safety_multimedia_qos.png
@@ -323,6 +370,7 @@ plan.
 │   ├── mobility.py               # Handover and stable simulated IP binding
 │   ├── npu_inference.py          # Optional ONNX provider inference checks
 │   ├── orchestration.py          # Simulated edge scaling and AI site placement
+│   ├── name_fabric.py            # Name-based forwarding, name classes and attacks
 │   ├── packet_io.py              # Real UDP loopback framing and payload verification
 │   ├── packet_demo.py            # Local packet transfer and optional inference CLI
 │   ├── pretraining.py            # Synthetic congestion forecaster training and ONNX export
@@ -340,6 +388,7 @@ plan.
 │   ├── benchmark_fair.py         # Independent-policy (ablation) benchmark
 │   ├── benchmark_role_fluid.py   # Role-fluid paradigm comparison and sweeps
 │   ├── benchmark_sensitivity.py  # Paired one-factor-at-a-time sensitivity sweeps
+│   ├── benchmark_name_fabric.py  # Five name-fabric experiments
 │   ├── benchmark_vision.py       # CDN, handover, and backhaul policy studies
 │   └── validation_io.py          # Normalize and compare simulator/testbed results
 ├── validation/
@@ -363,6 +412,7 @@ plan.
 │   ├── test_fair_benchmark.py
 │   ├── test_link_queue.py
 │   ├── test_mesh.py
+│   ├── test_name_fabric.py
 │   ├── test_packet_io.py
 │   ├── test_protocol_models.py
 │   ├── test_quantum_backhaul.py
