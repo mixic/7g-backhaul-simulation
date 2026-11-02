@@ -1,0 +1,6 @@
+experiment,family,mtu,sent,received,echoed,echoed_v4,echoed_v6,goodput_mbps,overhead_bytes_per_packet,rtt_mean_ms,switch_gap_ms
+overhead,ipv4,1500,2000,2000,1999,1999,0,0.682667,30.132,2.00253,0
+overhead,ipv6,1500,2000,2000,1999,0,1999,0.682667,50.132,2.00285,0
+fragment,ipv4,1280,2000,2000,1999,1999,0,7.46667,52.132,2.02323,0
+fragment,ipv6,1280,2000,2000,1999,0,1999,7.46667,108.132,2.02413,0
+agnostic,ipv4,1500,2000,2000,2000,1000,1000,0.2048,40.19,2.00269,5.00032
