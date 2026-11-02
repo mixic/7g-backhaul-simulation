@@ -37,6 +37,8 @@ The modeled link MTU can shrink as load increases. `AdaptiveMTULearner` explores
 
 `CoupledCongestionGroup` adds multipath coupling options over the same window abstraction: uncoupled per-path Reno, LIA per RFC 6356, and OLIA using the published Khalili et al. increase rule. It is a window-level model with no ACK packets, slow start, retransmission or scheduler, used for the comparison in §10.4 of the paper; it is not an MPTCP implementation and its numbers are not conformance evidence.
 
+`RoleFluidSimulation` in [`simulation/role_fluid.py`](../simulation/role_fluid.py) models the role-fluid paradigm: every node may act as router, load balancer or server, role selection is co-optimised with path selection through a potential field, and medium boundaries contribute MTU-based transmission/reflection coefficients. It is a control model, not a protocol, and it is not cross-validated. The model, its controllers and the first measured (partly negative) results are documented in [role-fluid-paradigm.md](role-fluid-paradigm.md).
+
 `TabularQRoutingAgent` is a small online Q-learning policy over quantized load and pressure state. It uses a safety mask to avoid unavailable links and adjusts the carrier allocation weights from observed delivery reward. This is genuine tabular RL in the simulated environment, but it is not deployment-grade: the state/action space, reward, training duration, and safety model are intentionally small and require validation before any real-world use.
 
 ## Link queue model

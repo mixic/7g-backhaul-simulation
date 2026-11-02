@@ -111,6 +111,48 @@ remains the "max window" path so its coupling term is zero and drop-tail
 halving keeps it below the bandwidth-delay product. The paper reports this as a
 model-level, testable finding; it is not MPTCP conformance evidence.
 
+## Role-fluid multipath paradigm (current direction)
+
+The repository's original framing — predictive scheduling and forecast-assisted
+cache warming — measured a *consequence* of the underlying idea rather than the
+idea itself. The paradigm now implemented is different: **a node has no fixed
+role**. At any moment it may be a router, a server/cache, or a load balancer,
+and the role is a control variable chosen continuously. Because a path
+terminates at a node that may become a server, path selection and role selection
+are one optimisation — something MPTCP cannot express, because its endpoints
+are fixed by the connection.
+
+The multipath protocol that carries this is governed by two rules, each with a
+physical analogue:
+
+- **gradient flow** (water overflowing a river): flow splits over candidate
+  paths in proportion to a potential gradient and spills onto alternatives when
+  a path is full — a local rule with memory, no forecast;
+- **boundary coefficients** (seismic waves crossing the crust): at each medium
+  boundary the transmitted fraction is bounded by the MTU ratio and the
+  reflected part is requeued, making heterogeneous fragmentation a first-class
+  term in the potential.
+
+The model and its first results are in
+[docs/role-fluid-paradigm.md](docs/role-fluid-paradigm.md); run it with:
+
+```powershell
+py tools\benchmark_role_fluid.py --output-dir figures --replicates 6 --seed 2026
+```
+
+The first results are reported as a **negative result for the naive
+controller**: on a six-node heterogeneous topology the local rule delivers less
+and costs more than a sensible static role design (flash crowd: 91.7 % vs
+95.1 % delivery, $16.99 vs $14.79), because its potential mis-prices serving and
+transit. A centralised controller with the true objective is much cheaper
+($10.43) but delivers less under stress (88.7 %). What the experiment does
+establish is conditional: the local rule needs its own unmet-demand signal
+(+1.41 pp delivery), damping is mandatory (share oscillation falls from 0.190 to
+0.031), role churn is the paradigm's hidden cost (hysteresis: 33.8 switches and
+$17.30 at zero, 2.0 switches and $11.95 at 0.05 $), and instability peaks at
+*moderate* path heterogeneity rather than maximal. The paradigm is therefore not
+demonstrated — the conditions it needs are identified.
+
 ### Community status
 
 As of this release there are no external issues, pull requests, forks or
@@ -154,7 +196,8 @@ plan.
 │   ├── peer-mesh.md              # Mesh routing and cache-defense model
 │   ├── positioning-7g.md         # What the "7G" codename does and does not claim
 │   ├── quantum-cooperative-backhaul.md # Quantum-resource abstraction
-│   └── real-packet-and-npu.md    # UDP demo and optional inference guide
+│   ├── real-packet-and-npu.md    # UDP demo and optional inference guide
+│   └── role-fluid-paradigm.md    # Role-fluid paradigm, model and first results
 ├── figures/
 │   ├── 7g_fabric_tick_0.png
 │   ├── 7g_fabric_tick_1.0.png
@@ -179,6 +222,12 @@ plan.
 │   ├── public_safety_benchmark_summary.csv
 │   ├── public_safety_multimedia_qos.png
 │   ├── public_safety_overflow_timeseries.png
+│   ├── role_fluid_cost_calibration.csv # Potential cost-weight calibration sweep
+│   ├── role_fluid_hysteresis.csv # Churn versus responsiveness sweep
+│   ├── role_fluid_paired.csv     # Paired controller differences
+│   ├── role_fluid_per_seed.csv   # Per-seed role-fluid runs
+│   ├── role_fluid_stability.csv  # Damping versus latency-spread sweep
+│   ├── role_fluid_summary.csv    # Role-fluid controller means
 │   ├── s1_ns3_comparison.csv     # Paired ns-3 versus model differences
 │   ├── s1_python_replicates.csv  # Python model runs for scenario S1
 │   ├── telemetry_dashboard.png
@@ -214,6 +263,7 @@ plan.
 │   ├── quantum.py                # Quantum resource and qubit-frame capacity model
 │   ├── link_queue.py             # Bounded FIFO drop-tail queue (validated model)
 │   ├── router.py                 # Soft path allocation
+│   ├── role_fluid.py             # Role-fluid potential-field model and controllers
 │   ├── security.py               # HMAC session credential model
 │   ├── telemetry.py              # INT-style telemetry
 │   └── trends.py                 # Velocity/acceleration forecasting
@@ -221,6 +271,7 @@ plan.
 │   ├── benchmark_brain_inspired.py # Event-driven multipath and multicloud study
 │   ├── benchmark_congestion_control.py # Reno vs MPTCP LIA vs OLIA comparison
 │   ├── benchmark_fair.py         # Independent-policy (ablation) benchmark
+│   ├── benchmark_role_fluid.py   # Role-fluid paradigm comparison and sweeps
 │   ├── benchmark_sensitivity.py  # Paired one-factor-at-a-time sensitivity sweeps
 │   ├── benchmark_vision.py       # CDN, handover, and backhaul policy studies
 │   └── validation_io.py          # Normalize and compare simulator/testbed results
@@ -244,6 +295,7 @@ plan.
 │   ├── test_packet_io.py
 │   ├── test_protocol_models.py
 │   ├── test_quantum_backhaul.py
+│   ├── test_role_fluid.py
 │   ├── test_validation_workflow.py
 │   └── test_vision_benchmark.py
 ├── CITATION.cff                  # Citation metadata (CFF 1.2.0)

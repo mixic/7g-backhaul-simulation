@@ -34,6 +34,18 @@ from .continuity import (
 )
 from .cdn import CachePlacementLearner, SelfScalingContentNetwork
 from .learning import TabularQRoutingAgent
+from .role_fluid import (
+    DEFAULT_WEIGHTS,
+    ROLES,
+    FlowWeights,
+    RoleFluidSimulation,
+    RunMetrics,
+    Scenario,
+    build_links,
+    build_nodes,
+    build_paths,
+    simulate_run,
+)
 from .cooperative import CooperativeBackhaulCoordinator, CooperativeBackhaulDecision
 from .mesh import (
     CacheAdmissionDecision,
@@ -95,6 +107,16 @@ __all__ = [
     "CooperativeBackhaulCoordinator",
     "CooperativeBackhaulDecision",
     "ContentManifest",
+    "DEFAULT_WEIGHTS",
+    "FlowWeights",
+    "RoleFluidSimulation",
+    "ROLES",
+    "RunMetrics",
+    "Scenario",
+    "build_links",
+    "build_nodes",
+    "build_paths",
+    "simulate_run",
     "FragmentReassembler",
     "HandoverDecision",
     "InBandTelemetry",
