@@ -61,6 +61,16 @@ METRIC_UNITS = {
     "goodput_mbps": "Mbps",
     "active_paths_mean": "paths",
     "primary_share_percent": "percent",
+    # RFMP role-transition metrics (validation/rfmp, docs/rfmp-validation.md).
+    "in_order_delivery_percent": "percent",
+    "duplicate_percent": "percent",
+    "handoff_duplicate_percent": "percent",
+    "transition_gap_6s_ms": "ms",
+    "transition_gap_12s_ms": "ms",
+    "reorder_stall_p95_ms": "ms",
+    "reorder_stall_max_ms": "ms",
+    "mean_delivery_delay_ms": "ms",
+    "late_drop_percent": "percent",
 }
 
 

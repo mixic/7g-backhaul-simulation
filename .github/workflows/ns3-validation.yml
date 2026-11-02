@@ -1,9 +1,10 @@
-name: ns-3 cross-validation (scenario S1)
+name: ns-3 cross-validation (scenarios S1 and RT1)
 
-# Runs the external cross-validation experiment described in
-# docs/external-validation.md: builds an ns-3.49 reference implementation of
-# scenario S1, runs both implementations over eight paired seeds, and publishes
-# the comparison report as a build artifact.
+# Runs the external cross-validation experiments described in
+# docs/external-validation.md and docs/rfmp-validation.md: builds ns-3.49
+# reference implementations of scenario S1 (two-path handover) and scenario RT1
+# (RFMP v0.1 role transition), runs both against the Python references, and
+# publishes the paired comparison reports as build artifacts.
 #
 # It is deliberately not part of the pull-request path: a full ns-3 build takes
 # roughly ten minutes, and the comparison is meaningful only when the scenario
@@ -69,11 +70,25 @@ jobs:
             --seeds 1 2 3 4 5 6 7 8 \
             --output-dir output/validation
 
+      - name: Run ns-3 RFMP role-transition reference (5 seeds)
+        run: |
+          NS3_DIR="$HOME/ns-3-dev" SEEDS=5 ./validation/ns3/run-rfmp.sh
+
+      - name: Compare RFMP implementations
+        run: |
+          python -m validation.run_rfmp_experiment \
+            --ns3-csv output/validation/rfmp_ns3.csv \
+            --seeds 1 2 3 4 5 \
+            --output-dir output/validation
+
       - name: Upload comparison artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: s1-ns3-cross-validation
+          name: ns3-cross-validation
           path: |
             output/validation/ns3_s1.csv
             output/validation/s1_comparison.csv
             output/validation/python_*.csv
+            output/validation/rfmp_ns3.csv
+            output/validation/rfmp_python.csv
+            output/validation/rfmp_comparison.csv

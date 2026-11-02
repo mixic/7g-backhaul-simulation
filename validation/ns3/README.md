@@ -1,8 +1,21 @@
-# ns-3 reference implementation of cross-validation scenario S1
+# ns-3 reference implementations
 
-This directory contains the independent packet-level reference used in
-[docs/external-validation.md](../../docs/external-validation.md). It models the
-same scenario as [`../scenario_s1.py`](../scenario_s1.py):
+This directory holds two independent packet-level references:
+
+| Program | Scenario | Specification | Validation report |
+| --- | --- | --- | --- |
+| `s1-multipath-handover.cc` | S1: two-path handover, fixed roles | [external-validation.md](../../docs/external-validation.md) | [external-validation.md](../../docs/external-validation.md) |
+| `rfmp-role-transition.cc` | RT1: RFMP v0.1 role transition | [rfmp-protocol.md](../../docs/rfmp-protocol.md) | [rfmp-validation.md](../../docs/rfmp-validation.md) |
+
+Run them with `./run-s1.sh` and `./run-rfmp.sh` respectively. The Python halves
+are `../../validation/scenario_s1.py` + `run_s1_experiment.py` and
+`../../simulation/rfmp.py` + `run_rfmp_experiment.py`.
+
+## S1: multipath handover with fixed roles
+
+This section describes `s1-multipath-handover.cc`, the packet-level reference
+used in [docs/external-validation.md](../../docs/external-validation.md). It
+models the same scenario as [`../scenario_s1.py`](../scenario_s1.py):
 
 - two point-to-point paths from a client to a server (20 Mbit/s / 5 ms one-way
   delay / 0.1 % loss, and 8 Mbit/s / 25 ms / 0.5 % loss),
@@ -141,4 +154,40 @@ Per run, the program writes one CSV row:
 ```bash
 $NS3_DIR/build/scratch/ns3.49-s1-multipath-handover-default \
     --scenario=s1_handover --seed=3 --out=/tmp/s1.csv --append=0
+```
+
+
+## RT1: RFMP v0.1 role transition
+
+`rfmp-role-transition.cc` implements the protocol specified in
+[docs/rfmp-protocol.md](../../docs/rfmp-protocol.md) for scenario RT1, and is
+compared against the Python discrete-event reference `simulation/rfmp.py` in
+[docs/rfmp-validation.md](../../docs/rfmp-validation.md).
+
+```bash
+NS3_DIR=~/ns-3-dev SEEDS=5 ./run-rfmp.sh
+```
+
+It builds a three-node topology (origin `O`, role-fluid node `X`, demand node
+`D`), two paths `O-X` (20 Mbit/s / 4 ms / MTU 9000 and 6.4 Mbit/s / 20 ms /
+MTU 1200, the rate scaled to emulate the 1.25x MTU overhead) and one edge link
+`X-D` (30 Mbit/s / 2 ms), a 12 Mbit/s constant-bit-rate stream for 20 s, and
+scripted role epochs `forward` / `serve` / `forward` with a 100 ms overlap at
+each boundary.
+
+Both the sender's smooth weighted round-robin and the receiver's reordering
+buffer are implemented in the applications, so the program measures the protocol
+rather than the IP stack. The default FqCoDel disc is removed on the sending
+nodes so the device drop-tail queue (100 packets) matches the Python model.
+
+Per run it writes one CSV row with
+`in_order_delivery_percent`, `duplicate_percent`, `handoff_duplicate_percent`,
+`transition_gap_6s_ms`, `transition_gap_12s_ms`, `reorder_stall_p95_ms`,
+`reorder_stall_max_ms`, `mean_delivery_delay_ms` and `late_drop_percent`.
+`rfmp/rt1_mapping.json` maps these names for `tools/validation_io.py`.
+
+Print the headline numbers of one run with:
+
+```bash
+$NS3_DIR/build/scratch/ns3.49-rfmp-role-transition-default --seed=1 --out=/tmp/rt1.csv --append=0
 ```

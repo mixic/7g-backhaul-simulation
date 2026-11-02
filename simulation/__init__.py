@@ -34,6 +34,7 @@ from .continuity import (
 )
 from .cdn import CachePlacementLearner, SelfScalingContentNetwork
 from .learning import TabularQRoutingAgent
+from .rfmp import RfmpMetrics, RfmpSimulation
 from .role_fluid import (
     DEFAULT_WEIGHTS,
     ROLES,
@@ -110,6 +111,8 @@ __all__ = [
     "DEFAULT_WEIGHTS",
     "FlowWeights",
     "RoleFluidSimulation",
+    "RfmpMetrics",
+    "RfmpSimulation",
     "ROLES",
     "RunMetrics",
     "Scenario",

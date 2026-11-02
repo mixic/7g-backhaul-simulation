@@ -31,11 +31,15 @@ backhauls is carried by a multipath protocol whose two governing rules are:
 
 ## 2. What this document does not claim
 
-- The model is not a protocol. There are no packets on a wire, no ACK clock, no
-  retransmission, no scheduler, and no path manager. It is a control model.
-- It is not cross-validated against ns-3. The transport cross-validation in
-  [external-validation.md](external-validation.md) covers a different
-  (fixed-role, two-path) scenario.
+- The paradigm's *controller* is not proven to beat a static design (Section 6).
+  Separately, the **transition mechanics** are now specified and cross-validated:
+  [`docs/rfmp-protocol.md`](rfmp-protocol.md) and
+  [`docs/rfmp-validation.md`](rfmp-validation.md) compare a Python and an
+  ns-3 implementation of RFMP v0.1 on scenario RT1. That validates the
+  protocol, not the decision policy.
+- It is not cross-validated against ns-3 as a *controller*. The transport
+  cross-validation in [external-validation.md](external-validation.md) covers a
+  different (fixed-role, two-path) scenario.
 - The economics are stipulated. `serve` is an idealised local termination: the
   model has no cache-capacity or hit-ratio dimension yet, so a node that serves
   always can.
@@ -160,9 +164,12 @@ necessary component, not a tuning detail:
 - **No cache capacity.** Serving is idealised; a real cache has finite content,
   a hit ratio, and eviction churn. This is the most important missing dimension,
   because it is what makes "serve everywhere" uneconomic in reality.
-- **No protocol.** No ACK clock, no reordering buffer, no path manager, no
-  failure detector. Cross-validation of role transitions in ns-3 is the next
-  experiment, not a completed one.
+- **The controller model still has no protocol.** The protocol now exists
+  separately (RFMP v0.1, [rfmp-protocol.md](rfmp-protocol.md)) and its transition
+  mechanics are cross-validated ([rfmp-validation.md](rfmp-validation.md)), but
+  the role-fluid controller in this document is not yet wired to it: this model
+  decides roles on 1 s ticks and does not emit packets. Bridging the two is the
+  next experiment, and until then the controller's results remain model-level.
 - **Myopic centralised baseline.** `centralized_greedy` minimises a one-tick
   objective; a lookahead controller would be stronger. The comparison therefore
   understates what centralisation can do, which makes the local result look
@@ -173,14 +180,27 @@ necessary component, not a tuning detail:
 
 ## 9. Next steps, in order
 
-1. Add cache capacity and a hit-ratio curve, so serving has a real marginal cost
+1. **Done — protocol specification.** [`docs/rfmp-protocol.md`](rfmp-protocol.md)
+   specifies RFMP v0.1: roles and the role/boundary interface, data and ACK
+   formats, the sender's scheduler and path state, the receiver's reordering
+   buffer, the ACK clock, the failure detector, the role-transition procedure
+   and the boundary rule.
+2. **Done — role-transition cross-validation in ns-3.**
+   [`docs/rfmp-validation.md`](rfmp-validation.md) compares the Python reference
+   with an ns-3.49 packet-level reference on scenario RT1. All five acceptance
+   criteria fixed before the run pass, with the largest residual at 1.6 µs.
+   The transition interrupts nothing (in-order gap ≈ one packet interval) and
+   costs a 16.3 ms reorder stall, inside the predicted drain bound.
+3. Add cache capacity and a hit-ratio curve, so serving has a real marginal cost
    and a real limit.
-2. Specify the multipath protocol around this controller: path manager, ACK
-   clock, reordering buffer, and the boundary/reflection queue.
-3. Cross-validate role transitions in ns-3 against a fixed-role baseline — the
-   analogous experiment to the transport validation already published.
-4. Compare against a real MPTCP stack, so the multipath claim is measured rather
+4. Close the loop between the two experiments: let the role-selection controller
+   drive the protocol's epochs instead of scripting them, then compare the
+   transition pattern across implementations.
+5. Inject path failure and validate the failure detector and path manager, which
+   v0.1 specifies but does not exercise.
+6. Replace the serialization substitution with real fragmentation and
+   reassembly at a medium boundary, and put a wireless medium on one path.
+7. Compare against a real MPTCP stack, so the multipath claim is measured rather
    than modelled.
-5. Pre-register the acceptance criterion (delivery, churn, cost) before running
-   the next round, following the negative-result discipline of the earlier
-   predictive-scheduling work.
+8. Pre-register the acceptance criterion before the next round, following the
+   negative-result discipline of the earlier predictive-scheduling work.

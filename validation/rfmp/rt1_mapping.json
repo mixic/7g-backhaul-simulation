@@ -1,0 +1,43 @@
+{
+  "scenario": "scenario",
+  "policy": "policy",
+  "seed": "seed",
+  "metrics": {
+    "in_order_delivery_percent": {
+      "column": "in_order_delivery_percent",
+      "unit": "percent"
+    },
+    "duplicate_percent": {
+      "column": "duplicate_percent",
+      "unit": "percent"
+    },
+    "handoff_duplicate_percent": {
+      "column": "handoff_duplicate_percent",
+      "unit": "percent"
+    },
+    "transition_gap_6s_ms": {
+      "column": "transition_gap_6s_ms",
+      "unit": "ms"
+    },
+    "transition_gap_12s_ms": {
+      "column": "transition_gap_12s_ms",
+      "unit": "ms"
+    },
+    "reorder_stall_p95_ms": {
+      "column": "reorder_stall_p95_ms",
+      "unit": "ms"
+    },
+    "reorder_stall_max_ms": {
+      "column": "reorder_stall_max_ms",
+      "unit": "ms"
+    },
+    "mean_delivery_delay_ms": {
+      "column": "mean_delivery_delay_ms",
+      "unit": "ms"
+    },
+    "late_drop_percent": {
+      "column": "late_drop_percent",
+      "unit": "percent"
+    }
+  }
+}

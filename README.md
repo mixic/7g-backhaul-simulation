@@ -153,6 +153,49 @@ $17.30 at zero, 2.0 switches and $11.95 at 0.05 $), and instability peaks at
 *moderate* path heterogeneity rather than maximal. The paradigm is therefore not
 demonstrated — the conditions it needs are identified.
 
+### Protocol specification and ns-3 cross-validation
+
+The paradigm's protocol now exists and has been cross-checked externally.
+[`docs/rfmp-protocol.md`](docs/rfmp-protocol.md) specifies **RFMP v0.1**: data
+and ACK formats, the sender's weighted scheduling and path state, the receiver's
+reordering buffer with deadline, the ACK clock, the failure detector, the
+role-transition procedure and the MTU boundary rule.
+[`simulation/rfmp.py`](simulation/rfmp.py) and
+[`validation/ns3/rfmp-role-transition.cc`](validation/ns3/rfmp-role-transition.cc)
+implement that specification independently, and
+[`docs/rfmp-validation.md`](docs/rfmp-validation.md) reports the paired
+comparison on scenario RT1 (scripted `forward` → `serve` → `forward` epochs with
+a 100 ms overlap at each boundary).
+
+All five acceptance criteria fixed before the run pass, with the largest
+residual at 1.6 µs:
+
+| Metric | ns-3.49 | Python | Δ |
+| --- | ---: | ---: | ---: |
+| In-order delivery (%) | 100.0000 | 100.0000 | 0.0000 |
+| Duplicate rate (%) | 0.9901 | 0.9901 | 0.0000 |
+| Transition gap at 6 s / 12 s (ms) | 0.79 / 0.88 | 0.79 / 0.88 | ≤ 0.0003 |
+| p95 reorder stall (ms) | 16.3128 | 16.3122 | +0.0006 |
+| Mean delivery delay (ms) | 15.5617 | 15.5601 | +0.0016 |
+
+A transition does not interrupt the stream: the in-order release gap is one
+packet interval, and the cost appears as a 16.3 ms reorder stall — inside the
+predicted 20 ms drain bound of the slower path, with duplicates from the overlap
+fully suppressed.
+
+```bash
+NS3_DIR=~/ns-3-dev SEEDS=5 ./validation/ns3/run-rfmp.sh
+py -3 -m validation.run_rfmp_experiment \
+    --ns3-csv output/validation/rfmp_ns3.csv --seeds 1 2 3 4 5 \
+    --output-dir output/validation
+```
+
+What this validates: the transition mechanics, reordering, duplicate
+suppression and the scheduling/boundary rules. What it does not: the
+role-*selection* policy (the epochs are scripted), the ACK clock and failure
+detector (not exercised), wireless physics, and congestion control. Closing the
+loop between the protocol and the controller is the next experiment.
+
 ### Community status
 
 As of this release there are no external issues, pull requests, forks or
@@ -197,6 +240,8 @@ plan.
 │   ├── positioning-7g.md         # What the "7G" codename does and does not claim
 │   ├── quantum-cooperative-backhaul.md # Quantum-resource abstraction
 │   ├── real-packet-and-npu.md    # UDP demo and optional inference guide
+│   ├── rfmp-protocol.md          # RFMP v0.1 protocol specification
+│   ├── rfmp-validation.md        # Role-transition cross-validation report
 │   └── role-fluid-paradigm.md    # Role-fluid paradigm, model and first results
 ├── figures/
 │   ├── 7g_fabric_tick_0.png
@@ -226,6 +271,9 @@ plan.
 │   ├── role_fluid_hysteresis.csv # Churn versus responsiveness sweep
 │   ├── role_fluid_paired.csv     # Paired controller differences
 │   ├── role_fluid_per_seed.csv   # Per-seed role-fluid runs
+│   ├── rfmp_comparison.csv       # ns-3 versus Python RFMP comparison
+│   ├── rfmp_ns3_replicates.csv   # ns-3 RFMP role-transition runs
+│   ├── rfmp_python_replicates.csv # Python RFMP role-transition runs
 │   ├── role_fluid_stability.csv  # Damping versus latency-spread sweep
 │   ├── role_fluid_summary.csv    # Role-fluid controller means
 │   ├── s1_ns3_comparison.csv     # Paired ns-3 versus model differences
@@ -262,6 +310,7 @@ plan.
 │   ├── pretraining.py            # Synthetic congestion forecaster training and ONNX export
 │   ├── quantum.py                # Quantum resource and qubit-frame capacity model
 │   ├── link_queue.py             # Bounded FIFO drop-tail queue (validated model)
+│   ├── rfmp.py                   # RFMP v0.1 Python discrete-event reference
 │   ├── router.py                 # Soft path allocation
 │   ├── role_fluid.py             # Role-fluid potential-field model and controllers
 │   ├── security.py               # HMAC session credential model
@@ -278,9 +327,13 @@ plan.
 ├── validation/
 │   ├── ns3/
 │   │   ├── README.md             # ns-3 build and run instructions
-│   │   ├── run-s1.sh             # Build and run the ns-3 reference
+│   │   ├── rfmp-role-transition.cc # RFMP role-transition reference
+│   │   ├── run-rfmp.sh           # Build and run the RFMP reference
+│   │   ├── run-s1.sh             # Build and run the S1 reference
 │   │   ├── s1-multipath-handover.cc # ns-3 reference implementation
 │   │   └── s1_mapping.json       # Metric mapping for validation_io
+│   ├── rfmp/rt1_mapping.json     # RT1 metric mapping for validation_io
+│   ├── run_rfmp_experiment.py    # RFMP comparison report
 │   ├── run_s1_experiment.py      # Python side + paired comparison report
 │   └── scenario_s1.py            # Shared scenario spec and Python models
 ├── tests/
@@ -295,6 +348,7 @@ plan.
 │   ├── test_packet_io.py
 │   ├── test_protocol_models.py
 │   ├── test_quantum_backhaul.py
+│   ├── test_rfmp.py
 │   ├── test_role_fluid.py
 │   ├── test_validation_workflow.py
 │   └── test_vision_benchmark.py
