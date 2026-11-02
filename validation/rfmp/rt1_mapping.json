@@ -38,6 +38,10 @@
     "late_drop_percent": {
       "column": "late_drop_percent",
       "unit": "percent"
+    },
+    "served_fraction_percent": {
+      "column": "served_fraction_percent",
+      "unit": "percent"
     }
   }
 }

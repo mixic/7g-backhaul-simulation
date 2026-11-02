@@ -247,9 +247,28 @@ Topology: origin `O`, role-fluid node `X`, demand node `D`.
 
 Phases: `forward` on `[0, 6)`, `serve` on `[6, 12)`, `forward` on `[12, 20)`.
 
+**Cache rule (RT2).** In RT2 the serving node starts with a cold cache. During
+the serve epoch its hit ratio is
+
+```
+hit(t) = min(1, (t − 6 s) / WARM_SECONDS)
+```
+
+with `WARM_SECONDS = 8 s`. Packet `k` in the serve epoch is served by `X` when
+`hash_unit(seed, k) < hit(t_k)` and by `O` otherwise, where `hash_unit` is the
+same deterministic uniform used for the jitter. The assignment is **exclusive**:
+exactly one node sources each sequence number, so RT2 produces no duplicates and
+does not need the overlap window of RT1. Misses keep using the RT1 paths, so a
+cold-cache transition is a *gradual* handover rather than a switch.
+
+**Scenarios.** RT1 (`warm cache`, overlap handoff) validates the transition
+mechanics; RT2 (`cold cache`, hit-based split) validates the cache-aware
+transition, where serving capacity ramps up while the demand stream is already
+live.
+
 Metrics, reported per replicate and as paired differences between
-implementations: in-order delivery, duplicate rate, transition gaps, p95 and max
-stall, mean one-way delay, and late drops.
+implementations: in-order delivery, duplicate rate, served fraction, transition
+gaps, p95 and max stall, mean one-way delay, and late drops.
 
 ## 12. Acceptance criteria (fixed before running)
 
@@ -257,9 +276,12 @@ The Python and ns-3 implementations are expected to agree on:
 
 1. in-order delivery within **0.5 percentage points**;
 2. duplicate rate within **0.1 percentage points**;
-3. p95 reorder stall within **15 %**;
-4. transition gap within **5 ms**;
-5. predicted transition behaviour: **zero in-order gap** with a stall spike of
-   at most the old path's drain time (≈20 ms) in the handoff window.
+3. served fraction within **0.5 percentage points** (RT2);
+4. p95 reorder stall within **15 %** relative;
+5. transition gap within **5 ms**;
+6. predicted transition behaviour: RT1 shows **zero in-order gap** with a stall
+   spike of at most the old path's drain time (≈20 ms); RT2 shows a
+   **gradual** handover whose served fraction equals the mean hit ratio
+   (3/8 of the epoch for the 6 s epoch and 8 s warm-up above).
 
 A failure of any criterion is reported as a discrepancy, not as a tuning target.

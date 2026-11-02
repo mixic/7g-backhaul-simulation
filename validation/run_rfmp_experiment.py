@@ -57,6 +57,7 @@ METRICS: tuple[str, ...] = (
     "reorder_stall_p95_ms",
     "reorder_stall_max_ms",
     "mean_delivery_delay_ms",
+    "served_fraction_percent",
     "late_drop_percent",
 )
 
@@ -70,18 +71,25 @@ ACCEPTANCE = {
 }
 
 
+MODES: tuple[tuple[str, str], ...] = (
+    ("rt1", "rt1_role_transition"),
+    ("rt2", "rt2_cache_transition"),
+)
+
+
 def _python_replicates(path: Path, seeds: Sequence[int]) -> list[dict[str, object]]:
     rows: list[dict[str, object]] = []
-    for seed in seeds:
-        metrics = asdict(simulate(seed))
-        row: dict[str, object] = {
-            "scenario": "rt1_role_transition",
-            "policy": "rfmp_python",
-            "seed": seed,
-        }
-        for name in METRICS:
-            row[name] = float(metrics[name])
-        rows.append(row)
+    for mode, scenario in MODES:
+        for seed in seeds:
+            metrics = asdict(simulate(seed, mode=mode))
+            row: dict[str, object] = {
+                "scenario": scenario,
+                "policy": "rfmp_python",
+                "seed": seed,
+            }
+            for name in METRICS:
+                row[name] = float(metrics[name])
+            rows.append(row)
     with path.open("w", newline="", encoding="utf-8") as file:
         writer = csv.DictWriter(file, fieldnames=list(rows[0]))
         writer.writeheader()

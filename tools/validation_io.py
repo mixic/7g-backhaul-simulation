@@ -70,6 +70,7 @@ METRIC_UNITS = {
     "reorder_stall_p95_ms": "ms",
     "reorder_stall_max_ms": "ms",
     "mean_delivery_delay_ms": "ms",
+    "served_fraction_percent": "percent",
     "late_drop_percent": "percent",
 }
 

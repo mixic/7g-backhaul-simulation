@@ -26,6 +26,7 @@ from simulation.rfmp import (
     AckClock,
     RfmpSimulation,
     active_sources,
+    hash_unit,
     jitter,
     simulate,
 )
@@ -151,6 +152,34 @@ class ScenarioTests(unittest.TestCase):
         self.assertLess(metrics.transition_gap_6s_ms, 2.0)
         self.assertLess(metrics.transition_gap_12s_ms, 2.0)
         self.assertEqual(metrics.late_drop_percent, 0.0)
+
+    def test_rt2_cache_warms_and_sources_only_hits(self):
+        metrics = simulate(1, mode="rt2")
+        self.assertAlmostEqual(metrics.in_order_delivery_percent, 100.0, places=6)
+        self.assertEqual(metrics.duplicate_percent, 0.0)
+        # Linear warm-up over 8 s inside a 6 s serve epoch averages 3/8.
+        self.assertAlmostEqual(metrics.served_fraction_percent, 37.5, places=1)
+
+    def test_rt2_with_a_warm_cache_serves_everything(self):
+        metrics = simulate(1, mode="rt2", warm_seconds=0.0)
+        self.assertAlmostEqual(metrics.served_fraction_percent, 100.0, places=6)
+        self.assertEqual(metrics.duplicate_percent, 0.0)
+
+    def test_rt2_is_deterministic(self):
+        self.assertEqual(simulate(4, mode="rt2"), simulate(4, mode="rt2"))
+
+    def test_hit_fraction_is_zero_outside_the_serve_epoch(self):
+        simulation = RfmpSimulation(1, mode="rt2")
+        self.assertEqual(simulation.hit_fraction(0.0), 0.0)
+        self.assertEqual(simulation.hit_fraction(5.999), 0.0)
+        self.assertEqual(simulation.hit_fraction(12.0), 0.0)
+        self.assertAlmostEqual(simulation.hit_fraction(10.0), 0.5)
+
+    def test_hash_unit_is_a_probability(self):
+        for index in (0, 1, 4999, 24999):
+            value = hash_unit(2, index)
+            self.assertGreaterEqual(value, 0.0)
+            self.assertLess(value, 1.0)
 
     def test_arrival_count_includes_the_handoff_duplicates(self):
         simulation = RfmpSimulation(1)

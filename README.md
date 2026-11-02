@@ -200,11 +200,19 @@ py -3 -m validation.run_rfmp_experiment \
     --output-dir output/validation
 ```
 
+A second scenario, **RT2**, removes the warm-cache assumption: the serving
+node starts cold, its hit ratio ramps linearly from 0 to 1 over 8 s, and hits
+and misses are sourced exclusively by `X` and `O`. Both implementations agree to
+four decimals on the served fraction (37.5167 %, the exact mean of the ramp),
+with zero duplicates and transition gaps of 5.7 ms / 10.7 ms: a cold cache turns
+the transition from a switch into a ramp instead of losing the stream.
+
 What this validates: the transition mechanics, reordering, duplicate
-suppression and the scheduling/boundary rules. What it does not: the
-role-*selection* policy (the epochs are scripted), the ACK clock and failure
-detector (not exercised), wireless physics, and congestion control. Closing the
-loop between the protocol and the controller is the next experiment.
+suppression, the scheduling/boundary rules and the cache-aware split. What it
+does not: the role-*selection* policy (the epochs are scripted), the ACK clock
+and failure detector (not exercised), wireless physics, and congestion control.
+The cache is a stipulated linear warm-up with no eviction or popularity curve.
+Closing the loop between the protocol and the controller is the next experiment.
 
 ### Community status
 

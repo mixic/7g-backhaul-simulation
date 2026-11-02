@@ -188,8 +188,10 @@ delivery; it does not close the gap to the static design:
 2. **Done — cache capacity and hit-ratio limit** in this model.
 3. Add eviction and a popularity curve, so caches have churn and a real
    hit-ratio function.
-4. Extend the RFMP scenario to a cold-cache transition (RT2): the protocol
-   currently assumes the serving node can answer immediately.
+4. **Done — cold-cache transition (RT2).** The RFMP scenario now ramps a cold
+   cache while the stream is live; the served fraction matches the stipulated
+   warm-up to four decimals in both implementations
+   ([rfmp-validation.md](rfmp-validation.md)).
 5. Close the loop: let this controller drive the protocol's epochs instead of
    scripting them.
 6. Compare against a real MPTCP stack, so the multipath claim is measured rather

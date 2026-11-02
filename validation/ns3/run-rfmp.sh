@@ -37,9 +37,11 @@ fi
 
 rm -f "$OUT"
 first=1
-for seed in $(seq 1 "$SEEDS"); do
-  "$BIN" --seed="$seed" --out="$OUT" --append=$((1 - first))
-  first=0
+for mode in rt1 rt2; do
+  for seed in $(seq 1 "$SEEDS"); do
+    "$BIN" --seed="$seed" --mode="$mode" --out="$OUT" --append=$((1 - first))
+    first=0
+  done
 done
 echo "ns-3 replicates: $(($(wc -l < "$OUT") - 1))"
 echo "CSV: $OUT"

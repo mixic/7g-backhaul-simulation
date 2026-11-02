@@ -66,6 +66,18 @@ JITTER_SECONDS = 0.05e-3
 SERVE_START = 6.0
 SERVE_END = 12.0
 
+#: Time a cold cache needs to reach full hit ratio in scenario RT2.
+RT2_WARM_SECONDS = 8.0
+
+
+def hash_unit(seed: int, index: int) -> float:
+    """Deterministic uniform in [0, 1); identical in the ns-3 implementation."""
+    value = (seed * 0x27D4EB2F + index + 0x165667B1) & 0xFFFFFFFF
+    value ^= value >> 15
+    value = (value * 0x2545F491) & 0xFFFFFFFF
+    value ^= value >> 13
+    return value / 4294967295.0
+
 
 def jitter(seed: int, index: int) -> float:
     """Deterministic send-time jitter, identical to the ns-3 implementation.
@@ -124,6 +136,7 @@ class RfmpMetrics:
     reorder_stall_max_ms: float
     mean_delivery_delay_ms: float
     late_drop_percent: float
+    served_fraction_percent: float
     released_packets: int
     arrivals: int
 
@@ -191,8 +204,17 @@ class AckClock:
 class RfmpSimulation:
     """Packet-level simulator for scenario RT1."""
 
-    def __init__(self, seed: int = 1) -> None:
+    def __init__(
+        self,
+        seed: int = 1,
+        mode: str = "rt1",
+        warm_seconds: float = RT2_WARM_SECONDS,
+    ) -> None:
+        if mode not in {"rt1", "rt2"}:
+            raise ValueError(f"Unknown scenario mode: {mode}")
         self.seed = seed
+        self.mode = mode
+        self.warm_seconds = warm_seconds
         self.queues = {
             "OX0": DropTailQueue(QUEUE_LIMIT),
             "OX1": DropTailQueue(QUEUE_LIMIT),
@@ -205,6 +227,22 @@ class RfmpSimulation:
             "OX1": deque(),
         }
         self._next_control = 0.0
+
+    def hit_fraction(self, timestamp: float) -> float:
+        """Hit ratio of the serving node in RT2 (0 outside the serve epoch)."""
+        if not (SERVE_START <= timestamp < SERVE_END):
+            return 0.0
+        if self.warm_seconds <= 0.0:
+            return 1.0
+        return min(1.0, (timestamp - SERVE_START) / self.warm_seconds)
+
+    def _sources(self, timestamp: float, sequence: int) -> tuple[str, ...]:
+        if self.mode == "rt1":
+            return active_sources(timestamp)
+        hit = self.hit_fraction(timestamp)
+        if hit <= 0.0:
+            return ("O",)
+        return ("X",) if hash_unit(self.seed, sequence) < hit else ("O",)
 
     # -- sender -----------------------------------------------------------
 
@@ -249,13 +287,19 @@ class RfmpSimulation:
         origin_offers: list[tuple[float, int, str, str]] = []
         edge_offers: list[tuple[float, int, str, str, float]] = []
         dropped_at_source = 0
+        served_by_x = 0
+        serve_epoch_packets = 0
 
         for sequence in range(PACKET_COUNT):
             timestamp = max(
                 0.0,
                 sequence * PACKET_INTERVAL + jitter(self.seed, sequence),
             )
-            for source in active_sources(timestamp):
+            if SERVE_START <= timestamp < SERVE_END:
+                serve_epoch_packets += 1
+            for source in self._sources(timestamp, sequence):
+                if source == "X":
+                    served_by_x += 1
                 if source == "O":
                     path_index = self._choose_path(timestamp)
                     link = PATHS[path_index]
@@ -304,7 +348,13 @@ class RfmpSimulation:
             )
 
         arrivals.sort(key=lambda item: (item[0], item[1]))
-        return self._receive(arrivals, dropped_at_source + dropped_at_edge)
+        metrics = self._receive(arrivals, dropped_at_source + dropped_at_edge)
+        metrics.served_fraction_percent = (
+            100.0 * served_by_x / serve_epoch_packets
+            if self.mode == "rt2" and serve_epoch_packets
+            else 0.0
+        )
+        return metrics
 
     def _receive(
         self,
@@ -387,6 +437,7 @@ class RfmpSimulation:
                 if delivery_delays
                 else 0.0
             ),
+            served_fraction_percent=0.0,
             late_drop_percent=100.0 * (late + dropped) / PACKET_COUNT,
             released_packets=released,
             arrivals=len(arrivals),
@@ -412,6 +463,10 @@ def _percentile(values: Sequence[float], percentile: float) -> float:
     return ordered[lower] + (ordered[upper] - ordered[lower]) * fraction
 
 
-def simulate(seed: int = 1) -> RfmpMetrics:
-    """Run one RT1 replicate."""
-    return RfmpSimulation(seed).run()
+def simulate(
+    seed: int = 1,
+    mode: str = "rt1",
+    warm_seconds: float = RT2_WARM_SECONDS,
+) -> RfmpMetrics:
+    """Run one replicate of RT1 (warm cache) or RT2 (cold cache)."""
+    return RfmpSimulation(seed, mode=mode, warm_seconds=warm_seconds).run()

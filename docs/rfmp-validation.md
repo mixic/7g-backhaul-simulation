@@ -76,6 +76,8 @@ incoming source, 50 ms tail for the outgoing one).
 
 ## 4. Results (5 paired seeds, means)
 
+### 4.1 RT1 — warm-cache transition
+
 | Metric | ns-3.49 | Python | Δ (ns-3 − Python) | Criterion | Verdict |
 | --- | ---: | ---: | ---: | --- | --- |
 | In-order delivery (%) | 100.0000 | 100.0000 | 0.0000 | ≤ 0.5 pp | **PASS** |
@@ -88,9 +90,37 @@ incoming source, 50 ms tail for the outgoing one).
 | Mean delivery delay (ms) | 15.5617 | 15.5601 | +0.0016 | — | informational |
 | Late drops (%) | 0.0000 | 0.0000 | 0.0000 | — | informational |
 
+### 4.2 RT2 — cold-cache transition
+
+RT2 starts `X` with a cold cache: during the serve epoch its hit ratio ramps
+linearly from 0 to 1 over 8 s, hits are sourced by `X` and misses by `O`, and the
+assignment is exclusive (no overlap, no duplicates).
+
+| Metric | ns-3.49 | Python | Δ (ns-3 − Python) | Criterion | Verdict |
+| --- | ---: | ---: | ---: | --- | --- |
+| In-order delivery (%) | 100.0000 | 100.0000 | 0.0000 | ≤ 0.5 pp | **PASS** |
+| Duplicate rate (%) | 0.0000 | 0.0000 | 0.0000 | ≤ 0.1 pp | **PASS** |
+| Served fraction (%) | 37.5167 | 37.5167 | 0.0000 | ≤ 0.5 pp | **PASS** |
+| Transition gap at 6 s (ms) | 5.7377 | 5.7374 | +0.0002 | ≤ 5 ms | **PASS** |
+| Transition gap at 12 s (ms) | 10.6507 | 10.6502 | +0.0004 | ≤ 5 ms | **PASS** |
+| Reorder stall, p95 (ms) | 16.3809 | 16.3776 | +0.0033 | ≤ 15 % rel. | **PASS** |
+| Reorder stall, max (ms) | 21.0778 | 21.0706 | +0.0072 | — | informational |
+| Mean delivery delay (ms) | 20.2753 | 20.2721 | +0.0033 | — | informational |
+| Late drops (%) | 0.0000 | 0.0000 | 0.0000 | — | informational |
+
+A cold cache changes what a transition *is*. The served fraction is 37.52 %, the
+exact mean of the linear warm-up over the 6 s epoch (3/8), and identical to four
+decimals in both implementations. The transition stops being a switch and
+becomes a ramp: 62.5 % of the epoch still transits the satellite path, which is
+why mean delivery delay rises to 20.3 ms (RT1: 15.6 ms) and the in-order gap
+grows to 5.7 ms at the start and 10.7 ms at the end of the epoch. The maximum
+reorder stall rises to 21.1 ms, bounded by the slowest path rather than by the
+handoff window. Duplicates are zero because exclusive sourcing needs no overlap
+window: the overlap in RT1 is a cost that a cache-aware transition does not pay.
+
 ## 5. What the numbers show
 
-1. **A transition does not interrupt the stream.** The in-order release gap at
+1. **A warm-cache transition does not interrupt the stream.** The in-order release gap at
    both boundaries is ≈ 0.8 ms, which is exactly one packet interval: the stream
    never pauses. The spec predicted a zero gap; the measured value is the
    inter-packet spacing, not an interruption.
@@ -121,6 +151,10 @@ incoming source, 50 ms tail for the outgoing one).
   mechanics. They say nothing about whether a node *should* switch. That is a
   different experiment, and it currently lives in the role-fluid model, where
   the local rule does not yet beat a static design.
+- **The cache is a linear warm-up.** No eviction, no popularity curve, no
+  request-level accounting: RT2's hit ratio is a stipulated ramp, so the
+  measured 37.5 % served fraction validates the *implementation* of that rule,
+  not the realism of the curve.
 - **No failure, no loss, no congestion.** Failure detection, path removal and
   re-addition are specified but not exercised here.
 - **One topology, one rate.** No sensitivity analysis over path asymmetry,
@@ -134,9 +168,9 @@ Requirements: Python 3.10+, and Linux or WSL with a C++17 toolchain, cmake and
 an ns-3.49 tree (see [validation/ns3/README.md](../validation/ns3/README.md)).
 
 ```bash
-# 1. ns-3 reference, 5 seeds
+# 1. ns-3 reference, 5 seeds, both scenarios (RT1 and RT2)
 NS3_DIR=~/ns-3-dev SEEDS=5 ./validation/ns3/run-rfmp.sh
-#    -> output/validation/rfmp_ns3.csv
+#    -> output/validation/rfmp_ns3.csv (10 rows)
 
 # 2. Python reference, normalization and paired comparison
 py -3 -m validation.run_rfmp_experiment \

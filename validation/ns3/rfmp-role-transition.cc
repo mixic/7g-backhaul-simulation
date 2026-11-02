@@ -72,6 +72,7 @@ constexpr double HANDOFF_TAIL = 0.05;
 constexpr double REORDER_DEADLINE = 0.2;
 constexpr double SERVE_START = 6.0;
 constexpr double SERVE_END = 12.0;
+constexpr double RT2_WARM_SECONDS = 8.0;
 constexpr uint32_t QUEUE_LIMIT = 100;
 constexpr double PATH0_RATE_MBPS = 20.0;
 constexpr double PATH1_RATE_MBPS = 6.4; // 8 / 1.25 effective
@@ -109,6 +110,30 @@ PacketTime(uint32_t seed, uint64_t index)
     return std::max(0.0, static_cast<double>(index) * INTERVAL + Jitter(seed, index));
 }
 
+double
+HashUnit(uint32_t seed, uint64_t index)
+{
+    uint32_t value = seed * 0x27D4EB2Fu + static_cast<uint32_t>(index) + 0x165667B1u;
+    value ^= value >> 15;
+    value *= 0x2545F491u;
+    value ^= value >> 13;
+    return static_cast<double>(value) / 4294967295.0;
+}
+
+double
+HitFraction(double timestamp, double warmSeconds)
+{
+    if (timestamp < SERVE_START || timestamp >= SERVE_END)
+    {
+        return 0.0;
+    }
+    if (warmSeconds <= 0.0)
+    {
+        return 1.0;
+    }
+    return std::min(1.0, (timestamp - SERVE_START) / warmSeconds);
+}
+
 bool
 OriginActive(double timestamp)
 {
@@ -127,12 +152,19 @@ class RfmpSender : public Application
   public:
     static TypeId GetTypeId();
 
-    void Configure(uint32_t seed, Ipv4Address path0, Ipv4Address path1, bool dualPath)
+    void Configure(uint32_t seed,
+                   Ipv4Address path0,
+                   Ipv4Address path1,
+                   bool dualPath,
+                   bool rt2 = false,
+                   double warmSeconds = RT2_WARM_SECONDS)
     {
         m_seed = seed;
         m_remotes[0] = path0;
         m_remotes[1] = path1;
         m_dualPath = dualPath;
+        m_rt2 = rt2;
+        m_warmSeconds = warmSeconds;
         m_log.resize(dualPath ? 2 : 1);
         m_deficit.assign(m_dualPath ? 2 : 1, 0.0);
         m_weights.assign(m_dualPath ? 2 : 1, 0.0);
@@ -152,7 +184,18 @@ class RfmpSender : public Application
         for (uint64_t sequence = 0; sequence < PACKET_COUNT; ++sequence)
         {
             const double timestamp = PacketTime(m_seed, sequence);
-            const bool active = m_dualPath ? OriginActive(timestamp) : ServingActive(timestamp);
+            bool active;
+            if (!m_rt2)
+            {
+                active = m_dualPath ? OriginActive(timestamp) : ServingActive(timestamp);
+            }
+            else
+            {
+                const double hit = HitFraction(timestamp, m_warmSeconds);
+                const bool isHit = hit > 0.0 && HashUnit(m_seed, sequence) < hit;
+                // The origin emits the misses, the serving node emits the hits.
+                active = m_dualPath ? !isHit : isHit;
+            }
             if (active)
             {
                 Simulator::Schedule(Seconds(timestamp), &RfmpSender::SendOne, this, sequence, timestamp);
@@ -238,6 +281,8 @@ class RfmpSender : public Application
     Ipv4Address m_remotes[2];
     uint32_t m_seed{1};
     bool m_dualPath{true};
+    bool m_rt2{false};
+    double m_warmSeconds{RT2_WARM_SECONDS};
     std::vector<std::deque<std::pair<double, double>>> m_log;
     std::vector<double> m_deficit;
     std::vector<double> m_weights;
@@ -321,6 +366,8 @@ class RfmpReceiver : public Application
     uint64_t handoffDuplicates{0};
     uint64_t released{0};
     uint64_t late{0};
+    uint64_t serveEpochArrivals{0};
+    uint64_t serveEpochFromX{0};
     std::vector<double> stalls;
     std::vector<double> delays;
     std::vector<std::pair<double, uint64_t>> releases;
@@ -382,6 +429,14 @@ class RfmpReceiver : public Application
             std::memcpy(&header, buffer, sizeof(header));
             const double now = Simulator::Now().GetSeconds();
             ++arrivals;
+            if (header.sendTime >= SERVE_START && header.sendTime < SERVE_END)
+            {
+                ++serveEpochArrivals;
+                if (header.source == 1)
+                {
+                    ++serveEpochFromX;
+                }
+            }
 
             bool duplicate = false;
             if (header.seq < m_nextExpected)
@@ -480,13 +535,23 @@ main(int argc, char* argv[])
 {
     uint32_t seed = 1;
     std::string outputPath = "rt1.csv";
+    std::string mode = "rt1";
+    double warmSeconds = RT2_WARM_SECONDS;
     bool append = false;
 
     CommandLine cmd(__FILE__);
     cmd.AddValue("seed", "replicate seed (selects the jitter sequence)", seed);
     cmd.AddValue("out", "CSV output path", outputPath);
+    cmd.AddValue("mode", "rt1 (warm cache) or rt2 (cold cache transition)", mode);
+    cmd.AddValue("warm", "RT2 cache warm-up time in seconds", warmSeconds);
     cmd.AddValue("append", "append to an existing CSV", append);
     cmd.Parse(argc, argv);
+
+    if (mode != "rt1" && mode != "rt2")
+    {
+        NS_FATAL_ERROR("Unknown mode: " << mode);
+    }
+    const bool rt2 = mode == "rt2";
 
     NodeContainer nodes;
     nodes.Create(3); // 0 = O, 1 = X, 2 = D
@@ -541,7 +606,7 @@ main(int argc, char* argv[])
     const Ipv4Address edgeAddress = interfaces[2].GetAddress(1);
 
     Ptr<RfmpSender> origin = CreateObject<RfmpSender>();
-    origin->Configure(seed, path0Address, path1Address, true);
+    origin->Configure(seed, path0Address, path1Address, true, rt2, warmSeconds);
     nodes.Get(0)->AddApplication(origin);
     origin->SetStartTime(Seconds(0.0));
     origin->SetStopTime(Seconds(DURATION + 1.0));
@@ -553,7 +618,7 @@ main(int argc, char* argv[])
     forwarder->SetStopTime(Seconds(DURATION + 1.0));
 
     Ptr<RfmpSender> serving = CreateObject<RfmpSender>();
-    serving->Configure(seed, edgeAddress, edgeAddress, false);
+    serving->Configure(seed, edgeAddress, edgeAddress, false, rt2, warmSeconds);
     nodes.Get(1)->AddApplication(serving);
     serving->SetStartTime(Seconds(0.0));
     serving->SetStopTime(Seconds(DURATION + 1.0));
@@ -592,19 +657,27 @@ main(int argc, char* argv[])
     {
         out << "scenario,policy,seed,in_order_delivery_percent,duplicate_percent,"
                "handoff_duplicate_percent,transition_gap_6s_ms,transition_gap_12s_ms,"
-               "reorder_stall_p95_ms,reorder_stall_max_ms,mean_delivery_delay_ms,late_drop_percent\n";
+               "reorder_stall_p95_ms,reorder_stall_max_ms,mean_delivery_delay_ms,"
+               "served_fraction_percent,late_drop_percent\n";
     }
-    out << "rt1_role_transition,rfmp_ns3," << seed << "," << delivery << "," << duplicateRate << ","
-        << handoffRate << "," << TransitionGap(receiver->releases, SERVE_START) << ","
+    const double servedFraction =
+        (rt2 && receiver->serveEpochArrivals > 0)
+            ? 100.0 * static_cast<double>(receiver->serveEpochFromX) /
+                  static_cast<double>(receiver->serveEpochArrivals)
+            : 0.0;
+    out << (rt2 ? "rt2_cache_transition" : "rt1_role_transition") << ",rfmp_ns3," << seed << ","
+        << delivery << "," << duplicateRate << "," << handoffRate << ","
+        << TransitionGap(receiver->releases, SERVE_START) << ","
         << TransitionGap(receiver->releases, SERVE_END) << ","
         << Percentile(receiver->stalls, 95.0) * 1000.0 << ","
         << (receiver->stalls.empty() ? 0.0 : *std::max_element(receiver->stalls.begin(),
                                                                receiver->stalls.end()) *
                                                   1000.0)
-        << "," << meanDelay << "," << latePercent << "\n";
+        << "," << meanDelay << "," << servedFraction << "," << latePercent << "\n";
     out.close();
 
-    std::printf("rt1 seed=%u released=%llu arrivals=%llu duplicates=%llu\n",
+    std::printf("%s seed=%u released=%llu arrivals=%llu duplicates=%llu\n",
+                rt2 ? "rt2" : "rt1",
                 seed,
                 static_cast<unsigned long long>(receiver->released),
                 static_cast<unsigned long long>(receiver->arrivals),
