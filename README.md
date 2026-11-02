@@ -63,6 +63,8 @@ The CDN direction is inspired by Milan Nikolic's University of Bern master's the
 │   ├── router.py                 # Soft path allocation
 │   ├── telemetry.py              # INT-style telemetry
 │   └── trends.py                 # Velocity/acceleration forecasting
+├── tools/
+│   └── benchmark_vision.py       # Reproducible synthetic policy comparison
 ├── tests/
 ├── Ni10.pdf
 ├── LICENSE
@@ -103,6 +105,99 @@ The quantum-assisted architecture and classical/quantum MTU distinction are
 described in [docs/quantum-cooperative-backhaul.md](docs/quantum-cooperative-backhaul.md).
 The loopback packet test and optional ONNX inference prerequisites and limits are
 documented in [docs/real-packet-and-npu.md](docs/real-packet-and-npu.md).
+The long-horizon planetary backhaul and orbital AI edge vision is presented in
+[docs/7g-backhaul-vision-paper.md](docs/7g-backhaul-vision-paper.md).
+The paper proposes a typed temporal topology model to coordinate across
+standardized OSI/protocol layers, while retaining existing packet
+encapsulation and defining testable hypotheses for predictability, security,
+and interoperability.
+Download the typeset [paper PDF](docs/7g-backhaul-vision-paper.pdf) or use the
+[LaTeX source](docs/7g-backhaul-vision-paper.tex).
+The paper now includes a chapter on AI- and NPU-assisted TCP transport
+optimization, distinguishing router packet-processing hardware from neural
+inference hardware and documenting congestion-control and deployment limits.
+Its related-work section cites closely matching heterogeneous-MPTCP, video
+scheduling, reinforcement-learning, and real-time multipath-media studies;
+it treats them as component precedents, not proof that the full proposed
+network/content/cloud combination is novel.
+
+The paper's synthetic policy comparison can be regenerated with:
+
+```powershell
+py tools\benchmark_vision.py --output-dir figures --replicates 30 --seed 2026
+```
+
+This writes the summary CSV and comparison plots into `figures/`. The plot
+labels distinguish a single-path reference, a reactive multipath baseline
+(6G-oriented), and the proposed predictive-cooperative policy. These are
+experiment-specific simulated policies, not 5G/6G/7G standards
+implementations or measurements of deployed networks. The main benchmark
+shares a path allocator between its reactive and predictive multipath
+policies, so similar goodput is expected; it does not yet test the full
+AI-assisted failure reorganization or Kubernetes/multicloud proposal.
+Methodology, the side-by-side architecture comparison, results, figures, and
+limitations are documented in the paper.
+The same command also generates a public-safety handover study comparing
+single-path switching, reactive multipath, predictive overflow multipath, and
+predictive multipath with selective media assist. Its real-time multimedia
+KPIs include on-time video-frame and audio-packet delivery, frame delay, audio
+delay variation, total video stall, longest freeze, explicit handover
+interruption, duplicate-packet ratio, and mean duplicated-media payload rate.
+The media-assist overhead is reported both as duplicate packets relative to
+original packets and as Mbps of duplicated payload; the packet ratio is not a
+capacity percentage. Results are in
+`figures/public_safety_benchmark_summary.csv` and
+`figures/public_safety_multimedia_qos.png`.
+
+The separate cooperative path/cloud failure study can be run with:
+
+```powershell
+py tools\benchmark_brain_inspired.py --output-dir figures --replicates 20 --seed 2026
+```
+
+This SimPy event-driven abstraction queues individual real-time media packets
+on finite-buffer path servers, serializes them at modeled link rates, applies
+path propagation delay/jitter/loss, and reconstructs each video frame from
+four required segments against a 150 ms deadline. Audio packets have a 50 ms
+deadline. Aggregate bulk demand remains a per-second fluid load used to
+estimate cross-traffic pressure and service capacity; bulk packets are not
+simulated individually. The cloud model includes region health and replica
+startup delays, but does not run Kubernetes or a cloud provider.
+
+The six matched policy arms separate reactive routing, predictive path
+activation, cloud pre-warming, and selective media duplication. Three paired
+scenario profiles cover nominal load, peak demand, and correlated terrestrial
+outage with slower setup/startup. Output CSV rows contain means, marginal
+intervals, and paired differences from the reactive baseline; generated plots
+are `figures/brain_inspired_cooperative_benchmark.png` and
+`figures/brain_inspired_cooperative_resources.png`, plus
+`figures/brain_inspired_cooperative_effects.png` with paired effect intervals,
+`figures/brain_inspired_cooperative_timeseries.png` with paired-seed
+load/capacity and frame-QoS timelines around injected faults. These are still synthetic
+simulation results, not trained distributed AI, a measured 6G baseline, or
+evidence of deployed-network superiority. The zero-recovery points are
+explicitly marked; they mean the modeled QoS target was already met at the
+failure instant. Capacity-time and duplicate payload are resource costs, not
+benefits by themselves.
+
+The default 20-seed results attribute most nominal video-QoS improvement to
+prepared cloud capacity: prepared-cloud-only gains 8.24 percentage points in
+video on-time delivery over the reactive baseline, while predictive paths
+alone gain 0.13 points. In the modeled correlated outage, prepared cloud
+improves video on-time delivery from 87.70% to 98.00%; selective duplication
+in the full cooperative arm reduces p95 delay among reconstructed frames
+from about 129 ms to 33 ms at 5.52% duplicate-payload overhead. These effects
+are conditional on the synthetic model and do not establish that the overall
+design outperforms real 6G or any deployed network.
+
+To rebuild the paper from the Markdown source with Pandoc and MiKTeX, run these
+commands from the repository root in PowerShell:
+
+```powershell
+pandoc --from=markdown+tex_math_single_backslash --standalone --table-of-contents --toc-depth=3 --shift-heading-level-by=-1 --metadata lang=en-US --variable documentclass=article --variable fontsize=11pt --variable geometry:margin=1in --variable linestretch=1.15 --variable colorlinks=true --variable linkcolor=blue --variable urlcolor=blue --include-in-header=docs\7g-backhaul-author.tex --output docs\7g-backhaul-vision-paper.tex docs\7g-backhaul-vision-paper.md
+pdflatex --enable-installer --interaction=nonstopmode --halt-on-error --output-directory=docs docs\7g-backhaul-vision-paper.tex
+pdflatex --enable-installer --interaction=nonstopmode --halt-on-error --output-directory=docs docs\7g-backhaul-vision-paper.tex
+```
 
 Run the local UDP packet demonstration independently of the simulation:
 

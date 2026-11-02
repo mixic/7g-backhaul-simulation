@@ -16,7 +16,7 @@ key-material generation. Its `max_qubits_per_frame` is a **quantum frame
 capacity**, measured in qubits; it is not an Ethernet/IP MTU and must not be
 compared to byte counts. The model translates qubit attempts and a configured
 fidelity factor into a simulated key-bit buffer. This is only a capacity
-abstraction—not a QKD protocol, entanglement-distribution protocol, security
+abstraction, not a QKD protocol, entanglement-distribution protocol, security
 proof, or real random-key generator.
 
 When classical content traverses a multi-link mesh route, each `MeshLink`

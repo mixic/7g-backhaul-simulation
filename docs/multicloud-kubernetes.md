@@ -100,7 +100,7 @@ regional edge clusters. A future deployment could combine object/model
 replication, private interconnects, and network-aware placement, with routing
 and service discovery handled by their respective systems. BGP Anycast,
 service-mesh routing, SDN control, and provider-specific networking are
-integration points—not behavior implemented by this simulator.
+integration points, not behavior implemented by this simulator.
 
 Predictive replication should account for the forecast confidence, object size,
 cache capacity, backhaul utilization, transfer deadline, data residency, and

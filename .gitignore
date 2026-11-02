@@ -3,3 +3,6 @@ __pycache__/
 .venv/
 venv/
 output/
+/docs/7g-backhaul-vision-paper.aux
+/docs/7g-backhaul-vision-paper.log
+/docs/7g-backhaul-vision-paper.toc
