@@ -1,2 +1,7 @@
+# Store text with LF endings and check it out with LF on every platform:
+# validation/ns3/run-s1.sh and the other helper scripts run in Linux/WSL, where
+# a CRLF shebang fails.
+* text=auto eol=lf
+
 *.pdf binary
 *.png binary
