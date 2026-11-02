@@ -12,6 +12,32 @@ by [`validation/ns3/run-ip46.sh`](../validation/ns3/run-ip46.sh). The committed 
 CSV is [`figures/ip46.csv`](../figures/ip46.csv) (the run writes
 `output/validation/ip46.csv`).
 
+## 0. Background and motivation
+
+IPv6 exists because IPv4 ran out. The exhaustion was predicted as early as
+1994, the basic protocol landed in RFC 1883 (1995) / RFC 2460 (1998), and the
+world staged **IPv6 Launch Day in 2012**. IPv4 addresses are now a traded asset:
+a single RIPE **/24 block cost ~$6,600 in 2026**, even though many large
+organisations use only a fraction of the /16 blocks they were assigned. The
+address space is a scarce resource, so a service layer that is *tied to the
+address family* inherits that scarcity.
+
+IPv6's design targets matter directly for this work:
+
+- **End-to-end connectivity** (NAT removed the end-to-end model; IPv6 restores
+  it) — relevant to a fabric where a name resolves to a reachable endpoint, not
+  a NATted one.
+- **NDP replaces ARP** and **IPsec/CGA** bind a signature key to an address — the
+  same "identity is a hash" idea the name fabric uses for self-certifying names.
+- **Extension headers** keep the base header fixed and simple while allowing
+  optional per-packet features (ESP 50, AH 51, Routing 43).
+- **Flow label** (20 bits): *"source, destination and flow label are used to
+  identify this traffic"*; unlabelled packets carry 0. This is the primitive
+  that G3 compares against IPv4's 5-tuple.
+
+These targets — not raw throughput — are where IPv4 and IPv6 genuinely diverge,
+and they are what the experiments below quantify or argue.
+
 ## 1. Setup
 
 - **2 nodes**, one `PointToPoint` link (1 Gbit/s, 1 ms delay), both the IPv4 and
