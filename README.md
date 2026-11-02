@@ -9,14 +9,22 @@ The CDN direction is inspired by Milan Nikolic's University of Bern master's the
 - **Stable application session:** one session ID and byte stream are preserved as fragments use different links.
 - **Mixed transport:** fragments can be striped across Microwave, HF, Satellite, Mobile, Wi-Fi, and drone-relay links without treating the change of medium as a new application session.
 - **Variable MTU:** each link advertises a current MTU and encapsulation overhead; fragments are sized to fit, and the receiver reassembles by byte offset, even when fragments arrive out of order.
+- **Radio handover and IP mobility models:** signal hysteresis/time-to-trigger controls make-before-break cell changes while a simulated IP anchor preserves the session address.
+- **Carrier bonding and congestion control:** fragments are scheduled over available media; per-link AIMD pacing reacts to delivery feedback.
+- **Authenticated sessions:** optional expiring HMAC-signed credentials can gate transport sessions.
 - **Adaptive transport:** an online reward learner explores MTU sizes per link; a failed fragment is retried using another medium.
+- **Q-learning routing:** a tabular agent adjusts routing weights from outcomes while masking unavailable media.
 - **Self-scaling CDN:** regional request demand and content popularity drive cache placement, warming, and eviction.
 - **Acceleration-aware scaling:** the request-rate predictor uses velocity and acceleration to forecast demand and can provision a regional cache before the raw request-count threshold is reached.
+- **Kubernetes-inspired edge scaling:** a forecast-aware model computes bounded cache-pod replica targets and reports when modeled demand exceeds configured cluster capacity.
+- **Multicloud AI placement:** an explainable scheduler ranks configured AI datacenters by latency, egress estimate, accelerator load/capacity, availability, and optional latency SLO.
+- **Peer mesh:** independent peer caches and link telemetry drive forecast-congestion-aware path selection and selective cache replication.
+- **Cache defenses:** trusted content manifests reject digest mismatches; an NPU-inspired anomaly score blocks low-reuse, high-novelty cache admissions.
 - **Telemetry and crisis simulation:** environment load, pressure, losses, storms, and solar flares are surfaced in the simulation dashboard.
 
 ## Important limitation
 
-“No handover or break” is the design goal at the application-session abstraction, not a guarantee of zero packet delay or loss in real mobile networks. This prototype does not implement real radio handover, carrier bonding, IP mobility, congestion control, authentication, or deployment-grade RL. It models fragment retry and reassembly across simulated links; practical seamlessness requires compatible endpoints, network support, and field testing.
+“No handover or break” is the goal at the application-session abstraction, not a guarantee of zero packet delay or loss in real mobile networks. Radio handover, carrier bonding, IP mobility, congestion control, and authentication are represented by protocol-inspired simulator models; they do not interoperate with live radio/carrier infrastructure or provide production-grade security. The Q-learning implementation is a real tabular RL algorithm in this toy environment, not deployment-grade RL. Practical seamlessness requires standards-based integrations, compatible endpoints, and field testing.
 
 ## Repository structure
 
@@ -26,12 +34,20 @@ The CDN direction is inspired by Milan Nikolic's University of Bern master's the
 │   ├── ISSUE_TEMPLATE/bug_report.md
 │   └── workflows/ci.yml
 ├── backhaul_sim/                 # Graph scenarios and Tomahawk CDN example
-├── docs/                         # Architecture and research notes
+├── docs/                         # Architecture, cloud/edge design, and research notes
 ├── figures/                      # Generated PNG dashboard frames
 ├── simulation/
 │   ├── cdn.py                    # Demand learning and regional caches
+│   ├── orchestration.py         # Simulated edge scaling and AI site placement
+│   ├── mesh.py                   # Peer mesh, congestion forecasts, and cache defenses
 │   ├── channels.py               # Heterogeneous link definitions
 │   ├── continuity.py             # MTU adaptation and fragment reassembly
+│   ├── mobility.py               # Handover and stable simulated IP binding
+│   ├── carrier_bonding.py        # Byte allocation over available media
+│   ├── congestion.py             # Per-link AIMD congestion control
+│   ├── security.py               # HMAC session credential model
+│   ├── learning.py               # Masked tabular Q-learning
+│   ├── analytics.py              # Historical KPI CSV logger
 │   ├── environment.py            # Link conditions and stochastic disasters
 │   ├── router.py                 # Soft path allocation
 │   ├── telemetry.py              # INT-style telemetry
@@ -64,7 +80,24 @@ pip install -r requirements.txt
 python main.py
 ```
 
-The output includes a byte-stream transfer across media, CDN cache decisions, demand rate and acceleration, and a live transport telemetry table. Dashboard PNGs are written to `figures/`.
+The output includes a byte-stream transfer across media, CDN cache decisions, demand rate and acceleration, simulated edge scaling and AI datacenter placement, a predictive peer-mesh routing/cache example, and a live transport telemetry table. Dashboard PNGs are written to `figures/`.
+Historical network and transfer metrics are appended to `output/network_history.csv`.
+
+The Kubernetes and multicloud features are simulation models, not deployment
+adapters. See [docs/multicloud-kubernetes.md](docs/multicloud-kubernetes.md)
+for the modeled policies, cost assumptions, and integration boundaries.
+The mesh routing and cache security abstractions are described in
+[docs/peer-mesh.md](docs/peer-mesh.md).
+
+## Key performance indicators
+
+- **Session continuity:** successful byte-stream reconstructions / completed transfer attempts
+- **Goodput:** application payload bits delivered per simulated elapsed time
+- **Retry rate:** fallback or retransmission attempts per delivered fragment
+- **Cache hit ratio:** cache hits / requests observed
+- **Per-link state:** routing allocation, load, pressure, MTU, estimated loss, and latency
+
+CSV fields, units, and suggested GitHub discovery topics are described in [docs/discoverability.md](docs/discoverability.md).
 
 ## Demand acceleration model
 
@@ -93,7 +126,8 @@ python -m unittest discover -s tests -v
 - [CONTRIBUTING.md](CONTRIBUTING.md)
 - [Bug report template](.github/ISSUE_TEMPLATE/bug_report.md)
 - [CI workflow](.github/workflows/ci.yml)
+- [Suggested GitHub topics and KPI definitions](docs/discoverability.md)
 
 ## License
 
-This project uses the MIT license included in the repository.
+This project is licensed under the GNU General Public License v3.0 or later. See [LICENSE](LICENSE).

@@ -44,6 +44,7 @@ class TransportMedium:
         self.encapsulation_overhead_bytes = encapsulation_overhead_bytes
         self.current_load = 0.0
         self.active_disaster = "None"
+        self.available = True
 
     @property
     def current_mtu_bytes(self):

@@ -54,7 +54,9 @@ class SeamlessTransportTests(unittest.TestCase):
     def test_route_allocation_accounts_for_bandwidth_and_latency(self):
         session = SeamlessTransportSession(self.channels, rng=random.Random(2))
 
-        distribution = session.router.calculate_routing_distribution()
+        scores = session.carrier_scheduler.weights(self.channels)
+        score_total = sum(scores.values())
+        distribution = {name: score / score_total for name, score in scores.items()}
 
         self.assertAlmostEqual(sum(distribution.values()), 1.0)
         self.assertGreater(distribution["WiFi"], distribution["HF"])
@@ -82,7 +84,7 @@ class SeamlessTransportTests(unittest.TestCase):
                 self.failed_once = True
                 return value
 
-        self.channels[0].packet_loss_base = 1.0
+        self.channels[0].packet_loss_base = 0.5
         session = SeamlessTransportSession(self.channels, rng=RetryRng())
 
         result = session.transmit(b"retry me", session_id="retry-session")

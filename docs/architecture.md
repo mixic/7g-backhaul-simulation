@@ -6,7 +6,7 @@ This design takes inspiration from Milan Nikolic's University of Bern master's t
 
 The design also emphasizes request routing, service discovery, measurement, and simulation. In this repository, per-region popularity is learned from requests, telemetry exposes transport conditions, and deterministic trend estimation gives cache placement a measurable trigger.
 
-## Continuity model
+## Continuity and radio mobility models
 
 An application session has a stable session ID and byte stream. The stream is split into fragments, and each fragment may use a different physical transport:
 
@@ -17,9 +17,9 @@ An application session has a stable session ID and byte stream. The stream is sp
 - Wi-Fi
 - Drone relay
 
-`Mixed` describes a session using several of these media concurrently; it is not modeled as a separate physical link. The transport policy distributes fragments across available paths and retries a lost fragment on another path. A receiver reassembles by session ID, byte offset, and total message length, so fragments may arrive out of order or use different MTUs without changing the application payload.
+`Mixed` describes a session using several of these media concurrently; it is not modeled as a separate physical link. The bonded-carrier scheduler allocates bytes across active media using available pacing rate, loss, pressure, and latency. It distributes fragments over those paths and retries a lost fragment on another path. A receiver reassembles by session ID, byte offset, and total message length, so fragments may arrive out of order or use different MTUs without changing the application payload.
 
-This is a simulator abstraction for continuity, not a claim that arbitrary real networks can provide zero interruption. It does not implement radio access handover, carrier integration, a common IP mobility anchor, congestion control, cryptographic framing, or real-time scheduling. A real deployment would need those mechanisms and end-to-end testing.
+`RadioHandoverController` models signal-strength measurements, hysteresis, a time-to-trigger counter, and a make-before-break transition. `MobileIpAnchor` keeps a stable simulated virtual IP while changing the access locator. These state machines model protocol concepts; they do not interoperate with cellular base stations, Wi-Fi controllers, carrier infrastructure, or real IP tunnels.
 
 ## Variable MTU and adaptation
 
@@ -29,7 +29,17 @@ Each medium advertises its own network-layer MTU and encapsulation overhead. Ava
 payload_mtu = current_link_mtu - encapsulation_overhead
 ```
 
-The modeled link MTU can shrink as load increases. `AdaptiveMTULearner` explores supported payload sizes per medium and updates an online reward estimate from delivery feedback. Successful larger payloads are more efficient; a loss penalizes that size and triggers retransmission on another medium. This is a lightweight online bandit-style policy, not a trained neural network or production-grade reinforcement-learning agent.
+The modeled link MTU can shrink as load increases. `AdaptiveMTULearner` explores supported payload sizes per medium and updates an online reward estimate from delivery feedback. Successful larger payloads are more efficient; a loss penalizes that size and triggers retransmission on another medium.
+
+## Congestion control and routing policy
+
+`AIMDCongestionController` applies a Reno-inspired additive-increase/multiplicative-decrease congestion window to each modeled medium. Acknowledgements grow the window; simulated losses reduce it. Its pacing rate feeds the bonded carrier scheduler, which can move subsequent fragments onto other paths.
+
+`TabularQRoutingAgent` is a small online Q-learning policy over quantized load and pressure state. It uses a safety mask to avoid unavailable links and adjusts the carrier allocation weights from observed delivery reward. This is genuine tabular RL in the simulated environment, but it is not deployment-grade: the state/action space, reward, training duration, and safety model are intentionally small and require validation before any real-world use.
+
+## Session authentication model
+
+`SessionAuthenticator` issues short-lived HMAC-SHA256 signed session credentials and verifies their session binding, expiry, and signature before transmission when the transport is configured with an authenticator. The demo creates a random ephemeral key for the process. This authenticates simulator requests only; it is not subscriber authentication, key management, replay protection, TLS, or a replacement for operator-grade identity systems.
 
 ## Demand velocity and acceleration
 
@@ -45,14 +55,57 @@ The same estimator can be applied to request rate, throughput, or latency. `Requ
 
 This is a deliberately transparent baseline. Real CDN scaling should include forecast uncertainty, cache-fill cost, origin capacity, network price, and latency SLOs before taking an action.
 
+## Multicloud AI datacenters and Kubernetes edge
+
+The orchestration model adds two educational abstractions. `KEDAInspiredScaler`
+translates observed and forecast request rates into a bounded desired replica
+count for an edge cache cluster. `MultiCloudAIScheduler` ranks eligible AI
+datacenters using configured latency, estimated billable egress, accelerator
+load, and hardware availability, while respecting an optional latency SLO.
+The demo exercises both decisions.
+
+These are not live cluster or cloud integrations. The scaler does not call
+Kubernetes/KEDA, and placement does not reserve GPUs, execute inference, fetch
+model artifacts, or provision a provider. Egress estimates use operator-supplied
+rates and omit charges not represented in those inputs. See
+[`multicloud-kubernetes.md`](multicloud-kubernetes.md) for formulas,
+assumptions, AI datacenter context, and future integration points.
+
+## Peer mesh and congestion-aware cache decisions
+
+`PeerMesh` models peers with independent caches connected by undirected links.
+Each link reports utilization, queue delay, loss, and a second-order predicted
+pressure score. Congestion hysteresis feeds a path cost that can select an
+alternate route; when the lowest-latency route is predicted congested, repeated
+content requests may trigger a local replica if the cache-admission guard
+approves it.
+
+The cache guard rejects content without a trusted manifest or with a
+SHA-256 mismatch. A small NPU-inspired anomaly score uses request reuse and
+cache footprint to limit one-off/high-novelty admissions. The score is a
+transparent heuristic, not a trained AI model or actual NPU execution.
+Publisher trust is configured out-of-band; manifests are not signed or
+distributed by a production trust service. See [`peer-mesh.md`](peer-mesh.md)
+for the model and security boundaries.
+
 ## How to exercise it
 
 The test suite checks:
 
 - The original bytes reconstruct after fragments use multiple media and MTUs.
 - A receiver can reassemble out-of-order fragments.
+- Radio handover applies hysteresis/TTT and preserves the stable simulated IP.
+- Carrier bonding respects availability and conserves allocated bytes.
+- Congestion feedback changes the AIMD window and stays within the link rate.
+- Authenticated transport rejects missing, expired, and wrong-session credentials.
+- Routing Q-values update while unavailable links remain masked.
 - The second-order forecast computes velocity, acceleration, and projected demand.
 - Accelerating regional requests trigger cache placement and warming.
+- Forecasted demand drives bounded Kubernetes-inspired edge replica decisions.
+- AI workload placement respects datacenter availability, accelerator capacity, and latency SLOs.
+- Congestion forecasts reroute mesh requests and trigger guarded peer-cache replication.
+- Mesh cache admission rejects untrusted or corrupted content and resists one-off cache pollution.
+- Network snapshots and transfer KPIs are appended as CSV.
 
 Run the interactive simulation with `python main.py`; generated dashboard frames are saved in [`../figures/`](../figures/).
 
@@ -62,4 +115,4 @@ Run the interactive simulation with `python main.py`; generated dashboard frames
 - Add throughput and latency histories to the route reward and trigger proactive path/capacity changes.
 - Model cache-fill traffic and compare request latency against an origin-only baseline.
 - Test correlated outages, reordered/lost fragments, and realistic per-medium rate limits.
-- Define the receiver/session protocol and experiment against real multi-access networks.
+- Implement standards-based access-network control, real IP tunneling/mobility, cryptographic session protocols, and congestion algorithms in a network simulator or controlled testbed.

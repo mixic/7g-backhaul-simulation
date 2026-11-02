@@ -17,11 +17,17 @@
 from __future__ import annotations
 
 import random
+import time
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Sequence, Tuple
 
+from .carrier_bonding import BondedCarrierScheduler
+from .congestion import AIMDCongestionController
 from .environment import TransportMedium, clip
+from .learning import RoutingState, TabularQRoutingAgent
+from .mobility import HandoverDecision, MobileIpAnchor, RadioCell, RadioHandoverController
 from .router import SoftHandoverRouter
+from .security import AuthenticationError, SessionAuthenticator, SessionCredential
 
 
 @dataclass(frozen=True)
@@ -42,6 +48,11 @@ class TransferResult:
     fragments: List[PacketFragment] = field(default_factory=list)
     media_used: List[str] = field(default_factory=list)
     retries: int = 0
+    attempts: int = 0
+    elapsed_ms: float = 0.0
+    goodput_mbps: float = 0.0
+    principal: Optional[str] = None
+    stable_ip: Optional[str] = None
 
 
 class TransferError(RuntimeError):
@@ -141,57 +152,135 @@ class SeamlessTransportSession:
         channels: Sequence[TransportMedium],
         mtu_learner: Optional[AdaptiveMTULearner] = None,
         rng: Optional[random.Random] = None,
+        routing_agent: Optional[TabularQRoutingAgent] = None,
+        authenticator: Optional[SessionAuthenticator] = None,
+        ip_anchor: Optional[MobileIpAnchor] = None,
     ) -> None:
         if not channels:
             raise ValueError("At least one transport medium is required.")
+        if len({channel.name for channel in channels}) != len(channels):
+            raise ValueError("Transport medium names must be unique.")
         self.channels = list(channels)
         self.router = SoftHandoverRouter(self.channels)
         self.mtu_learner = mtu_learner or AdaptiveMTULearner()
         self.rng = rng or random.Random()
+        self.congestion_controllers = {
+            channel.name: AIMDCongestionController(channel) for channel in self.channels
+        }
+        self.carrier_scheduler = BondedCarrierScheduler(self.congestion_controllers)
+        self.routing_agent = routing_agent or TabularQRoutingAgent(rng=self.rng)
+        self.authenticator = authenticator
+        self.ip_anchor = ip_anchor or MobileIpAnchor()
+        self.handover_controller = RadioHandoverController(self.ip_anchor)
         self.reassembler = FragmentReassembler()
         self._next_sequence = 0
 
-    def _ordered_channels(self) -> List[TransportMedium]:
-        distribution = self.router.calculate_routing_distribution()
-        names = list(distribution)
-        weights = [distribution[name] for name in names]
-        primary_name = self.rng.choices(names, weights=weights, k=1)[0]
+    def update_radio_measurements(
+        self,
+        session_id: str,
+        cells: Sequence[RadioCell],
+    ) -> HandoverDecision:
+        return self.handover_controller.update(session_id, cells)
+
+    def _ordered_channels(self, remaining_bytes: int) -> List[TransportMedium]:
+        available = [channel for channel in self.channels if channel.available]
+        if not available:
+            return []
+        weights = self.carrier_scheduler.weights(available)
+        if not weights:
+            return []
+        learned_weights = self.routing_agent.action_weights(available, weights)
+        allocations = self.carrier_scheduler.allocate(
+            max(1, remaining_bytes),
+            available,
+            weights_override=learned_weights,
+        )
+        names = list(allocations)
+        primary_name = self.rng.choices(
+            names,
+            weights=[allocations[name] for name in names],
+            k=1,
+        )[0]
         primary = next(channel for channel in self.channels if channel.name == primary_name)
         fallbacks = sorted(
-            (channel for channel in self.channels if channel is not primary),
-            key=lambda channel: (channel.get_pressure_score(), channel.base_latency),
+            (channel for channel in available if channel is not primary),
+            key=lambda channel: (
+                -allocations.get(channel.name, 0),
+                -weights.get(channel.name, 0.0),
+                channel.get_pressure_score(),
+            ),
         )
         return [primary, *fallbacks]
 
-    def transmit(self, payload: bytes, session_id: str = "mobile-session") -> TransferResult:
+    def transmit(
+        self,
+        payload: bytes,
+        session_id: str = "mobile-session",
+        credential: Optional[SessionCredential] = None,
+        now: Optional[int] = None,
+    ) -> TransferResult:
         if not isinstance(payload, bytes):
             raise TypeError("Payload must be bytes.")
         if not session_id:
             raise ValueError("Session ID must not be empty.")
 
-        result = TransferResult(session_id=session_id, payload=b"")
+        principal = None
+        if self.authenticator is not None:
+            if credential is None:
+                raise AuthenticationError("An authenticated session credential is required.")
+            principal = self.authenticator.verify(
+                credential,
+                session_id,
+                int(time.time()) if now is None else now,
+            )
+        elif credential is not None:
+            raise AuthenticationError("This transport session has no credential verifier configured.")
+
+        binding = self.ip_anchor.lookup(session_id)
+        result = TransferResult(
+            session_id=session_id,
+            payload=b"",
+            principal=principal,
+            stable_ip=binding.stable_ip if binding else None,
+        )
         reassembled_payload: Optional[bytes] = None
         offset = 0
         if not payload:
             return result
 
         while offset < len(payload):
-            ordered_channels = self._ordered_channels()
+            ordered_channels = self._ordered_channels(len(payload) - offset)
+            if not ordered_channels:
+                raise TransferError("No available transport media can carry this session.")
             primary = ordered_channels[0]
             chunk_size = min(self.mtu_learner.choose_payload_mtu(primary), len(payload) - offset)
             delivered = False
+            state = self.routing_agent.state(self.channels)
 
-            for attempt, medium in enumerate(ordered_channels):
+            for medium in ordered_channels:
+                result.attempts += 1
                 mtu = self.mtu_learner.choose_payload_mtu(medium)
                 fragment_size = min(chunk_size, mtu, len(payload) - offset)
                 fragment_payload = payload[offset : offset + fragment_size]
                 loss_probability = clip(medium.packet_loss_base * (1 + medium.current_load), 0.0, 1.0)
+                controller = self.congestion_controllers[medium.name]
+                pacing_rate_mbps = controller.pacing_rate_mbps
+                if pacing_rate_mbps <= 0:
+                    continue
+                hop_latency_ms = medium.base_latency * (1.0 + medium.current_load)
+                serialization_ms = len(fragment_payload) * 8 / (pacing_rate_mbps * 1000)
+                elapsed_attempt_ms = hop_latency_ms + serialization_ms
+                result.elapsed_ms += elapsed_attempt_ms
                 success = self.rng.random() >= loss_probability
                 self.mtu_learner.observe(medium, mtu, success)
                 if not success:
                     result.retries += 1
+                    controller.on_loss()
+                    next_state = self.routing_agent.state(self.channels)
+                    self.routing_agent.update(state, medium.name, -1.0, next_state)
                     continue
 
+                controller.on_ack(len(fragment_payload), max(1.0, elapsed_attempt_ms))
                 fragment = PacketFragment(
                     session_id=session_id,
                     sequence=self._next_sequence,
@@ -211,6 +300,16 @@ class SeamlessTransportSession:
                 delivered = True
                 if assembled is not None:
                     reassembled_payload = assembled
+                reward = clip(
+                    1.0
+                    - 0.5 * (hop_latency_ms / max(1.0, max(item.base_latency for item in self.channels)))
+                    - 0.3 * loss_probability
+                    - 0.2 * medium.current_load,
+                    -1.0,
+                    1.0,
+                )
+                next_state = self.routing_agent.state(self.channels)
+                self.routing_agent.update(state, medium.name, reward, next_state)
                 break
 
             if not delivered:
@@ -219,4 +318,6 @@ class SeamlessTransportSession:
         if reassembled_payload != payload:
             raise RuntimeError("Transport completed without reconstructing the original session payload.")
         result.payload = reassembled_payload
+        if result.elapsed_ms > 0:
+            result.goodput_mbps = len(payload) * 8 / (result.elapsed_ms * 1000)
         return result
