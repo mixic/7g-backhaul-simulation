@@ -1,0 +1,3 @@
+test,value,threshold,passed,detail
+steady_guard,0.0,0.5,True,"local steady 99.24 %, SDN steady 99.24 %"
+flood_isolation,6.986522628673271,SDN E3 >= 95 % and >= local + 5 pp,True,"local E3 92.08 %, SDN E3 99.07 %, gain +6.99 pp"

@@ -307,6 +307,7 @@ class DualRoleSimulation:
         self.cache_fill: dict[str, float] = {name: 0.0 for name in self.nodes}
         self.prev_link_load: dict[str, float] = {link.name: 0.0 for link in self.links}
         self.share: dict[tuple[str, int], float] = {}
+        self.tick = 0
         self.pressure_history: dict[str, list[float]] = {name: [] for name in self.nodes}
         self.alpha_deltas: list[float] = []
         self.alpha_trace: dict[str, list[float]] = {name: [] for name in self.nodes}
@@ -433,6 +434,7 @@ class DualRoleSimulation:
         legit_delivered: dict[str, list[float]] = {}
         legit_offered: dict[str, list[float]] = {}
         for tick in range(self.scenario.ticks):
+            self.tick = tick
             if tick % CONTROL_INTERVAL == 0:
                 self.update_alpha()
             legit, attack = self._classes(tick)

@@ -272,6 +272,31 @@ flips sign at every control step, reintroducing role churn. See
 [docs/signed-trends.md](docs/signed-trends.md) and
 [docs/signed-trends-results.md](docs/signed-trends-results.md).
 
+## SDN mapping: Software-Defined CDN and Backhaul
+
+[docs/sdn-mapping.md](docs/sdn-mapping.md) maps the concepts onto the SDN
+stack. The continuous `α` split is a control-plane decision executed by the
+data plane over a southbound `set_alpha` instruction; authenticated name-class
+admission is a control-plane application enforced at the data plane; signed
+trends are control-plane analytics; RFMP role epochs are southbound role
+transitions; the layered authentication scope constrains which fields the
+controller may act on. The document lists the additional components for an
+**SD-CDN** (name/content controller, replica placement, cache controller,
+admission, role/α, telemetry, origin policy) and for an **SD-BH** (link-state
+collector, path/TE, epoch orchestrator, tunnel manager, admission, SLO
+controller, telemetry), with the interfaces between them.
+
+`simulation/sdn_plane.py` implements the minimal control-plane/data-plane
+split: `FloodAwareController` turns a northbound flood policy into
+`SouthboundMessage` instructions and `SDNDualRoleSimulation` applies them. The
+pre-registered claim is **confirmed**: steady delivery is unchanged (99.24 %),
+and under the DDoS flood the SDN override delivers 99.07 % to the unattacked
+`E3` versus 92.08 % for local control (+6.99 pp). It does not reduce total
+attack congestion (64.86 % vs 64.91 %); protection comes from keeping `E3`'s
+serving capacity pinned, not from dropping attack volume. The alert is
+stipulated perfect, only `set_alpha` is implemented, and RFMP epochs remain
+scripted. See [docs/sdn-results.md](docs/sdn-results.md).
+
 ## Layered-protocol testbed (phase 0)
 
 The repository also contains a three-fidelity testbed for encapsulated stacks.
@@ -380,6 +405,8 @@ plan.
 │   ├── attack-aware-results.md   # Classifier sweep and its refutation
 │   ├── signed-trends.md          # Pre-registered signed velocity/acceleration claim
 │   ├── signed-trends-results.md  # Signed-trend refutation and role-churn finding
+│   ├── sdn-mapping.md            # SDN stack mapping, SD-CDN and SD-BH components
+│   ├── sdn-results.md            # SDN role-override comparison
 │   ├── layering-predictions.md   # Frozen P1-P7 encapsulation predictions
 │   └── layering-results.md       # Three-fidelity layering classification
 ├── figures/
@@ -452,6 +479,9 @@ plan.
 │   ├── signed_trends_verdict.csv # Pre-registered signed-trend tests
 │   ├── signed_trends_alpha.csv   # Mean E2 alpha trace
 │   ├── signed_trends_alpha.png
+│   ├── sdn_summary.csv           # SDN/local/separated arm means
+│   ├── sdn_verdict.csv           # Pre-registered SDN tests
+│   ├── sdn_control.png
 │   └── vision_fair_summary.csv   # Controlled-benchmark arm means
 ├── models/
 │   ├── congestion_forecast.npz   # Synthetic model weights
@@ -480,6 +510,7 @@ plan.
 │   ├── router.py                 # Soft path allocation
 │   ├── role_fluid.py             # Role-fluid potential-field model and controllers
 │   ├── dual_role.py              # Continuous alpha serve/balance model and DDoS scenario
+│   ├── sdn_plane.py              # Southbound messages and SDN role-override policy
 │   ├── layering/                 # Typed C/E/T/F/S codec, stacks and survival model
 │   ├── security.py               # HMAC session credential model
 │   ├── telemetry.py              # INT-style telemetry
@@ -497,6 +528,8 @@ plan.
 │   ├── plot_attack_aware.py      # Legitimate delivery vs false-negative rate
 │   ├── benchmark_signed_trends.py # Signed vs positive trend on a shaped flood
 │   ├── plot_signed_trends.py     # Alpha and decay-delivery plots
+│   ├── benchmark_sdn.py          # SDN role-override comparison
+│   ├── plot_sdn.py               # Delivery-by-target and steady-state plots
 │   ├── benchmark_vision.py       # CDN, handover, and backhaul policy studies
 │   └── validation_io.py          # Normalize and compare simulator/testbed results
 ├── validation/
@@ -529,6 +562,7 @@ plan.
 │   ├── test_rfmp.py
 │   ├── test_role_fluid.py
 │   ├── test_dual_role.py
+│   ├── test_sdn_plane.py
 │   ├── test_layering_codec.py
 │   ├── test_layering_linux.py
 │   ├── test_layering_properties.py

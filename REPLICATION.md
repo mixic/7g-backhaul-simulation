@@ -228,6 +228,19 @@ py -3 tools\plot_signed_trends.py --input-dir figures --output-dir figures
 It writes `figures/signed_trends_summary.csv`, `signed_trends_verdict.csv`,
 `signed_trends_alpha.csv` and `figures/signed_trends_alpha.png`.
 
+The SDN mapping's control-plane prototype
+([docs/sdn-mapping.md](docs/sdn-mapping.md)) is compared with local and
+separated control; the result is in [docs/sdn-results.md](docs/sdn-results.md):
+
+```powershell
+py -3 tools\benchmark_sdn.py --output-dir figures
+py -3 tools\plot_sdn.py --input-dir figures --output-dir figures
+```
+
+It writes `figures/sdn_summary.csv`, `sdn_verdict.csv` and
+`figures/sdn_control.png`. The SDN arm uses a stipulated perfect attack alert
+and implements only the `set_alpha` southbound action.
+
 ## Run the ns-3 cross-validation experiment (scenario S1)
 
 The external cross-check described in
