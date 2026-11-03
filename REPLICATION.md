@@ -22,6 +22,7 @@ listed. That table is currently empty by design; see
 - [Run the vision benchmark](#run-the-vision-benchmark)
 - [Run the sensitivity benchmark](#run-the-sensitivity-benchmark)
 - [Run the cooperative benchmark replicates](#run-the-cooperative-benchmark-replicates)
+- [Run the layered-protocol testbed](#run-the-layered-protocol-testbed)
 - [The validation I/O tool](#the-validation-io-tool)
 - [Produce a comparison CSV from an external simulator](#produce-a-comparison-csv-from-an-external-simulator)
 - [Published external validations](#published-external-validations)
@@ -119,6 +120,57 @@ gains come from predictive cache scaling. Attempts to overturn that result are
 a useful contribution, but the comparison design (independent allocator
 instances, constant cache gains) must be preserved, and any change must be
 reported as a deviation.
+
+## Run the layered-protocol testbed
+
+The layering testbed evaluates the **frozen** predictions in
+[docs/layering-predictions.md](docs/layering-predictions.md) at three fidelity
+levels: the executable Python model, SimPy, and a Linux network-namespace data
+plane. The predictions file was committed before the experiment code and its
+tolerances do not change. Do not edit tolerances or scenarios to make a run
+pass; record a failure instead.
+
+The executable model and SimPy need only the repository requirements:
+
+```powershell
+py -3 -m validation.layering.run_model --output validation\layering\results\model_observations.csv
+py -3 -m validation.layering.run_simpy --output validation\layering\results\simpy_observations.csv
+```
+
+The Linux data plane uses two network namespaces joined by a veth pair, a TUN
+device in each namespace, and `tc netem` loss on the veth. It requires root and
+`iproute2` (`ip`, `tc`), `/dev/net/tun`, and user/network namespace support.
+On Windows the command delegates to WSL2 (distro `Ubuntu`) as root; on Linux it
+must already run as root. No other privilege is used. The harness creates and
+deletes the namespaces `layA`/`layB` and never changes the host network
+configuration.
+
+```powershell
+py -3 -m validation.layering.run_linux --output validation\layering\results\linux_observations.csv
+```
+
+It runs 40 Linux replicates (netem seeds 1–40, 100 datagrams each) for the
+stochastic predictions and one replicate for the deterministic cases; the full
+run takes several minutes. The harness normalises the application payload to
+`model_payload - 28` bytes so the IP/UDP datagram handed to the codec is the
+model's payload size. See [validation/linux_layering/README.md](validation/linux_layering/README.md)
+for the exact setup and privilege list.
+
+Then classify every prediction against the frozen tolerances:
+
+```powershell
+py -3 -m validation.layering.report --model validation\layering\results\model_observations.csv --simpy validation\layering\results\simpy_observations.csv --linux validation\layering\results\linux_observations.csv --verdicts validation\layering\results\verdicts.csv --doc docs\layering-results.md
+```
+
+The observation CSVs use the normalized validation schema
+(`source, scenario, policy, seed, metric, value, unit`) and the metric names
+and units registered in `tools/validation_io.py`. The report uses paired seeds
+and 95 % intervals where the quantity is stochastic. It writes its mechanical
+tables to `docs/layering-results.generated.md` when the hand-maintained
+`docs/layering-results.md` already exists, so a rerun cannot silently overwrite
+the refutation explanation. All three fidelities share the codec, so agreement
+checks the codec under different execution environments, not independent
+protocol semantics.
 
 ## Run the ns-3 cross-validation experiment (scenario S1)
 
