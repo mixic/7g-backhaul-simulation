@@ -23,6 +23,7 @@ listed. That table is currently empty by design; see
 - [Run the sensitivity benchmark](#run-the-sensitivity-benchmark)
 - [Run the cooperative benchmark replicates](#run-the-cooperative-benchmark-replicates)
 - [Run the layered-protocol testbed](#run-the-layered-protocol-testbed)
+- [Run the dual-role comparison](#run-the-dual-role-comparison)
 - [The validation I/O tool](#the-validation-io-tool)
 - [Produce a comparison CSV from an external simulator](#produce-a-comparison-csv-from-an-external-simulator)
 - [Published external validations](#published-external-validations)
@@ -171,6 +172,33 @@ tables to `docs/layering-results.generated.md` when the hand-maintained
 the refutation explanation. All three fidelities share the codec, so agreement
 checks the codec under different execution environments, not independent
 protocol semantics.
+
+## Run the dual-role comparison
+
+This compares the continuous serve/load-balance controller (`α ∈ [0,1]`) with
+the separated fixed-role baseline. The claim and acceptance tests are frozen in
+[docs/dual-role.md](docs/dual-role.md); the classified results, including the
+refutation and the exploratory DDoS run, are in
+[docs/dual-role-results.md](docs/dual-role-results.md).
+
+From the repository root:
+
+```powershell
+py -3 tools\benchmark_dual_role.py --output-dir figures --replicates 12 --seed 2026
+py -3 tools\plot_dual_role.py --input-dir figures --output-dir figures
+py -3 -m pytest tests\test_dual_role.py -q
+```
+
+The benchmark writes `figures/dual_role_summary.csv`,
+`dual_role_per_seed.csv`, `dual_role_sweep.csv`, `dual_role_verdict.csv`,
+`dual_role_alpha_trace.csv`, `dual_role_stability.csv`,
+`dual_role_latency_cdf.csv` and `dual_role_ddos.csv`. The plot tool writes the
+five `figures/dual_role_*.png` files. The verdict file applies the frozen
+tests mechanically; it is not edited to make the claim pass.
+
+The comparison is a flow-level model with stipulated topology, demand and
+controller gains. It does not emit packets and is not a DDoS defence: the
+`ddos` scenario is a demand flood, not attack classification or scrubbing.
 
 ## Run the ns-3 cross-validation experiment (scenario S1)
 

@@ -214,6 +214,55 @@ and failure detector (not exercised), wireless physics, and congestion control.
 The cache is a stipulated linear warm-up with no eviction or popularity curve.
 Closing the loop between the protocol and the controller is the next experiment.
 
+## Dual-role nodes: continuous α (new concept)
+
+The role-fluid work above treats a role as a discrete state. The dual-role
+experiment makes the split continuous: `α ∈ [0, 1]` is the fraction of a node's
+resource committed to **serving** from a warm cache, and `1 − α` is the
+fraction committed to **forwarding / load balancing**. Every node reallocates
+`α` from local pressure, its velocity and its acceleration; the separated
+baseline fixes interior nodes at `α = 0` (pure balancers) and edge nodes at
+`α = 1` (pure servers), the proxy-based architectural split.
+
+The claim and acceptance tests are frozen in
+[docs/dual-role.md](docs/dual-role.md) before the comparison; results are in
+[docs/dual-role-results.md](docs/dual-role-results.md).
+
+The main claim is **refuted**. At the separated arm's first sub-95 % load
+(`L* = 1.4 ×` nominal), the fluid arm's goodput is 3.7 % higher (threshold 5 %)
+and its p95 latency is 2.23 × the separated baseline (threshold ≤ 1.5 ×). The
+controller does improve the delivered fraction through the middle of the sweep
+(98.2 % vs 95.8 % at 1.3 ×), but it pays a latency cost and degrades faster
+above 1.7 ×. An exploratory DDoS flood at `E2` is also negative: the
+pressure-maximising rule serves the attack and starves forwarding to an
+unattacked target (`E3`: 92.1 % vs 98.8 %). The model cannot distinguish
+attack from legitimate demand and implements no scrubbing or rate limiting;
+this is **not** a DDoS defence. The result is reported as a refutation, not
+tuned away.
+
+```powershell
+py -3 tools\benchmark_dual_role.py --output-dir figures --replicates 12 --seed 2026
+py -3 tools\plot_dual_role.py --input-dir figures --output-dir figures
+```
+
+Figures: `dual_role_alpha.png` (α and 1−α over the flash crowd),
+`dual_role_throughput.png` (goodput and delivery vs load),
+`dual_role_latency_cdf.png`, `dual_role_stability.png` and
+`dual_role_ddos.png` (delivery by target under the flood).
+
+## Layered-protocol testbed (phase 0)
+
+The repository also contains a three-fidelity testbed for encapsulated stacks.
+[docs/layering-predictions.md](docs/layering-predictions.md) froze seven
+predictions over wire size, delivery, ordering and authentication scope;
+[docs/layering-results.md](docs/layering-results.md) classifies them in the
+executable model, SimPy and a Linux network-namespace/TUN data plane under
+`tc netem`. Six predictions are confirmed; P5 is refuted at the Linux fidelity
+and the cause (a payload normalisation that changes the fragment count) is
+explained rather than removed. The testbed measures size, delivery and
+authentication acceptance only, and makes no cryptographic security claim.
+Reproduction commands are in [REPLICATION.md](REPLICATION.md).
+
 ## The name fabric: DNS-independence as one operation
 
 The strongest version of the paradigm is not "no DNS". It is that **resolution
@@ -302,7 +351,11 @@ plan.
 │   ├── real-packet-and-npu.md    # UDP demo and optional inference guide
 │   ├── rfmp-protocol.md          # RFMP v0.1 protocol specification
 │   ├── rfmp-validation.md        # Role-transition cross-validation report
-│   └── role-fluid-paradigm.md    # Role-fluid paradigm, model and first results
+│   ├── role-fluid-paradigm.md    # Role-fluid paradigm, model and first results
+│   ├── dual-role.md              # Continuous serve/balance claim and scenarios
+│   ├── dual-role-results.md      # Dual-role comparison, refutation and DDoS
+│   ├── layering-predictions.md   # Frozen P1-P7 encapsulation predictions
+│   └── layering-results.md       # Three-fidelity layering classification
 ├── figures/
 │   ├── 7g_fabric_tick_0.png
 │   ├── 7g_fabric_tick_1.0.png
@@ -352,6 +405,19 @@ plan.
 │   ├── vision_benchmark_summary.csv
 │   ├── vision_benchmark_urban_timeseries.png
 │   ├── vision_fair_paired.csv    # Controlled-benchmark paired differences
+│   ├── dual_role_summary.csv     # Dual-role arm means and intervals
+│   ├── dual_role_per_seed.csv    # Paired-seed dual-role runs
+│   ├── dual_role_sweep.csv       # Delivered load sweep
+│   ├── dual_role_verdict.csv     # Frozen acceptance tests at L*
+│   ├── dual_role_alpha_trace.csv # Alpha per node and tick
+│   ├── dual_role_stability.csv   # Mean |delta alpha| per tick
+│   ├── dual_role_latency_cdf.csv # Volume-weighted latency quantiles
+│   ├── dual_role_ddos.csv        # Delivery by target under the flood
+│   ├── dual_role_alpha.png
+│   ├── dual_role_throughput.png
+│   ├── dual_role_latency_cdf.png
+│   ├── dual_role_stability.png
+│   ├── dual_role_ddos.png
 │   └── vision_fair_summary.csv   # Controlled-benchmark arm means
 ├── models/
 │   ├── congestion_forecast.npz   # Synthetic model weights
@@ -379,6 +445,8 @@ plan.
 │   ├── rfmp.py                   # RFMP v0.1 Python discrete-event reference
 │   ├── router.py                 # Soft path allocation
 │   ├── role_fluid.py             # Role-fluid potential-field model and controllers
+│   ├── dual_role.py              # Continuous alpha serve/balance model and DDoS scenario
+│   ├── layering/                 # Typed C/E/T/F/S codec, stacks and survival model
 │   ├── security.py               # HMAC session credential model
 │   ├── telemetry.py              # INT-style telemetry
 │   └── trends.py                 # Velocity/acceleration forecasting
@@ -389,6 +457,8 @@ plan.
 │   ├── benchmark_role_fluid.py   # Role-fluid paradigm comparison and sweeps
 │   ├── benchmark_sensitivity.py  # Paired one-factor-at-a-time sensitivity sweeps
 │   ├── benchmark_name_fabric.py  # Five name-fabric experiments
+│   ├── benchmark_dual_role.py    # Continuous alpha comparison, sweep and DDoS
+│   ├── plot_dual_role.py         # Alpha, throughput, latency, stability, DDoS plots
 │   ├── benchmark_vision.py       # CDN, handover, and backhaul policy studies
 │   └── validation_io.py          # Normalize and compare simulator/testbed results
 ├── validation/
@@ -402,6 +472,8 @@ plan.
 │   ├── rfmp/rt1_mapping.json     # RT1 metric mapping for validation_io
 │   ├── run_rfmp_experiment.py    # RFMP comparison report
 │   ├── run_s1_experiment.py      # Python side + paired comparison report
+│   ├── layering/                 # Layering runners, classifier and committed CSVs
+│   ├── linux_layering/           # Two-netns TUN relay and tc-netem harness
 │   └── scenario_s1.py            # Shared scenario spec and Python models
 ├── tests/
 │   ├── test_backhaul_sim.py
@@ -418,9 +490,17 @@ plan.
 │   ├── test_quantum_backhaul.py
 │   ├── test_rfmp.py
 │   ├── test_role_fluid.py
+│   ├── test_dual_role.py
+│   ├── test_layering_codec.py
+│   ├── test_layering_linux.py
+│   ├── test_layering_properties.py
+│   ├── test_layering_report.py
+│   ├── test_layering_scenarios.py
+│   ├── test_layering_simpy.py
 │   ├── test_validation_workflow.py
 │   └── test_vision_benchmark.py
 ├── CITATION.cff                  # Citation metadata (CFF 1.2.0)
+├── GOAL.md                       # Current testbed goal and milestone status
 ├── REPLICATION.md                # How to replicate and report results
 ├── Ni10.pdf
 ├── LICENSE

@@ -1,0 +1,4 @@
+test,value,threshold,passed,detail
+L_star,1.4,95.0,True,lowest sweep load where separated delivery < 95 %
+goodput_margin,1.037250184480808,1.05,False,fluid goodput / separated goodput at L*
+latency_bound,2.2312216424410445,1.5,False,fluid p95 / separated p95 at L*

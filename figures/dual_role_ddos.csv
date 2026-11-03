@@ -1,0 +1,15 @@
+scenario,mode,metric,replicates,mean,ci95
+ddos,fluid,delivered_goodput_mbps,12,159.39893386938328,0.19492589600982513
+ddos,fluid,delivered_percent,12,64.91432058282068,0.1476545245616883
+ddos,fluid,p95_latency_ms,12,21.803134709118268,1.3737987723782494
+ddos,fluid,mean_alpha_abs_delta,12,0.1286281722978593,0.0011937230776671924
+ddos,fluid,target_E1_delivered_percent,12,98.98143214817391,0.02019444646548159
+ddos,fluid,target_E2_delivered_percent,12,52.51174081239737,0.1701319377237558
+ddos,fluid,target_E3_delivered_percent,12,92.08459263481224,0.14764332079954873
+ddos,separated,delivered_goodput_mbps,12,198.6300748476746,0.1866083127182499
+ddos,separated,delivered_percent,12,80.89078196885866,0.13600884325285223
+ddos,separated,p95_latency_ms,12,37.953732601010714,0.08975118019852625
+ddos,separated,mean_alpha_abs_delta,12,0.0,0.0
+ddos,separated,target_E1_delivered_percent,12,99.05070922786818,0.02266959309416175
+ddos,separated,target_E2_delivered_percent,12,73.6962905860907,0.15992288000273272
+ddos,separated,target_E3_delivered_percent,12,98.78872648710062,0.027497856908085386
