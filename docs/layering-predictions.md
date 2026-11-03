@@ -301,5 +301,24 @@ TUN and `tc netem`). The exact commands and privilege list are in
 
 ## 8. Addenda
 
-None. Additions after the freeze commit must be dated and must not alter the
-predictions or tolerances above.
+### 2026-11-03 — cross-fidelity P5 fragment count and zlib variant
+
+This addendum does not alter any prediction, tolerance or refutation condition.
+
+The frozen P5 prediction fixes `n1 = 3` for `C -> F` at 8192 text bytes. That
+value was measured with the executable model on Python 3.14.7, whose zlib
+reports `1.3.1.zlib-ng`. The Linux fidelity uses stock zlib 1.3.1 and, by the
+normalisation in §6, feeds the 28-byte IPv4/UDP header through `C`. Under those
+conditions `C -> F` has `n1 = 4`, so the frozen 19.7559 pp difference is not the
+Linux scenario. Linux measures 11.10 pp, consistent with
+`0.9^4 − 0.9^6 = 12.47 pp`.
+
+P5 is therefore reported as **refuted at the Linux fidelity** in
+[`layering-results.md`](layering-results.md). The prediction is not edited and
+no tolerance is changed. The discrepancy is a scenario/normalisation mismatch,
+not a failure of the `(1−p)^n` arithmetic.
+
+The compression ratios in §4 were measured with zlib-ng; stock zlib compresses
+the same corpora slightly differently (for example 17383 versus 17225 bytes for
+the 32768-byte text corpus). This does not affect P2, P4, P6 or P7, but it is
+recorded for reproducibility.

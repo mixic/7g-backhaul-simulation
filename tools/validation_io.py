@@ -72,6 +72,14 @@ METRIC_UNITS = {
     "mean_delivery_delay_ms": "ms",
     "served_fraction_percent": "percent",
     "late_drop_percent": "percent",
+    # Layering testbed metrics (docs/layering-predictions.md).
+    "wire_bytes": "bytes",
+    "max_payload_bytes": "bytes",
+    "delivery_percent": "percent",
+    "auth_accept_percent": "percent",
+    "mutation_applied": "boolean",
+    "field_visible": "boolean",
+    "fragment_count": "fragments",
 }
 
 
