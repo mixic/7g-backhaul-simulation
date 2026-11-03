@@ -1,0 +1,4 @@
+test,value,threshold,passed,detail
+e3_decay_gain,-10.08248910153823,2.0,False,"E3 legit delivery in [85,105): signed_release - positive"
+recovery_time_reduction,1.0,0.15,True,"positive 2.17 ticks, signed_release 0.00 ticks"
+steady_guard,1.098302262962477,1.0,False,positive steady delivery - signed_release steady delivery

@@ -215,6 +215,19 @@ It writes `figures/attack_aware_summary.csv`, `attack_aware_sweep.csv`,
 false-positive and false-negative rates are stipulated inputs, not measured
 performance of a real name-verification scheme.
 
+The signed-trend follow-up tests whether negative velocity and acceleration —
+the receding side of a flood — can release serving capacity back to
+forwarding. The claim is in [docs/signed-trends.md](docs/signed-trends.md), the
+refutation in [docs/signed-trends-results.md](docs/signed-trends-results.md):
+
+```powershell
+py -3 tools\benchmark_signed_trends.py --output-dir figures
+py -3 tools\plot_signed_trends.py --input-dir figures --output-dir figures
+```
+
+It writes `figures/signed_trends_summary.csv`, `signed_trends_verdict.csv`,
+`signed_trends_alpha.csv` and `figures/signed_trends_alpha.png`.
+
 ## Run the ns-3 cross-validation experiment (scenario S1)
 
 The external cross-check described in

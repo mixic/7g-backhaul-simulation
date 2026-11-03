@@ -261,6 +261,17 @@ about 80 % of the flood to keep every target at ≥ 95 % in this topology. See
 [docs/attack-aware-results.md](docs/attack-aware-results.md). The RFMP loop is
 still not closed; this remains a flow-level controller.
 
+A further pre-registered test asks whether **negative** velocity and
+acceleration — the receding side of a flood — can drive capacity release back
+to forwarding. On a trapezoidal flood, signing the trend terms is also
+**refuted**: `E3` legitimate delivery in the decay window falls from 93.07 % to
+82.99 % (−10.08 pp against a required +2 pp), steady-state delivery loses
+1.10 pp (limit 1 pp), and the shorter `α` recovery is degenerate because the
+controller never commits much in the first place. The finite-difference trend
+flips sign at every control step, reintroducing role churn. See
+[docs/signed-trends.md](docs/signed-trends.md) and
+[docs/signed-trends-results.md](docs/signed-trends-results.md).
+
 ## Layered-protocol testbed (phase 0)
 
 The repository also contains a three-fidelity testbed for encapsulated stacks.
@@ -367,6 +378,8 @@ plan.
 │   ├── dual-role-results.md      # Dual-role comparison, refutation and DDoS
 │   ├── attack-aware.md           # Pre-registered authenticated-admission claim
 │   ├── attack-aware-results.md   # Classifier sweep and its refutation
+│   ├── signed-trends.md          # Pre-registered signed velocity/acceleration claim
+│   ├── signed-trends-results.md  # Signed-trend refutation and role-churn finding
 │   ├── layering-predictions.md   # Frozen P1-P7 encapsulation predictions
 │   └── layering-results.md       # Three-fidelity layering classification
 ├── figures/
@@ -435,6 +448,10 @@ plan.
 │   ├── attack_aware_sweep.csv    # Delivery vs classifier leakage
 │   ├── attack_aware_verdict.csv  # Pre-registered admission tests
 │   ├── attack_aware_ddos.png     # Legitimate delivery vs false-negative rate
+│   ├── signed_trends_summary.csv # Signed vs positive trend arm means
+│   ├── signed_trends_verdict.csv # Pre-registered signed-trend tests
+│   ├── signed_trends_alpha.csv   # Mean E2 alpha trace
+│   ├── signed_trends_alpha.png
 │   └── vision_fair_summary.csv   # Controlled-benchmark arm means
 ├── models/
 │   ├── congestion_forecast.npz   # Synthetic model weights
@@ -478,6 +495,8 @@ plan.
 │   ├── plot_dual_role.py         # Alpha, throughput, latency, stability, DDoS plots
 │   ├── benchmark_attack_aware.py # Authenticated admission vs classifier leakage
 │   ├── plot_attack_aware.py      # Legitimate delivery vs false-negative rate
+│   ├── benchmark_signed_trends.py # Signed vs positive trend on a shaped flood
+│   ├── plot_signed_trends.py     # Alpha and decay-delivery plots
 │   ├── benchmark_vision.py       # CDN, handover, and backhaul policy studies
 │   └── validation_io.py          # Normalize and compare simulator/testbed results
 ├── validation/

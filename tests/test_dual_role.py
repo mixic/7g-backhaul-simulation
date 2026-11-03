@@ -19,8 +19,12 @@
 from __future__ import annotations
 
 import unittest
+from dataclasses import replace
+
+import numpy as np
 
 from simulation.dual_role import (
+    DEFAULT_CONTROLLER,
     NOMINAL_DEMAND_MBPS,
     SEPARATED_ALPHA,
     Classifier,
@@ -199,6 +203,51 @@ class AcceptanceTestLogicTests(unittest.TestCase):
         self.assertEqual(len(rows), 1)
         self.assertEqual(rows[0]["test"], "L_star")
         self.assertFalse(rows[0]["passed"])
+
+
+class SignedTrendTests(unittest.TestCase):
+    def test_flood_wave_ramps_up_plateaus_and_decays(self) -> None:
+        from simulation.dual_role import SCENARIOS
+
+        attack = SCENARIOS["flood_wave"].attack
+        self.assertAlmostEqual(attack(47)["E2"], 250.0 * 7 / 15)
+        self.assertEqual(attack(70)["E2"], 250.0)
+        self.assertAlmostEqual(attack(92)["E2"], 250.0 * 8 / 15)
+        self.assertEqual(attack(100)["E2"], 0.0)
+
+    def test_signed_trends_change_the_alpha_trajectory(self) -> None:
+        positive = simulate_run("flood_wave", "fluid", 3)
+        signed = simulate_run(
+            "flood_wave",
+            "fluid",
+            3,
+            controller=replace(DEFAULT_CONTROLLER, signed_trends=True),
+        )
+        self.assertNotEqual(
+            positive.alpha_trace["E2"], signed.alpha_trace["E2"]
+        )
+
+    def test_signed_trends_oscillate_more(self) -> None:
+        positive = np.asarray(
+            simulate_run("flood_wave", "fluid", 3).alpha_trace["E2"]
+        )
+        signed = np.asarray(
+            simulate_run(
+                "flood_wave",
+                "fluid",
+                3,
+                controller=replace(DEFAULT_CONTROLLER, signed_trends=True),
+            ).alpha_trace["E2"]
+        )
+        positive_delta = np.mean(np.abs(np.diff(positive)))
+        signed_delta = np.mean(np.abs(np.diff(signed)))
+        self.assertGreater(signed_delta, positive_delta)
+
+    def test_legit_traces_have_one_value_per_tick(self) -> None:
+        metrics = simulate_run("flood_wave", "fluid", 3)
+        for target in ("E1", "E2", "E3"):
+            self.assertEqual(len(metrics.legit_delivered_trace[target]), 120)
+            self.assertEqual(len(metrics.legit_offered_trace[target]), 120)
 
 
 if __name__ == "__main__":

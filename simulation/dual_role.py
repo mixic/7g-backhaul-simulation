@@ -94,6 +94,12 @@ class ControllerParams:
     velocity_ref: float = 0.05
     acceleration_ref: float = 0.01
     temperature: float = 0.45
+    #: When true, negative velocity/acceleration contribute to the serve
+    #: signal instead of being clipped at zero.
+    signed_trends: bool = False
+    #: Extra weight on negative trend terms; only used when signed_trends is
+    #: true.  ``1.0`` is symmetric, ``2.0`` releases twice as fast.
+    release_gain: float = 1.0
 
 
 DEFAULT_CONTROLLER = ControllerParams()
@@ -139,6 +145,8 @@ class RunMetrics:
     goodput_trace: list[float] = field(default_factory=list)
     target_delivered_percent: dict[str, float] = field(default_factory=dict)
     target_legit_delivered_percent: dict[str, float] = field(default_factory=dict)
+    legit_delivered_trace: dict[str, list[float]] = field(default_factory=dict)
+    legit_offered_trace: dict[str, list[float]] = field(default_factory=dict)
     latency_weighted: list[tuple[float, float]] = field(default_factory=list)
 
 
@@ -241,10 +249,28 @@ def _ddos_attack(tick: int) -> Mapping[str, float]:
     return attack
 
 
+def _flood_wave_attack(tick: int) -> Mapping[str, float]:
+    """Trapezoidal flood at E2: ramp up, plateau, ramp down.
+
+    The ramp-down gives the trend estimator negative velocity; the transitions
+    give negative acceleration.  This is the signal the signed controller is
+    supposed to use, unlike the step-shaped ``ddos`` scenario.
+    """
+    attack = {target: 0.0 for target in NOMINAL_DEMAND_MBPS}
+    if 40 <= tick < 55:
+        attack["E2"] = 250.0 * (tick - 40) / 15.0
+    elif 55 <= tick < 85:
+        attack["E2"] = 250.0
+    elif 85 <= tick < 100:
+        attack["E2"] = 250.0 * (100 - tick) / 15.0
+    return attack
+
+
 SCENARIOS: dict[str, Scenario] = {
     "steady": Scenario("steady", _steady),
     "flash_crowd": Scenario("flash_crowd", _flash_crowd),
     "ddos": Scenario("ddos", _steady, attack=_ddos_attack),
+    "flood_wave": Scenario("flood_wave", _steady, attack=_flood_wave_attack),
 }
 
 
@@ -333,12 +359,33 @@ class DualRoleSimulation:
             pressure = self._pressure(name)
             velocity, acceleration = self._trend(name, pressure)
             hit = self.hit_ratio(name)
+            if self.controller.signed_trends:
+                velocity_term = (
+                    self.controller.w_velocity
+                    * velocity
+                    / self.controller.velocity_ref
+                )
+                acceleration_term = (
+                    self.controller.w_acceleration
+                    * acceleration
+                    / self.controller.acceleration_ref
+                )
+                if velocity_term < 0.0:
+                    velocity_term *= self.controller.release_gain
+                if acceleration_term < 0.0:
+                    acceleration_term *= self.controller.release_gain
+                trend_signal = velocity_term + acceleration_term
+            else:
+                trend_signal = (
+                    self.controller.w_velocity
+                    * max(0.0, velocity)
+                    / self.controller.velocity_ref
+                    + self.controller.w_acceleration
+                    * max(0.0, acceleration)
+                    / self.controller.acceleration_ref
+                )
             serve_signal = (
-                self.controller.w_pressure * pressure * hit
-                + self.controller.w_velocity * max(0.0, velocity) / self.controller.velocity_ref
-                + self.controller.w_acceleration
-                * max(0.0, acceleration)
-                / self.controller.acceleration_ref
+                self.controller.w_pressure * pressure * hit + trend_signal
             )
             target = min(1.0, max(0.0, self.controller.alpha0 + self.controller.gain * serve_signal))
             updated[name] = (
@@ -439,6 +486,12 @@ class DualRoleSimulation:
                 * sum(legit_delivered[target])
                 / max(1e-9, sum(legit_offered[target]))
                 for target in legit_delivered
+            },
+            legit_delivered_trace={
+                target: list(values) for target, values in legit_delivered.items()
+            },
+            legit_offered_trace={
+                target: list(values) for target, values in legit_offered.items()
             },
             latency_weighted=list(latency_weighted),
         )
