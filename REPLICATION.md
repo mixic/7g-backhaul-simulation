@@ -200,6 +200,21 @@ The comparison is a flow-level model with stipulated topology, demand and
 controller gains. It does not emit packets and is not a DDoS defence: the
 `ddos` scenario is a demand flood, not attack classification or scrubbing.
 
+The attack-aware follow-up filters unauthenticated flood volume before it
+reaches the role controller. Its claim is frozen in
+[docs/attack-aware.md](docs/attack-aware.md) and its classifier sweep is in
+[docs/attack-aware-results.md](docs/attack-aware-results.md):
+
+```powershell
+py -3 tools\benchmark_attack_aware.py --output-dir figures
+py -3 tools\plot_attack_aware.py --input-dir figures --output-dir figures
+```
+
+It writes `figures/attack_aware_summary.csv`, `attack_aware_sweep.csv`,
+`attack_aware_verdict.csv` and `figures/attack_aware_ddos.png`. The classifier
+false-positive and false-negative rates are stipulated inputs, not measured
+performance of a real name-verification scheme.
+
 ## Run the ns-3 cross-validation experiment (scenario S1)
 
 The external cross-check described in

@@ -1,0 +1,5 @@
+test,value,threshold,passed,detail
+classifier_leakage_threshold,,>= 50 % retention of the 95 % bar and 5 pp gain,False,largest false-negative rate on the grid that keeps every target >= 95 % legit delivery and E3 >= unclassified + 5 pp
+claim_at_fn_0.5,1.7259052172597837,all targets >= 95 % and E3 gain >= 5 pp,False,"E1=97.03, E2=83.26, E3=93.81; E3 gain over unclassified = +1.73 pp +/- 0.18"
+perfect_classifier_gain,4.908443278802559,>= 5 pp,False,fn=0: E3 legit 96.99 % vs unclassified 92.08 %; gain +4.91 +/- 0.17 pp
+reference_unclassified,92.08459263481224,,True,"unclassified E1=98.98, E3=92.08; separated E3=98.79"

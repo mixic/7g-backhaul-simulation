@@ -49,6 +49,10 @@ LATENCY_REFERENCE_MS = 25.0
 NOMINAL_DEMAND_MBPS = {"E1": 40.0, "E2": 50.0, "E3": 30.0}
 
 
+def _no_attack(_tick: int) -> Mapping[str, float]:
+    return {target: 0.0 for target in NOMINAL_DEMAND_MBPS}
+
+
 @dataclass(frozen=True)
 class Link:
     name: str
@@ -102,8 +106,27 @@ SEPARATED_ALPHA = {"M1": 0.0, "M2": 0.0, "E1": 1.0, "E2": 1.0, "E3": 1.0}
 class Scenario:
     key: str
     demand: Callable[[int], Mapping[str, float]]
+    attack: Callable[[int], Mapping[str, float]] = _no_attack
     load_multiplier: float = 1.0
     ticks: int = DEFAULT_TICKS
+
+
+@dataclass(frozen=True)
+class Classifier:
+    """Stipulated name-class admission error rates.
+
+    ``false_positive`` is the fraction of legitimate demand dropped by the
+    filter; ``false_negative`` is the fraction of the flood admitted.
+    """
+
+    false_positive: float = 0.02
+    false_negative: float = 0.10
+
+    def __post_init__(self) -> None:
+        for name in ("false_positive", "false_negative"):
+            value = getattr(self, name)
+            if not 0.0 <= value <= 1.0:
+                raise ValueError(f"{name} must be in [0, 1].")
 
 
 @dataclass
@@ -115,6 +138,7 @@ class RunMetrics:
     alpha_trace: dict[str, list[float]] = field(default_factory=dict)
     goodput_trace: list[float] = field(default_factory=list)
     target_delivered_percent: dict[str, float] = field(default_factory=dict)
+    target_legit_delivered_percent: dict[str, float] = field(default_factory=dict)
     latency_weighted: list[tuple[float, float]] = field(default_factory=list)
 
 
@@ -202,23 +226,25 @@ def _flash_crowd(tick: int) -> Mapping[str, float]:
     return demand
 
 
-def _ddos(tick: int) -> Mapping[str, float]:
+def _ddos_attack(tick: int) -> Mapping[str, float]:
     """Focused demand flood at E2: a stipulated DDoS-shaped surge.
 
     The model cannot tell malicious from legitimate bytes, so this is a demand
     flood, not a security model.  It measures graceful degradation and attack
-    isolation (delivery to the *unattacked* targets), not scrubbing.
+    isolation (delivery to the *unattacked* targets), not scrubbing.  The
+    attack is tracked separately from demand so the attack-aware admission can
+    filter it.
     """
-    demand = dict(NOMINAL_DEMAND_MBPS)
+    attack = {target: 0.0 for target in NOMINAL_DEMAND_MBPS}
     if 40 <= tick < 100:
-        demand["E2"] += 250.0
-    return demand
+        attack["E2"] = 250.0
+    return attack
 
 
 SCENARIOS: dict[str, Scenario] = {
     "steady": Scenario("steady", _steady),
     "flash_crowd": Scenario("flash_crowd", _flash_crowd),
-    "ddos": Scenario("ddos", _ddos),
+    "ddos": Scenario("ddos", _steady, attack=_ddos_attack),
 }
 
 
@@ -234,9 +260,15 @@ class DualRoleSimulation:
         nodes: Mapping[str, Node] | None = None,
         links: Sequence[Link] | None = None,
         load_multiplier: float = 1.0,
+        admission: str = "open",
+        classifier: Classifier = Classifier(),
     ) -> None:
         if mode not in {"fluid", "separated"}:
             raise ValueError(f"Unknown mode: {mode}")
+        if admission not in {"open", "authenticated"}:
+            raise ValueError(f"Unknown admission mode: {admission}")
+        self.admission = admission
+        self.classifier = classifier
         self.scenario = SCENARIOS[scenario] if isinstance(scenario, str) else scenario
         self.mode = mode
         self.controller = controller
@@ -351,20 +383,34 @@ class DualRoleSimulation:
         offered_ticks: list[float] = []
         target_delivered: dict[str, list[float]] = {}
         target_offered: dict[str, list[float]] = {}
+        legit_delivered: dict[str, list[float]] = {}
+        legit_offered: dict[str, list[float]] = {}
         for tick in range(self.scenario.ticks):
             if tick % CONTROL_INTERVAL == 0:
                 self.update_alpha()
-            demand = self._demand(tick)
-            allocation = self._allocate(demand)
+            legit, attack = self._classes(tick)
+            admitted_legit, admitted_attack = self._admit(legit, attack)
+            effective = {
+                target: admitted_legit[target] + admitted_attack[target]
+                for target in legit
+            }
+            allocation = self._allocate(effective)
             self._commit(allocation)
             delivered = sum(allocation.delivered_mbps.values())
-            offered = sum(demand.values())
+            offered = sum(effective.values())
             goodput_ticks.append(delivered)
             offered_ticks.append(offered)
             latency_weighted.extend(allocation.latency_samples)
             for target, amount in allocation.delivered_mbps.items():
                 target_delivered.setdefault(target, []).append(amount)
-                target_offered.setdefault(target, []).append(demand[target])
+                target_offered.setdefault(target, []).append(effective[target])
+                share = (
+                    admitted_legit[target] / effective[target]
+                    if effective[target] > 1e-12
+                    else 1.0
+                )
+                legit_delivered.setdefault(target, []).append(amount * share)
+                legit_offered.setdefault(target, []).append(legit[target])
             for name in self.nodes:
                 self.alpha_trace[name].append(self.alpha[name])
             self.goodput_trace.append(delivered)
@@ -383,16 +429,58 @@ class DualRoleSimulation:
             alpha_trace={name: list(trace) for name, trace in self.alpha_trace.items()},
             goodput_trace=list(goodput_ticks),
             target_delivered_percent={
-                target: 100.0 * sum(target_delivered[target]) / sum(target_offered[target])
-                if sum(target_offered[target]) > 0.0
-                else 0.0
+                target: 100.0
+                * sum(target_delivered[target])
+                / max(1e-9, sum(target_offered[target]))
                 for target in target_delivered
+            },
+            target_legit_delivered_percent={
+                target: 100.0
+                * sum(legit_delivered[target])
+                / max(1e-9, sum(legit_offered[target]))
+                for target in legit_delivered
             },
             latency_weighted=list(latency_weighted),
         )
 
+    def _classes(self, tick: int) -> tuple[dict[str, float], dict[str, float]]:
+        """Split noisy total demand into legitimate and attack volume."""
+        total = self._demand(tick)
+        attack = self.scenario.attack(tick)
+        legit: dict[str, float] = {}
+        attack_adjusted: dict[str, float] = {}
+        for target, amount in total.items():
+            attack_amount = max(0.0, min(amount, float(attack.get(target, 0.0))))
+            attack_adjusted[target] = attack_amount
+            legit[target] = max(0.0, amount - attack_amount)
+        return legit, attack_adjusted
+
+    def _admit(
+        self,
+        legit: Mapping[str, float],
+        attack: Mapping[str, float],
+    ) -> tuple[dict[str, float], dict[str, float]]:
+        if self.admission == "authenticated":
+            admitted_legit = {
+                target: value * (1.0 - self.classifier.false_positive)
+                for target, value in legit.items()
+            }
+            admitted_attack = {
+                target: value * self.classifier.false_negative
+                for target, value in attack.items()
+            }
+        else:
+            admitted_legit = dict(legit)
+            admitted_attack = dict(attack)
+        return admitted_legit, admitted_attack
+
     def _demand(self, tick: int) -> dict[str, float]:
         base = self.scenario.demand(tick)
+        attack = self.scenario.attack(tick)
+        combined = {
+            target: float(base.get(target, 0.0)) + float(attack.get(target, 0.0))
+            for target in base
+        }
         return {
             target: max(
                 0.0,
@@ -400,7 +488,7 @@ class DualRoleSimulation:
                 * self.load_multiplier
                 * (1.0 + 0.04 * self.rng.gauss(0.0, 1.0)),
             )
-            for target, value in base.items()
+            for target, value in combined.items()
         }
 
     # -- allocation --------------------------------------------------------
@@ -620,8 +708,16 @@ def simulate_run(
     seed: int,
     controller: ControllerParams = DEFAULT_CONTROLLER,
     load_multiplier: float = 1.0,
+    admission: str = "open",
+    classifier: Classifier = Classifier(),
 ) -> RunMetrics:
     """Run one replicate of one mode on one scenario."""
     return DualRoleSimulation(
-        scenario, mode, seed, controller, load_multiplier=load_multiplier
+        scenario,
+        mode,
+        seed,
+        controller,
+        load_multiplier=load_multiplier,
+        admission=admission,
+        classifier=classifier,
     ).run()

@@ -250,6 +250,17 @@ Figures: `dual_role_alpha.png` (α and 1−α over the flash crowd),
 `dual_role_latency_cdf.png`, `dual_role_stability.png` and
 `dual_role_ddos.png` (delivery by target under the flood).
 
+The follow-up claim in [docs/attack-aware.md](docs/attack-aware.md) tests
+whether authenticated name-class admission — the service-layer analogue of the
+layering testbed's integrity-scope finding — fixes that failure. It is also
+**refuted as stated**: at 50 % flood leakage all-target legitimate delivery
+falls below 95 % and the `E3` gain is only 1.73 pp; even with perfect flood
+rejection the `E3` gain is 4.91 pp, missing the pre-registered 5 pp bar by
+0.09 pp. The sweep does yield the useful condition: the filter must reject
+about 80 % of the flood to keep every target at ≥ 95 % in this topology. See
+[docs/attack-aware-results.md](docs/attack-aware-results.md). The RFMP loop is
+still not closed; this remains a flow-level controller.
+
 ## Layered-protocol testbed (phase 0)
 
 The repository also contains a three-fidelity testbed for encapsulated stacks.
@@ -354,6 +365,8 @@ plan.
 │   ├── role-fluid-paradigm.md    # Role-fluid paradigm, model and first results
 │   ├── dual-role.md              # Continuous serve/balance claim and scenarios
 │   ├── dual-role-results.md      # Dual-role comparison, refutation and DDoS
+│   ├── attack-aware.md           # Pre-registered authenticated-admission claim
+│   ├── attack-aware-results.md   # Classifier sweep and its refutation
 │   ├── layering-predictions.md   # Frozen P1-P7 encapsulation predictions
 │   └── layering-results.md       # Three-fidelity layering classification
 ├── figures/
@@ -418,6 +431,10 @@ plan.
 │   ├── dual_role_latency_cdf.png
 │   ├── dual_role_stability.png
 │   ├── dual_role_ddos.png
+│   ├── attack_aware_summary.csv  # Admission arms and legitimate delivery
+│   ├── attack_aware_sweep.csv    # Delivery vs classifier leakage
+│   ├── attack_aware_verdict.csv  # Pre-registered admission tests
+│   ├── attack_aware_ddos.png     # Legitimate delivery vs false-negative rate
 │   └── vision_fair_summary.csv   # Controlled-benchmark arm means
 ├── models/
 │   ├── congestion_forecast.npz   # Synthetic model weights
@@ -459,6 +476,8 @@ plan.
 │   ├── benchmark_name_fabric.py  # Five name-fabric experiments
 │   ├── benchmark_dual_role.py    # Continuous alpha comparison, sweep and DDoS
 │   ├── plot_dual_role.py         # Alpha, throughput, latency, stability, DDoS plots
+│   ├── benchmark_attack_aware.py # Authenticated admission vs classifier leakage
+│   ├── plot_attack_aware.py      # Legitimate delivery vs false-negative rate
 │   ├── benchmark_vision.py       # CDN, handover, and backhaul policy studies
 │   └── validation_io.py          # Normalize and compare simulator/testbed results
 ├── validation/

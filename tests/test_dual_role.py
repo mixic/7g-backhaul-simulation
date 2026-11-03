@@ -23,6 +23,7 @@ import unittest
 from simulation.dual_role import (
     NOMINAL_DEMAND_MBPS,
     SEPARATED_ALPHA,
+    Classifier,
     DualRoleSimulation,
     simulate_run,
 )
@@ -94,6 +95,69 @@ class DualRoleModelTests(unittest.TestCase):
         self.assertLess(
             metrics.target_delivered_percent["E2"],
             metrics.target_delivered_percent["E3"],
+        )
+
+
+class AttackAdmissionTests(unittest.TestCase):
+    def test_invalid_classifier_rates_are_rejected(self) -> None:
+        with self.assertRaises(ValueError):
+            Classifier(false_positive=1.2)
+        with self.assertRaises(ValueError):
+            Classifier(false_negative=-0.1)
+
+    def test_unknown_admission_mode_is_rejected(self) -> None:
+        with self.assertRaises(ValueError):
+            DualRoleSimulation("ddos", "fluid", 1, admission="unknown")
+
+    def test_perfect_admission_recovers_the_attacked_target(self) -> None:
+        open_loop = simulate_run("ddos", "fluid", 5)
+        admitted = simulate_run(
+            "ddos",
+            "fluid",
+            5,
+            admission="authenticated",
+            classifier=Classifier(0.0, 0.0),
+        )
+        self.assertGreater(
+            admitted.target_legit_delivered_percent["E2"],
+            open_loop.target_legit_delivered_percent["E2"] + 10.0,
+        )
+
+    def test_perfect_admission_reduces_collateral_damage(self) -> None:
+        open_loop = simulate_run("ddos", "fluid", 5)
+        admitted = simulate_run(
+            "ddos",
+            "fluid",
+            5,
+            admission="authenticated",
+            classifier=Classifier(0.0, 0.0),
+        )
+        self.assertGreater(
+            admitted.target_legit_delivered_percent["E3"],
+            open_loop.target_legit_delivered_percent["E3"],
+        )
+
+    def test_false_positives_cost_legitimate_delivery(self) -> None:
+        admitted = simulate_run(
+            "ddos",
+            "fluid",
+            5,
+            admission="authenticated",
+            classifier=Classifier(0.2, 0.0),
+        )
+        self.assertLessEqual(admitted.target_legit_delivered_percent["E1"], 82.0)
+
+    def test_open_admission_with_all_attack_admitted_matches_the_open_loop(self) -> None:
+        open_loop = simulate_run("ddos", "fluid", 5)
+        admitted = simulate_run(
+            "ddos",
+            "fluid",
+            5,
+            admission="authenticated",
+            classifier=Classifier(0.0, 1.0),
+        )
+        self.assertAlmostEqual(
+            admitted.delivered_percent, open_loop.delivered_percent, places=6
         )
 
 
