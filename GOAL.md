@@ -105,6 +105,18 @@ its only role is to make the integrity scope observable.
 - No external network dependencies beyond `requirements.txt`. Linux emulation
   runs as root in a container or WSL; the exact privileges are documented.
 
+## Current status (3 November 2026)
+
+- M1–M5 are complete. The frozen predictions are in
+  [`docs/layering-predictions.md`](docs/layering-predictions.md); the
+  classified results are in [`docs/layering-results.md`](docs/layering-results.md).
+- Six predictions are confirmed. **P5 is refuted at the Linux fidelity** and
+  is reported as a refutation, with the cause (a payload-normalisation
+  fragment-count shift) explained. No prediction, tolerance or scenario was
+  tuned to remove it.
+- M6 (ns-3 cross-check) was not attempted because no ns-3 tree was available
+  in the execution environment. It remains open.
+
 ## Out of scope
 
 Wireless PHY/MAC effects, congestion control, role-selection policy,

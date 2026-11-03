@@ -29,6 +29,13 @@ ip netns del layA 2>/dev/null
 ip netns del layB 2>/dev/null
 ```
 
+The Linux interpreter also needs the repository's Python dependencies (at
+minimum `numpy`; install `requirements.txt` in that interpreter, for example
+`python3 -m pip install --break-system-packages -r requirements.txt`). The
+committed Linux results used stock zlib 1.3.1; the Windows model uses
+zlib-ng, which compresses the synthetic corpus slightly differently. This is
+recorded in the results and in the predictions addendum.
+
 An unprivileged-in-a-container run is possible only if the container grants
 `CAP_NET_ADMIN` and `/dev/net/tun`; user-namespace-only (`unshare -Urn`) setups
 are kernel-dependent and are not supported by the harness. WSL2 Ubuntu works as

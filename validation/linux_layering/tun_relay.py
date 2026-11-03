@@ -198,9 +198,6 @@ def run_source(args: argparse.Namespace) -> None:
             packet = os.read(tun, 65535)
             if not is_application_packet(packet, args.app_port):
                 continue
-            if args.dump:
-                Path(args.dump).write_bytes(packet)
-                args.dump = ""
             stack = make_stack(kinds=args.kinds, aad=args.aad, datagram_id=sent + 1)
             encoded = stack.encode(packet)
             for index, part in enumerate(encoded.parts):
@@ -242,7 +239,6 @@ def run_destination(args: argparse.Namespace) -> None:
     buffers: dict[int, dict[int, bytes]] = {}
     counts: dict[int, int] = {}
     results: dict[int, dict[str, object]] = {}
-    rewrites: list[bool] = []
     while True:
         try:
             data, _ = sock.recvfrom(70000)
@@ -266,7 +262,6 @@ def run_destination(args: argparse.Namespace) -> None:
         reachable, is_visible, applied = apply_rewrite(
             args.kinds, args.target, args.rewrite, args.max_depth, mutable
         )
-        rewrites.append(applied and is_visible and reachable)
         decoded = decode_datagram(
             args.kinds, args.aad, {key: bytes(value) for key, value in mutable.items()}, count
         )
@@ -339,7 +334,6 @@ def main() -> None:
     parser.add_argument("--max-depth", type=int, default=None)
     parser.add_argument("--datagrams", type=int, default=100)
     parser.add_argument("--app-port", type=int, default=9999)
-    parser.add_argument("--dump", default="")
     parser.add_argument("--timeout", type=float, default=5.0)
     parser.add_argument("--result", required=True)
     args = parser.parse_args()

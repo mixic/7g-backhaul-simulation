@@ -145,6 +145,17 @@ class Harness:
         process._layering_log = handle  # type: ignore[attr-defined]
         return process
 
+    @staticmethod
+    def _reap(process, timeout: float = 15.0) -> None:
+        try:
+            process.wait(timeout=timeout)
+        except subprocess.TimeoutExpired:
+            process.kill()
+            process.wait()
+        handle = getattr(process, "_layering_log", None)
+        if handle is not None:
+            handle.close()
+
     def run_once(self, case: Case, run_seed: int, datagrams: int) -> dict[str, object]:
         self.netem(case.loss, run_seed)
         src_result = self.temporary / "src.json"
@@ -228,18 +239,10 @@ class Harness:
             env=self.environment,
             timeout=30,
         )
-        for process, name in ((src_relay, "src"), (dst_relay, "dst")):
-            try:
-                process.wait(timeout=15)
-            except subprocess.TimeoutExpired:
-                process.kill()
-                process.wait()
+        for process in (src_relay, dst_relay):
+            self._reap(process)
         dst_app.terminate()
-        try:
-            dst_app.wait(timeout=5)
-        except subprocess.TimeoutExpired:
-            dst_app.kill()
-            dst_app.wait()
+        self._reap(dst_app, timeout=5.0)
         if not src_result.exists():
             log = (self.temporary / "src_relay.log").read_text(errors="replace")
             raise RuntimeError(f"Linux source relay failed: {send.stderr}\n{log}")
