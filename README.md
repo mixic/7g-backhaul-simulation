@@ -599,6 +599,7 @@ is a mock; a real LLM must be benchmarked separately before any latency claim.
 │   ├── oef-mkb.md                # OEF + MKB controller notes (M4)
 │   ├── homeostasis-biological-topology.md # Fick/homeostasis theory mapping
 │   ├── marder-goaillard-cross-correlation.md # Degeneracy/homeostasis mapping
+│   ├── kinematics-filtering.md   # Raw-derivative noise + alpha-beta-gamma/RER (H8)
 │   ├── kinematic-fabric.md       # Role-fluid kinematic fabric in ns-3
 │   ├── ip46-services.md          # IPv4 vs IPv6 overhead and agnostic services
 │   ├── layering-predictions.md   # Frozen P1-P7 encapsulation predictions
