@@ -30,6 +30,10 @@ from simulation.llm_compiler import (
 )
 from simulation.layering.layers import CompressLayer, EncryptLayer, FragmentLayer, TunnelLayer
 from simulation.layering.stack import MiddleboxSpec, Stack
+from simulation.mkb_controller import EwmaMkbController
+from simulation.surgical.config import MKB_EWMA, SimConfig
+from simulation.surgical.network import SimRun
+from simulation.surgical.sim import run_and_score
 
 
 def build(order, authenticate_outer, mtu=500):
@@ -126,6 +130,19 @@ class CodecIntegrationTests(unittest.TestCase):
         suboptimal = build((F, E, C), False, mtu=500)
         payload = b"network homeostasis " * 70
         self.assertLess(optimal.wire_bytes(payload), suboptimal.wire_bytes(payload))
+
+
+class EwmaControllerTests(unittest.TestCase):
+    def test_ewma_controller_is_registered(self) -> None:
+        sim = SimRun(SimConfig(name="exp1_ddos", seed=0, controller=MKB_EWMA))
+        self.assertIsInstance(sim.controller, EwmaMkbController)
+
+    def test_ewma_controller_runs_and_reports(self) -> None:
+        r = run_and_score(SimConfig(name="exp1_ddos", seed=0,
+                                    controller=MKB_EWMA).child(duration=45.0))
+        self.assertGreaterEqual(r["edits"], 0)
+        self.assertGreaterEqual(r["rer_event_count"], 0)
+        self.assertGreater(r["goodput_shock"], 0.0)
 
 
 if __name__ == "__main__":

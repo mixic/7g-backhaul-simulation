@@ -503,6 +503,8 @@ class SimRun:
             "oef_limit_hit": bool(getattr(self.controller, "oef_limit_hit", False)),
             "mkb_spikes": np.asarray(getattr(self.controller, "mkb_spikes", []),
                                      dtype=np.float64),
+            "rer_events": np.asarray(getattr(self.controller, "rer_events", []),
+                                     dtype=np.float64),
             "edit_times": np.array([e.t for e in self.ledger.edits], dtype=float),
         }
 

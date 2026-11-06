@@ -75,6 +75,7 @@ SAVANT           = "savant"             # compensatory hyper-specialisation (H4)
 OEF              = "oef_surgical"       # M4: OEF-compensated surgical control
 MKB              = "mkb"                # M4: multidimensional kinematic baselining
 MKB_NO_OEF       = "mkb_no_oef"         # M4: MKB vector trigger, OEF actuator disabled
+MKB_EWMA         = "m5_ewma_mkb"        # M5.1: EWMA-smoothed vector trigger + RER
 
 MAIN_CONTROLLERS = [K8S, PRESSURE, SURGICAL]
 ALL_CONTROLLERS = [K8S, PRESSURE, PRESSURE_TUNED, SURGICAL, SURGICAL_UNLIM,
@@ -166,6 +167,12 @@ class SimConfig:
     mkb_tau_v: float = 1.0            # EMA time constant for the velocity vector
     mkb_floor_a: float = 2.0          # absolute floor on ||a|| residual (1/s^2)
     mkb_floor_v: float = 0.08         # absolute floor on ||v|| for the angle test
+
+    # ---- M5.1: EWMA-smoothed kinematics + Random Early Redirection ----
+    mkb_alpha_tau: float = 1.0        # EWMA time constant for the velocity vector (s)
+    mkb_beta_tau: float = 1.0         # EWMA time constant for the acceleration vector (s)
+    mkb_rer_frac: float = 0.8         # RER band: pre-trigger at this fraction of the floor threshold
+    mkb_rer_prob: float = 0.05        # RER redirect probability per affected flow
 
     # ---- surgical controller ----
     spike_k: float = 4.0             # trigger: residual > k * EMA(|residual|)

@@ -41,7 +41,7 @@ import math
 
 import numpy as np
 
-from .surgical.config import MKB
+from .surgical.config import MKB, MKB_EWMA
 from .oef_controller import OefController
 
 
@@ -143,3 +143,156 @@ class MkbController(OefController):
                 continue
             self.mkb_spikes.append((t, n))
             self._apply(t, flow, n)
+
+
+class EwmaMkbMonitor:
+    """Alpha-beta EWMA smoothing plus a Random Early Redirection band (H8).
+
+    Computes the vector velocity/acceleration exactly like :class:`MkbMonitor`
+    (discrete derivatives of a short-window EMA of the state), then applies a
+    separate EWMA to the velocity (``alpha``) and the acceleration (``beta``),
+    and returns a *level*: ``0`` = quiet, ``1`` = inside the RER band
+    (``rer_frac`` of the adaptive threshold), ``2`` = full trigger.
+    """
+
+    __slots__ = ("dt", "dims", "tau_s", "alpha_tau", "beta_tau", "k",
+                 "cos_thr", "floor_a", "floor_v", "rer_frac", "s_ema",
+                 "v_ema", "a_ema", "resid_ema", "v_prev", "init", "last_level",
+                 "max_resid", "max_thr")
+
+    def __init__(self, dims: int, dt: float, tau_s: float = 0.3,
+                 alpha_tau: float = 0.5, beta_tau: float = 1.0,
+                 k: float = 4.0, angle_deg: float = 45.0,
+                 floor_a: float = 2.0, floor_v: float = 0.08,
+                 rer_frac: float = 0.8):
+        self.dims = dims
+        self.dt = dt
+        self.tau_s = tau_s
+        self.alpha_tau = alpha_tau
+        self.beta_tau = beta_tau
+        self.k = k
+        self.cos_thr = math.cos(math.radians(angle_deg))
+        self.floor_a = floor_a
+        self.floor_v = floor_v
+        self.rer_frac = rer_frac
+        self.s_ema = None
+        self.v_ema = None
+        self.a_ema = None
+        self.resid_ema = 0.0
+        self.v_prev = None
+        self.init = False
+        self.last_level = 0
+        self.max_resid = 0.0
+        self.max_thr = 0.0
+
+    def update(self, s) -> int:
+        s = np.asarray(s, dtype=float)
+        if not self.init:
+            self.init = True
+            self.s_ema = s.copy()
+            self.v_ema = np.zeros(self.dims)
+            self.a_ema = np.zeros(self.dims)
+            self.v_prev = np.zeros(self.dims)
+            return 0
+
+        alpha = 1.0 - math.exp(-self.dt / self.alpha_tau)
+        beta = 1.0 - math.exp(-self.dt / self.beta_tau)
+        as_ = 1.0 - math.exp(-self.dt / self.tau_s)
+
+        prev_ema = self.s_ema.copy()
+        self.s_ema += as_ * (s - self.s_ema)
+        v = (self.s_ema - prev_ema) / self.dt
+        a = (v - self.v_prev) / self.dt
+        self.v_prev = v.copy()
+
+        self.v_ema += alpha * (v - self.v_ema)
+        a_resid = float(np.linalg.norm(a - self.a_ema))
+        self.a_ema += beta * (a - self.a_ema)
+        self.resid_ema += beta * (a_resid - self.resid_ema)
+
+        thr = max(self.floor_a, self.k * self.resid_ema)
+        self.max_resid = max(self.max_resid, a_resid)
+        self.max_thr = max(self.max_thr, thr)
+        mag = a_resid > thr
+        nv = float(np.linalg.norm(v))
+        nve = float(np.linalg.norm(self.v_ema))
+        cosang = (float(np.dot(v, self.v_ema) / (nv * nve))
+                  if nv > 1e-9 and nve > 1e-9 else 1.0)
+        angle = (nv > self.floor_v and nve > self.floor_v
+                 and cosang < self.cos_thr)
+
+        if mag or angle:
+            self.last_level = 2
+        elif a_resid > self.rer_frac * self.floor_a:
+            self.last_level = 1
+        else:
+            self.last_level = 0
+        return self.last_level
+
+
+class EwmaMkbController(OefController):
+    """EWMA-smoothed vector trigger plus Random Early Redirection (H8).
+
+    In the pre-trigger band (``rer_frac`` of the threshold) it probabilistically
+    redirects a small fraction of the affected flows instead of firing the full
+    surgical edit, spreading the state change so the all-nodes-at-once burst of
+    the raw controllers is broken up.
+    """
+
+    name = MKB_EWMA
+
+    def __init__(self, cfg, sim):
+        super().__init__(cfg, sim, oef_on=False)
+        self.monitors = {
+            n: EwmaMkbMonitor(4, cfg.tick, tau_s=0.3,
+                              alpha_tau=cfg.mkb_alpha_tau,
+                              beta_tau=cfg.mkb_beta_tau, k=cfg.mkb_k,
+                              angle_deg=cfg.mkb_angle_deg,
+                              floor_a=cfg.mkb_floor_a,
+                              floor_v=cfg.mkb_floor_v,
+                              rer_frac=cfg.mkb_rer_frac)
+            for n in range(sim.topo.n_nodes)
+        }
+        self.mkb_spikes = []   # (t, node) full triggers
+        self.rer_events = []   # (t, node) Random Early Redirection events
+
+    def on_tick(self, t, obs):
+        dt = self._dt(t)
+        self._oef_step(t, dt)
+        self._release(t, obs)
+        self._ewma_detect(t, obs)
+        self._top_up(t, obs)
+
+    def _ewma_detect(self, t, obs):
+        if t < self.cfg.warmup:
+            return
+        for n in range(self.sim.topo.n_nodes):
+            e = self.active.get(n)
+            if e is not None and e["phase"] == "in":
+                continue
+            state = self._state.get(n)
+            if state is None:
+                continue
+            level = self.monitors[n].update(state)
+            if level == 0:
+                continue
+            flow = self._attribute(n, t)
+            if flow is None:
+                continue
+            if level == 1:
+                self._rer(t, n, flow)
+            else:
+                self.mkb_spikes.append((t, n))
+                self._apply(t, flow, n)
+
+    def _rer(self, t, n, flow):
+        """Probabilistic Random Early Redirection of one affected flow."""
+        if self.sim.rng.random() >= self.cfg.mkb_rer_prob:
+            return
+        alt = self.sim.best_alternate(n, flow)
+        if alt is None or not self._spend(n, 0.25, t):
+            return
+        self.sim.set_flow_override(n, flow, alt)
+        self.sim.invalidate_paths()
+        self._vcache.clear()
+        self.rer_events.append((t, n))

@@ -284,6 +284,7 @@ def run_and_score(cfg):
                           if len(res["oef_log"]) else 0.0),
         "oef_series": res.get("oef_series", np.zeros((0, 3))),
         "mkb_spike_count": int(len(res.get("mkb_spikes", []))),
+        "rer_event_count": int(len(res.get("rer_events", []))),
         "mkb_first_trigger": (float(np.min(res["mkb_spikes"][:, 0]))
                               if len(res.get("mkb_spikes", [])) else float("nan")),
         "cbf_base": _cbf_mean(res, base_w),

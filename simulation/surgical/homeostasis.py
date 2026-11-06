@@ -23,15 +23,15 @@ and the CI tests) keep working unchanged.
 """
 from __future__ import annotations
 
-from ..mkb_controller import MkbController, MkbMonitor
+from ..mkb_controller import EwmaMkbController, MkbController, MkbMonitor
 from ..oef_controller import OefController, OefSurgicalController
 
 __all__ = ["OefController", "OefSurgicalController", "MkbController",
-           "MkbMonitor", "make_homeostasis_controller"]
+           "MkbMonitor", "EwmaMkbController", "make_homeostasis_controller"]
 
 
 def make_homeostasis_controller(cfg, sim):
-    from .config import MKB, MKB_NO_OEF, OEF
+    from .config import MKB, MKB_EWMA, MKB_NO_OEF, OEF
 
     if cfg.controller == OEF:
         return OefController(cfg, sim)
@@ -39,4 +39,6 @@ def make_homeostasis_controller(cfg, sim):
         return MkbController(cfg, sim, oef_on=True)
     if cfg.controller == MKB_NO_OEF:
         return MkbController(cfg, sim, oef_on=False)
+    if cfg.controller == MKB_EWMA:
+        return EwmaMkbController(cfg, sim)
     return None

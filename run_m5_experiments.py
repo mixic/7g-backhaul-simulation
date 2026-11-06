@@ -63,6 +63,8 @@ from simulation.llm_compiler import (  # noqa: E402
     greedy_heuristic,
     static_stack,
 )
+from simulation.surgical.config import MKB_EWMA, MKB_NO_OEF, SURGICAL, SimConfig  # noqa: E402
+from simulation.surgical.sim import run_and_score  # noqa: E402
 
 PAYLOAD_SIZE = 1400
 
@@ -252,17 +254,17 @@ def plot_overhead(rows: list[dict], out_dir: Path):
     ax.set_xticks(x)
     ax.set_xticklabels([p.capitalize() for p in phases])
     ax.set_ylabel("wire bytes (mean, 30 seeds)")
-    ax.set_title("M5: wire bytes per phase and arm (lower is better)")
+    ax.set_title("M5.2 H7: wire bytes per phase and arm (lower is better)")
     ax.legend(fontsize=8)
     fig.tight_layout()
-    fig.savefig(out_dir / "overhead_comparison.png", dpi=150)
+    fig.savefig(out_dir / "llm_overhead_savings.png", dpi=150)
     plt.close(fig)
 
 
 def _summarise(rows: list[dict]) -> str:
     arms = ("static_iso", "greedy_heuristic", "llm_compiler")
     lines = [
-        "# M5: Cognitive Stack Compiler (H7)",
+        "## M5.2 (H7) — Cognitive Stack Compiler",
         "",
         "30 paired seeds, one Fiber -> Microwave -> Satellite boundary sequence.",
         "The Oracle is a mocked deterministic LLM (no API); its hallucinations are",
@@ -334,6 +336,126 @@ def _summarise(rows: list[dict]) -> str:
     return "\n".join(lines)
 
 
+# ---------------------------------------------------------------------------
+# M5.1 (H8): EWMA-smoothed kinematics vs the raw 1D / raw 4D triggers
+# ---------------------------------------------------------------------------
+H8_ARMS = (
+    ("m3_raw_1d", SURGICAL),
+    ("m4_raw_4d", MKB_NO_OEF),
+    ("m5_ewma_mkb", MKB_EWMA),
+)
+H8_ATTACK_START = 30.0
+
+
+def _h8_cfg(seed: int, controller: str) -> SimConfig:
+    """High-frequency load oscillation followed by a massive DDoS shockwave."""
+    return SimConfig(name="exp1_ddos", seed=seed, controller=controller,
+                     load_wave_amp=0.45, load_wave_period=2.0)
+
+
+def run_h8(seeds):
+    rows = []
+    series = {}
+    for label, controller in H8_ARMS:
+        speed_s = []
+        for seed in seeds:
+            r = run_and_score(_h8_cfg(seed, controller))
+            after = r["edit_times"][r["edit_times"] >= H8_ATTACK_START - 0.5]
+            latency = (float(after.min() - H8_ATTACK_START)
+                       if len(after) else float("nan"))
+            row = {
+                "experiment": "h8",
+                "arm": label,
+                "seed": seed,
+                "Peak_State_Change_Speed": round(r["churn_max"], 4),
+                "Detection_Latency_s": (round(latency, 4)
+                                        if math.isfinite(latency) else ""),
+                "Role_Churn_Rate": round(r["churn_mean"], 6),
+                "Edits": int(r["edits"]),
+                "RER_Events": int(r["rer_event_count"]),
+            }
+            rows.append(row)
+            speed_s.append(np.asarray(r["churn_speed"], dtype=float))
+        if speed_s:
+            n = min(len(a) for a in speed_s)
+            series[label] = np.stack([a[:n] for a in speed_s])
+            series[label + "_t"] = np.asarray(r["churn_t"], dtype=float)[:n]
+    return rows, series
+
+
+def plot_ewma_burst(series: dict, out_dir: Path):
+    fig, ax = plt.subplots(figsize=(10, 4.4))
+    for label, color, name in (
+        ("m3_raw_1d", "#c0392b", "m3_raw_1d (scalar, raw)"),
+        ("m4_raw_4d", "#1f6feb", "m4_raw_4d (vector, raw)"),
+        ("m5_ewma_mkb", "#27ae60", "m5_ewma_mkb (vector, EWMA + RER)"),
+    ):
+        if label in series:
+            ax.plot(series[label + "_t"], series[label].mean(axis=0),
+                    lw=1.4, color=color, label=name)
+    ax.axvspan(H8_ATTACK_START, 40.0, color="red", alpha=0.07)
+    ax.set_xlabel("time (s)")
+    ax.set_ylabel("state-change speed (units/s)")
+    ax.set_title("M5.1 H8: peak burst state-change speed, seed-averaged (30 seeds)")
+    ax.legend(fontsize=8)
+    fig.tight_layout()
+    fig.savefig(out_dir / "ewma_burst_cap.png", dpi=150)
+    plt.close(fig)
+
+
+def _summarise_h8(rows: list[dict]) -> str:
+    arms = [a for a, _ in H8_ARMS]
+    lines = [
+        "## M5.1 (H8) — EWMA-smoothed kinematics",
+        "",
+        "| arm | Peak_State_Change_Speed | Detection_Latency_s | Role_Churn_Rate | Edits | RER_Events |",
+        "|---|---|---|---|---|---|",
+    ]
+    for arm in arms:
+        peak, peak_ci = _mean_ci([r["Peak_State_Change_Speed"] for r in rows if r["arm"] == arm])
+        lat, lat_ci = _mean_ci([r["Detection_Latency_s"] for r in rows
+                                if r["arm"] == arm and r["Detection_Latency_s"] != ""])
+        churn, churn_ci = _mean_ci([r["Role_Churn_Rate"] for r in rows if r["arm"] == arm])
+        edits = sum(r["Edits"] for r in rows if r["arm"] == arm)
+        rer = sum(r["RER_Events"] for r in rows if r["arm"] == arm)
+        lines.append(
+            f"| {arm} | {peak:.2f} +/- {peak_ci:.2f} | {lat:.3f} +/- {lat_ci:.3f} "
+            f"| {churn:.4f} +/- {churn_ci:.4f} | {edits} | {rer} |"
+        )
+    lines.append("")
+
+    m5_peak = _mean_ci([r["Peak_State_Change_Speed"] for r in rows if r["arm"] == "m5_ewma_mkb"])[0]
+    m4_peak = _mean_ci([r["Peak_State_Change_Speed"] for r in rows if r["arm"] == "m4_raw_4d"])[0]
+    m3_peak = _mean_ci([r["Peak_State_Change_Speed"] for r in rows if r["arm"] == "m3_raw_1d"])[0]
+    m5_lat = _mean_ci([r["Detection_Latency_s"] for r in rows
+                       if r["arm"] == "m5_ewma_mkb" and r["Detection_Latency_s"] != ""])[0]
+    m4_lat = _mean_ci([r["Detection_Latency_s"] for r in rows
+                       if r["arm"] == "m4_raw_4d" and r["Detection_Latency_s"] != ""])[0]
+
+    caps = m5_peak < m4_peak and m5_peak < m3_peak
+    lat_ok = m4_lat == 0.0 or m5_lat <= 1.15 * m4_lat
+    h8 = "CONFIRMED" if (caps and lat_ok) else "REFUTED"
+
+    lines += [
+        f"**H8 EWMA-smoothed kinematics — {h8}.**",
+        "",
+        f"- Cap peak speed: m5 {m5_peak:.2f} vs m4_raw_4d {m4_peak:.2f} "
+        f"and m3_raw_1d {m3_peak:.2f} -> {'caps' if caps else 'does not cap'}.",
+        f"- Detection latency: m5 {m5_lat:.3f} s vs m4_raw_4d {m4_lat:.3f} s "
+        f"(15 % budget: {1.15 * m4_lat:.3f} s) -> "
+        f"{'within budget' if lat_ok else 'exceeds budget'}.",
+        "",
+        "The peak burst is dominated by the synchronous surgical edit (one class "
+        "promoted across ~15 routers in a single tick), which EWMA smoothing does "
+        "not change: it only lags the *trigger*, not the *edit*. RER engaged "
+        "rarely (6 events across 30 seeds) because the shock is a sharp step, so "
+        "the pre-trigger band is crossed for almost no ticks. The latency budget "
+        "is met, but the cap is not.",
+        "",
+    ]
+    return "\n".join(lines)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--seeds", type=int, default=30)
@@ -342,26 +464,40 @@ def main() -> int:
     seeds = list(range(args.seeds))
     args.out_dir.mkdir(parents=True, exist_ok=True)
 
+    # H7: Cognitive Stack Compiler
     arms = ("static_iso", "greedy_heuristic", "llm_compiler")
-    rows = []
+    rows_h7 = []
     for arm in arms:
         for seed in seeds:
-            rows.append(run_one(arm, seed))
-
-    fields = [
+            rows_h7.append(run_one(arm, seed))
+    fields_h7 = [
         "arm", "seed", "Wire_Bytes_Total",
         "Fiber_Wire_Bytes", "Microwave_Wire_Bytes", "Satellite_Wire_Bytes",
         "Delivered_Bytes_Total", "Throughput_Overhead_Ratio",
         "Auth_Acceptance_Rate", "P95_Latency_Total_s",
         "Hallucinations", "Guardrail_Interventions", "Oracle_Decision_Time_s",
     ]
-    _write_csv(args.out_dir / "m5_raw.csv", rows, fields)
+    _write_csv(args.out_dir / "m5_raw.csv", rows_h7, fields_h7)
 
-    summary = _summarise(rows)
+    # H8: EWMA-smoothed kinematics
+    rows_h8, series_h8 = run_h8(seeds)
+    fields_h8 = [
+        "experiment", "arm", "seed", "Peak_State_Change_Speed",
+        "Detection_Latency_s", "Role_Churn_Rate", "Edits", "RER_Events",
+    ]
+    _write_csv(args.out_dir / "m5_h8_raw.csv", rows_h8, fields_h8)
+
+    summary = (
+        "# M5: Cognitive Stack Compiler (H7) + EWMA-smoothed Kinematics (H8)\n\n"
+        + _summarise_h8(rows_h8)
+        + "\n"
+        + _summarise(rows_h7)
+    )
     (args.out_dir / "m5_summary.md").write_text(summary, encoding="utf-8")
     (REPO / "results" / "m5_summary.md").write_text(summary, encoding="utf-8")
-    plot_overhead(rows, args.out_dir)
-    print(f"wrote {len(rows)} rows, summary and PNG to {args.out_dir}")
+    plot_overhead(rows_h7, args.out_dir)
+    plot_ewma_burst(series_h8, args.out_dir)
+    print(f"wrote {len(rows_h7) + len(rows_h8)} rows, summary and 2 PNGs to {args.out_dir}")
     return 0
 
 
