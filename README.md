@@ -562,7 +562,9 @@ Full numbers, paired t-tests, Cohen's d and the conclusion are in
 │   ├── homeostasis-biological-topology.md # Fick/homeostasis theory mapping
 │   ├── marder-goaillard-cross-correlation.md # Degeneracy/homeostasis mapping
 │   ├── layering-predictions.md   # Frozen P1-P7 encapsulation predictions
-│   └── layering-results.md       # Three-fidelity layering classification
+│   ├── layering-results.md       # Three-fidelity layering classification
+│   ├── layering-real-stack-predictions.md # Frozen P8-P12 real-stack predictions
+│   └── layering-real-stack-results.md # P8-P12 status (NOT RUN in this sandbox)
 ├── figures/
 │   ├── 7g_fabric_tick_0.png
 │   ├── 7g_fabric_tick_1.0.png
