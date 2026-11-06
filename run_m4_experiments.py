@@ -268,8 +268,16 @@ def _verdicts(rows: list[dict]) -> str:
     mkb_fp, mkb_fp_ci = _arm_values(rows, "m4_mkb", "False_Positive_Edits")
     s1d_fp, s1d_fp_ci = _arm_values(rows, "m3_surgical_1d", "False_Positive_Edits")
 
+    _, _, _, _, p_h5, _ = _paired_compare(
+        rows, "m4_oef", "static_isolation", "Legitimate_Goodput_CMRO2")
+    _, _, _, _, p_h6, _ = _paired_compare(
+        rows, "m4_mkb", "m3_surgical_1d", "Peak_State_Change_Speed")
+
     h5_pass = oef_gp > 0.92 and oef_gp > iso_gp
-    h6_pass = mkb_peak < s1d_peak and mkb_fp == 0.0
+    # "outperform the 1D limiter" must be statistically significant, not just
+    # a lower point estimate.
+    h6_pass = (mkb_peak < s1d_peak and math.isfinite(p_h6) and p_h6 < 0.05
+               and mkb_fp == 0.0)
 
     lines = [
         "## Verdicts",
@@ -278,13 +286,16 @@ def _verdicts(rows: list[dict]) -> str:
         "",
         f"m4_oef legitimate goodput (CMRO2) = **{oef_gp:.4f} +/- {oef_ci:.4f}** "
         f"vs static_isolation **{iso_gp:.4f} +/- {iso_ci:.4f}** (documented 86.5 %). "
-        f"Target: > 0.92 and > static_isolation. "
+        f"Target: > 0.92 and > static_isolation. Paired difference "
+        f"{oef_gp - iso_gp:+.4f} (p = {_fmt_p(p_h5)}). "
         f"Transit drop rate (starvation cost) = **{oef_drop:.4f} +/- {oef_drop_ci:.4f}**.",
         "",
         f"| H6 MKB rate control | **{'CONFIRMED' if h6_pass else 'REFUTED'}** |",
         "",
         f"m4_mkb peak state-change speed = **{mkb_peak:.4f} +/- {mkb_ci:.4f}** "
-        f"vs m3_surgical_1d **{s1d_peak:.4f} +/- {s1d_ci:.4f}** (must be lower). "
+        f"vs m3_surgical_1d **{s1d_peak:.4f} +/- {s1d_ci:.4f}** "
+        f"(paired difference {mkb_peak - s1d_peak:+.2f}, p = {_fmt_p(p_h6)}; "
+        f"must be significantly lower). "
         f"m4_mkb false-positive edits = **{mkb_fp:.4f} +/- {mkb_fp_ci:.4f}** "
         f"vs m3_surgical_1d **{s1d_fp:.4f} +/- {s1d_fp_ci:.4f}** (must be zero).",
         "",
@@ -326,6 +337,8 @@ def _interpretation(rows: list[dict]) -> str:
     s1d_peak = _arm_values(rows, "m3_surgical_1d", "Peak_State_Change_Speed")[0]
     comb_gp = _arm_values(rows, "m4_combined", "Legitimate_Goodput_CMRO2")[0]
     comb_fp = _arm_values(rows, "m4_combined", "False_Positive_Edits")[0]
+    _, _, _, _, p_h6, _ = _paired_compare(
+        rows, "m4_mkb", "m3_surgical_1d", "Peak_State_Change_Speed")
 
     return "\n".join([
         "## Interpretation",
@@ -340,13 +353,13 @@ def _interpretation(rows: list[dict]) -> str:
         "— does not hold in this testbed, so the compensation has nothing to "
         "compensate.",
         "",
-        "**H6 (MKB) — CONFIRMED, with a caveat.** m4_mkb keeps false-positive "
-        "edits at exactly zero during steady state, satisfying that clause.  "
-        f"Its peak burst speed ({mkb_peak:.1f}) is slightly below the 1D limiter "
-        f"({s1d_peak:.1f}), but the confidence intervals overlap heavily, so the "
-        "\"cap\" is marginal — a few percent at best — because both arms share "
-        "the same discrete surgical edit.  The vector trigger does not make the "
-        "burst worse, but it does not clearly bound it either.",
+        "**H6 (MKB) — REFUTED.** m4_mkb keeps false-positive edits at exactly "
+        "zero during steady state, satisfying that clause.  Its peak burst speed "
+        f"({mkb_peak:.1f}) is numerically below the 1D limiter ({s1d_peak:.1f}), "
+        "but the paired difference is not statistically significant "
+        f"(p = {_fmt_p(p_h6)}), so the \"cap\" is indistinguishable from noise "
+        "— both arms share the same discrete surgical edit, and the vector "
+        "trigger does not bound the burst.",
         "",
         "**m4_combined — negative result.** Running OEF and MKB together is "
         f"strictly worse than either alone (goodput {comb_gp:.4f} vs {oef_gp:.4f}): "
@@ -364,19 +377,131 @@ def _answers(rows: list[dict]) -> str:
     mkb_peak, mkb_ci = _arm_values(rows, "m4_mkb", "Peak_State_Change_Speed")
     s1d_peak, s1d_ci = _arm_values(rows, "m3_surgical_1d", "Peak_State_Change_Speed")
     mkb_fp, _ = _arm_values(rows, "m4_mkb", "False_Positive_Edits")
+    _, _, _, _, p_h6, _ = _paired_compare(
+        rows, "m4_mkb", "m3_surgical_1d", "Peak_State_Change_Speed")
     return "\n".join([
         "## Direct answers to the review questions",
         "",
         "1. **Did OEF beat static_isolation (86.5 %)?** "
         f"{'**No.**' if oef_gp <= iso_gp else 'Yes.'} m4_oef = {oef_gp:.4f} +/- {oef_ci:.4f} "
         f"vs static_isolation = {iso_gp:.4f} +/- {iso_ci:.4f}.",
-        "2. **Did MKB cap the peak burst speed?** "
-        f"{'Yes (marginal).' if mkb_peak < s1d_peak else '**No.**'} "
-        f"m4_mkb = {mkb_peak:.2f} +/- {mkb_ci:.2f} vs m3_surgical_1d = {s1d_peak:.2f} +/- {s1d_ci:.2f}; "
-        f"false-positive edits = {mkb_fp:.0f}.",
+        "2. **Did MKB cap the peak burst speed?** **No** (not statistically "
+        f"significant). m4_mkb = {mkb_peak:.2f} +/- {mkb_ci:.2f} vs "
+        f"m3_surgical_1d = {s1d_peak:.2f} +/- {s1d_ci:.2f} "
+        f"(paired p = {_fmt_p(p_h6)}); false-positive edits = {mkb_fp:.0f} (met).",
         "3. **What is the exact starvation cost?** Transit drop rate = "
         f"{oef_drop:.4f} +/- {oef_drop_ci:.4f} (m4_oef); the destructive threshold "
         "is in the starvation table below.",
+        "",
+    ])
+
+
+def _paired_compare(rows, arm_a, arm_b, metric):
+    """Paired (same-seed) two-sided test: mean diff, 95% CI, Cohen's d, t, p."""
+    def per_seed(arm):
+        return {r["seed"]: r[metric] for r in rows
+                if r["arm"] == arm and isinstance(r.get(metric), (int, float))
+                and np.isfinite(r[metric])}
+    da, db = per_seed(arm_a), per_seed(arm_b)
+    seeds = sorted(set(da) & set(db))
+    a = np.array([da[s] for s in seeds], dtype=float)
+    b = np.array([db[s] for s in seeds], dtype=float)
+    diff = a - b
+    n = len(diff)
+    md = float(diff.mean())
+    sd = float(diff.std(ddof=1)) if n > 1 else 0.0
+    se = sd / math.sqrt(n) if n > 1 else 0.0
+    ci = 1.96 * se
+    d = md / sd if sd > 0 else 0.0
+    t = float("nan")
+    p = float("nan")
+    try:
+        from scipy import stats
+        t, p = stats.ttest_rel(a, b)
+        t, p = float(t), float(p)
+    except Exception:
+        pass
+    return md, ci, d, t, p, n
+
+
+def _fmt_p(p: float) -> str:
+    if not math.isfinite(p):
+        return "nan"
+    return "<0.0001" if p < 0.0001 else f"{p:.4f}"
+
+
+def _significance(rows: list[dict]) -> str:
+    lines = ["## Statistical significance (paired, same-seed, two-sided t-test)",
+             "",
+             "| comparison | mean diff | 95% CI | Cohen's d | t | p | p<0.05 |",
+             "|---|---|---|---|---|---|---|"]
+    tests = [
+        ("H5: m4_oef vs static_isolation (goodput)", "m4_oef",
+         "static_isolation", "Legitimate_Goodput_CMRO2"),
+        ("H5: m4_oef vs m3_surgical_1d (goodput)", "m4_oef",
+         "m3_surgical_1d", "Legitimate_Goodput_CMRO2"),
+        ("H6: m4_mkb vs m3_surgical_1d (peak speed)", "m4_mkb",
+         "m3_surgical_1d", "Peak_State_Change_Speed"),
+        ("H6: m4_mkb vs m3_surgical_1d (false positives)", "m4_mkb",
+         "m3_surgical_1d", "False_Positive_Edits"),
+        ("m4_combined vs m3_surgical_1d (goodput)", "m4_combined",
+         "m3_surgical_1d", "Legitimate_Goodput_CMRO2"),
+    ]
+    for name, a, b, m in tests:
+        md, ci, d, t, p, n = _paired_compare(rows, a, b, m)
+        sig = "yes" if (math.isfinite(p) and p < 0.05) else "no"
+        lines.append(f"| {name} | {md:.4f} | +/- {ci:.4f} | {d:.3f} | "
+                     f"{t:.3f} | {_fmt_p(p)} | {sig} |")
+    lines.append("")
+    return "\n".join(lines)
+
+
+def _conclusion(rows: list[dict]) -> str:
+    oef_gp = _arm_values(rows, "m4_oef", "Legitimate_Goodput_CMRO2")[0]
+    s1d_gp = _arm_values(rows, "m3_surgical_1d", "Legitimate_Goodput_CMRO2")[0]
+    iso_gp = _arm_values(rows, "static_isolation", "Legitimate_Goodput_CMRO2")[0]
+    mkb_peak = _arm_values(rows, "m4_mkb", "Peak_State_Change_Speed")[0]
+    s1d_peak = _arm_values(rows, "m3_surgical_1d", "Peak_State_Change_Speed")[0]
+    comb_gp = _arm_values(rows, "m4_combined", "Legitimate_Goodput_CMRO2")[0]
+    comb_fp = _arm_values(rows, "m4_combined", "False_Positive_Edits")[0]
+    md_h5, _, _, _, p_h5, _ = _paired_compare(
+        rows, "m4_oef", "static_isolation", "Legitimate_Goodput_CMRO2")
+    md_h6, _, _, _, p_h6, _ = _paired_compare(
+        rows, "m4_mkb", "m3_surgical_1d", "Peak_State_Change_Speed")
+
+    return "\n".join([
+        "## Conclusion",
+        "",
+        "**H5 (OEF) — refuted.** The Fick-principle actuator provides no benefit "
+        f"over the stateless confound: m4_oef ({oef_gp:.4f}) is statistically "
+        f"indistinguishable from m3_surgical_1d ({s1d_gp:.4f}) and numerically "
+        f"below static_isolation ({iso_gp:.4f}); the paired difference is "
+        f"{md_h5:+.4f} (p = {_fmt_p(p_h5)}).  The mechanism fails at its "
+        "premise — a DDoS flood raises total delivered throughput rather than "
+        "lowering it, so the CBF-drop trigger never engages during the attack.  "
+        "The starvation sweep confirms the null: forcing OEF to its maximum "
+        "across a 16x weight range leaves goodput and transit drop flat, so "
+        "there is no operating point at which OEF trades transit for legitimate "
+        "delivery.",
+        "",
+        "**H6 (MKB) — refuted.** m4_mkb keeps false-positive edits at exactly "
+        "zero and numerically shaves the peak burst speed "
+        f"({mkb_peak:.1f} vs {s1d_peak:.1f}), but the paired difference "
+        f"({md_h6:+.2f}, p = {_fmt_p(p_h6)}) is not significant, so the \"cap\" "
+        "is indistinguishable from noise; the same discrete surgical edit "
+        "dominates both arms.  The decisive finding is the cost: ~135x the "
+        "per-tick CPU of the 1D limiter buys no measurable burst reduction.",
+        "",
+        "**m4_combined — negative.** Coupling OEF and MKB is strictly harmful: "
+        f"the OEF weight changes feed back into the 4-D state vector and trip "
+        f"the trigger ~{comb_fp:.0f} times during steady traffic, halving "
+        f"goodput ({comb_gp:.4f} vs {oef_gp:.4f}).",
+        "",
+        "**Bottom line.** Per-flow fair queueing (static_isolation) remains the "
+        "best known controller for this DDoS scenario.  The biological "
+        "controllers are a valuable negative result: they are not justified on "
+        "goodput (H5) or on burst-capping per unit of compute (H6) in this "
+        "testbed.",
         "",
     ])
 
@@ -396,52 +521,67 @@ def _summarise(rows: list[dict], starvation_rows: list[dict],
         _metric_table(rows, "Peak_State_Change_Speed",
                       "Peak burst state-change speed across arms"),
         _full_table(rows),
+        _significance(rows),
         _starvation_table(starvation_rows),
         _overhead_table(overhead),
         _interpretation(rows),
+        _conclusion(rows),
     ])
 
 
 # --------------------------------------------------------------------------
 # Plots
 # --------------------------------------------------------------------------
+def _plot_mean_ci(ax, t, stacked, color, label, lw=1.6):
+    """Plot the seed mean and shade the 95% confidence band (mean +/- 1.96 SE)."""
+    mean = stacked.mean(axis=0)
+    n = stacked.shape[0]
+    if n > 1:
+        se = stacked.std(axis=0, ddof=1) / math.sqrt(n)
+    else:
+        se = np.zeros_like(mean)
+    ax.fill_between(t, mean - 1.96 * se, mean + 1.96 * se,
+                    color=color, alpha=0.15, linewidth=0)
+    ax.plot(t, mean, color=color, lw=lw, label=label)
+    return mean
+
+
 def plot_oef(series: dict, out_dir: Path):
-    """Plot 1: CBF (left), OEF and CMRO2 (right), seed-averaged for m4_oef."""
+    """Plot 1: CBF (left), OEF and CMRO2 (right), m4_oef, mean + 95% CI."""
     arm = series.get("m4_oef")
     if not arm or "oef" not in arm:
         return
     oef_stack = arm["oef"]
     t = oef_stack[0, :, 0]
-    cbf = oef_stack[:, :, 2].mean(axis=0) / 1e6  # MB/s
-    oef = oef_stack[:, :, 3].mean(axis=0)        # max OEF across nodes
 
     fig, ax1 = plt.subplots(figsize=(10, 4.6))
-    ax1.plot(t, cbf, color="#c0392b", lw=1.6, label="CBF (total throughput, MB/s)")
+    _plot_mean_ci(ax1, t, oef_stack[:, :, 2] / 1e6, "#c0392b",
+                  "CBF (total throughput, MB/s)")
     ax1.set_xlabel("time (s)")
     ax1.set_ylabel("CBF (MB/s)", color="#c0392b")
     ax1.tick_params(axis="y", labelcolor="#c0392b")
     ax1.axvspan(ATTACK_START, ATTACK_END, color="red", alpha=0.07)
 
     ax2 = ax1.twinx()
-    ax2.plot(t, oef, color="#1f6feb", lw=1.6, label="OEF (max extraction fraction)")
+    _plot_mean_ci(ax2, t, oef_stack[:, :, 3], "#1f6feb",
+                  "OEF (max extraction fraction)")
     if "goodput" in arm:
-        gt = arm["goodput_t"]
-        gp = arm["goodput"].mean(axis=0)
-        ax2.plot(gt, gp, color="#27ae60", lw=1.6, label="CMRO2 (legit goodput)")
+        _plot_mean_ci(ax2, arm["goodput_t"], arm["goodput"], "#27ae60",
+                      "CMRO2 (legit goodput)")
     ax2.set_ylabel("fraction (0-1)", color="#1f6feb")
     ax2.set_ylim(0, 1.05)
     ax2.tick_params(axis="y", labelcolor="#1f6feb")
 
     lines = ax1.get_lines() + ax2.get_lines()
     ax1.legend(lines, [ln.get_label() for ln in lines], loc="upper left", fontsize=8)
-    ax1.set_title("M4 H5: CBF, OEF and CMRO2 (legit goodput), m4_oef, seed-averaged")
+    ax1.set_title("M4 H5: CBF, OEF and CMRO2 (legit goodput), m4_oef, mean +/- 95% CI")
     fig.tight_layout()
     fig.savefig(out_dir / "oef_vs_goodput.png", dpi=150)
     plt.close(fig)
 
 
 def plot_peak_burst(series: dict, out_dir: Path):
-    """Plot 2: state-change speed, 1D limiter vs MKB arms."""
+    """Plot 2: state-change speed, 1D limiter vs MKB arms, mean + 95% CI."""
     fig, ax = plt.subplots(figsize=(10, 4.4))
     for label, color in (("m3_surgical_1d", "#c0392b"),
                          ("m4_mkb", "#1f6feb"),
@@ -449,12 +589,11 @@ def plot_peak_burst(series: dict, out_dir: Path):
         arm = series.get(label)
         if not arm or "speed" not in arm:
             continue
-        ax.plot(arm["speed_t"], arm["speed"].mean(axis=0), lw=1.4,
-                color=color, label=label)
+        _plot_mean_ci(ax, arm["speed_t"], arm["speed"], color, label, lw=1.4)
     ax.axvspan(ATTACK_START, ATTACK_END, color="red", alpha=0.07)
     ax.set_xlabel("time (s)")
     ax.set_ylabel("state-change speed (units/s)")
-    ax.set_title("M4 H6: peak burst state-change speed, seed-averaged (30 seeds)")
+    ax.set_title("M4 H6: peak burst state-change speed, mean +/- 95% CI (30 seeds)")
     ax.legend(fontsize=8)
     fig.tight_layout()
     fig.savefig(out_dir / "peak_burst_cap.png", dpi=150)
@@ -462,7 +601,7 @@ def plot_peak_burst(series: dict, out_dir: Path):
 
 
 def plot_starvation(series: dict, out_dir: Path):
-    """Plot 3: transit drop rate over time (the starvation cost)."""
+    """Plot 3: transit drop rate over time (starvation cost), mean + 95% CI."""
     fig, ax = plt.subplots(figsize=(10, 4.4))
     for label, color in (("m4_oef", "#c0392b"),
                          ("m4_combined", "#8e44ad"),
@@ -470,12 +609,12 @@ def plot_starvation(series: dict, out_dir: Path):
         arm = series.get(label)
         if not arm or "transit" not in arm:
             continue
-        drop = 1.0 - arm["transit"].mean(axis=0)
-        ax.plot(arm["goodput_t"], drop, lw=1.4, color=color, label=label)
+        drop = 1.0 - arm["transit"]
+        _plot_mean_ci(ax, arm["goodput_t"], drop, color, label, lw=1.4)
     ax.axvspan(ATTACK_START, ATTACK_END, color="red", alpha=0.07)
     ax.set_xlabel("time (s)")
     ax.set_ylabel("transit drop rate (0-1)")
-    ax.set_title("M4: transit drop rate (starvation cost), seed-averaged (30 seeds)")
+    ax.set_title("M4: transit drop rate (starvation cost), mean +/- 95% CI (30 seeds)")
     ax.legend(fontsize=8)
     fig.tight_layout()
     fig.savefig(out_dir / "oef_starvation.png", dpi=150)
