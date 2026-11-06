@@ -512,6 +512,32 @@ Full numbers, paired t-tests, Cohen's d and the conclusion are in
 [`results/m4/final_benchmark_raw.csv`](results/m4/final_benchmark_raw.csv) and
 [`results/m4/starvation_sweep_raw.csv`](results/m4/starvation_sweep_raw.csv).
 
+## M5: Cognitive Stack Compiler (H7)
+
+M5 moves the AI from the reactive data plane (M4) to the proactive control
+plane. [`simulation/llm_compiler.py`](simulation/llm_compiler.py) is a mocked
+deterministic LLM Oracle that compiles an encapsulation-layer ordering from
+network telemetry; [`simulation/guardrails.py`](simulation/guardrails.py)
+validates the ordering against the P1/P5/P3 commutation rules frozen in
+[docs/layering-predictions.md](docs/layering-predictions.md) and forces the
+canonical stack on any violation.
+
+```powershell
+py run_m5_experiments.py    # 30 seeds -> results/m5/*.csv + PNG + summary
+```
+
+Three arms — a static ISO order, a hand-written greedy heuristic, and the
+guardrailed LLM compiler — compile a stack for a Fiber → Microwave → Satellite
+boundary sequence. The result is honest: the compiler **beats the static order**
+on wire bytes (−42 %, p ≪ 0.05) but **does not beat the greedy heuristic**
+(the LLM adds generality and guardrail safety, not decision quality); the
+guardrail caught every hallucinated proposal and kept auth acceptance at 100 %.
+
+![Wire bytes per phase and arm](results/m5/overhead_comparison.png)
+
+The Oracle decision time is measured but is sub-millisecond because the Oracle
+is a mock; a real LLM must be benchmarked separately before any latency claim.
+
 ## Repository structure
 
 ```text
@@ -682,6 +708,8 @@ Full numbers, paired t-tests, Cohen's d and the conclusion are in
 │   ├── sdn_plane.py              # Southbound messages and SDN role-override policy
 │   ├── oef_controller.py         # Fick-principle OEF controller (H5)
 │   ├── mkb_controller.py         # 4D kinematic baselining controller (H6)
+│   ├── guardrails.py             # P1-P5 commutation guardrails (M5)
+│   ├── llm_compiler.py           # Mocked LLM Oracle + stack compiler (M5)
 │   ├── surgical/                 # SimPy 100-node fabric, baselines, surgical controller
 │   ├── savant/                   # Compensatory hyper-specialisation (H4)
 │   ├── layering/                 # Typed C/E/T/F/S codec, stacks and survival model
@@ -757,12 +785,14 @@ Full numbers, paired t-tests, Cohen's d and the conclusion are in
 │   ├── test_m4_controllers.py
 │   ├── test_savant.py
 │   ├── test_layering_aes.py
+│   ├── test_m5.py
 │   └── test_vision_benchmark.py
 ├── CITATION.cff                  # Citation metadata (CFF 1.2.0)
 ├── GOAL.md                       # Current testbed goal and milestone status
 ├── REPLICATION.md                # How to replicate and report results
 ├── run_m3_experiments.py         # M3 paired-seed runner -> results/m3/
 ├── run_m4_experiments.py         # M4-Execution OEF/MKB benchmark -> results/m4/
+├── run_m5_experiments.py         # M5 Cognitive Stack Compiler benchmark -> results/m5/
 ├── results/
 │   ├── m3/                       # 30-seed M3 CSVs, summary and PNG
 │   ├── m4/                       # M4 benchmark outputs
@@ -772,6 +802,7 @@ Full numbers, paired t-tests, Cohen's d and the conclusion are in
 │   │   ├── oef_vs_goodput.png
 │   │   ├── peak_burst_cap.png
 │   │   └── oef_starvation.png
+│   ├── m5/                       # M5 CSVs, summary and PNG
 │   └── m4_summary.md             # M4 summary copy at results root
 ├── Ni10.pdf
 ├── LICENSE
