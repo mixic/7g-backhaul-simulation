@@ -512,18 +512,29 @@ Full numbers, paired t-tests, Cohen's d and the conclusion are in
 [`results/m4/final_benchmark_raw.csv`](results/m4/final_benchmark_raw.csv) and
 [`results/m4/starvation_sweep_raw.csv`](results/m4/starvation_sweep_raw.csv).
 
-## M5: Cognitive Stack Compiler (H7)
+## M5: Cognitive Stack Compiler (H7) + EWMA Kinematics (H8)
 
-M5 moves the AI from the reactive data plane (M4) to the proactive control
-plane. [`simulation/llm_compiler.py`](simulation/llm_compiler.py) is a mocked
-deterministic LLM Oracle that compiles an encapsulation-layer ordering from
-network telemetry; [`simulation/guardrails.py`](simulation/guardrails.py)
+M5 runs two parallel experiments.
+
+**M5.1 (H8) — EWMA-smoothed kinematics.** `simulation/mkb_controller.py` gains
+an `EwmaMkbController` that applies a separate EWMA to the velocity (`alpha`)
+and acceleration (`beta`) vectors and a Random Early Redirection band at 80 %
+of the trigger floor. Against the raw 1D and raw 4D controllers it is
+**refuted**: EWMA smoothing does not cap the peak burst (223.9 vs 189.7 units/s
+for the raw 4D) because the synchronous surgical edit dominates, and RER
+engaged only 6 times. Detection latency stays within the 15 % budget.
+
+![Peak burst state-change speed](results/m5/ewma_burst_cap.png)
+
+**M5.2 (H7) — Cognitive Stack Compiler.** [`simulation/llm_compiler.py`](simulation/llm_compiler.py)
+is a mocked deterministic LLM Oracle that compiles an encapsulation-layer
+ordering from network telemetry; [`simulation/guardrails.py`](simulation/guardrails.py)
 validates the ordering against the P1/P5/P3 commutation rules frozen in
 [docs/layering-predictions.md](docs/layering-predictions.md) and forces the
 canonical stack on any violation.
 
 ```powershell
-py run_m5_experiments.py    # 30 seeds -> results/m5/*.csv + PNG + summary
+py run_m5_experiments.py    # 30 seeds -> results/m5/*.csv + 2 PNGs + summary
 ```
 
 Three arms — a static ISO order, a hand-written greedy heuristic, and the
@@ -533,7 +544,7 @@ on wire bytes (−42 %, p ≪ 0.05) but **does not beat the greedy heuristic**
 (the LLM adds generality and guardrail safety, not decision quality); the
 guardrail caught every hallucinated proposal and kept auth acceptance at 100 %.
 
-![Wire bytes per phase and arm](results/m5/overhead_comparison.png)
+![Wire bytes per phase and arm](results/m5/llm_overhead_savings.png)
 
 The Oracle decision time is measured but is sub-millisecond because the Oracle
 is a mock; a real LLM must be benchmarked separately before any latency claim.
