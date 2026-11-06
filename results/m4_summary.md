@@ -58,6 +58,22 @@ m4_mkb peak state-change speed = **218.3800 +/- 36.8013** vs m3_surgical_1d **22
 | H6: m4_mkb vs m3_surgical_1d (false positives) | 0.0000 | +/- 0.0000 | 0.000 | nan | nan | no |
 | m4_combined vs m3_surgical_1d (goodput) | -0.3638 | +/- 0.0633 | -2.056 | -11.262 | <0.0001 | yes |
 
+## Marder & Goaillard metrics (degeneracy & compensatory distance)
+
+**Degeneracy Index** = 102 / 150 distinct (oef_max x seed) state configurations achieve > 90 % legitimate goodput (68.0 %).
+
+**Compensatory Distance** — Euclidean distance the mean 4-D state [CBF, Queue, Drop, OEF] travels from its steady baseline during the shockwave (shorter = better homeostasis; n/a = arm does not navigate the kinematic state):
+
+| arm | mean | 95% CI |
+|---|---|---|
+| static_isolation | n/a | |
+| m3_surgical_1d | n/a | |
+| m4_oef | 0.0343 | +/- 0.0032 |
+| m4_mkb | 0.0149 | +/- 0.0006 |
+| m4_combined | 0.0389 | +/- 0.0029 |
+
+*Interpretation.* The degeneracy index is dominated by seed-level routing variance rather than the OEF weight (the weight sweep is flat), so OEF contributes little genuine degeneracy.  The compensatory distance is *larger* with the OEF actuator (m4_oef 0.0343, m4_combined 0.0389) than without it (m4_mkb 0.0149): OEF moves the 4-D state farther from baseline without improving goodput, the opposite of the homeostasis the analogy predicts.
+
 ## Starvation threshold (OEF forced to max, weight swept)
 
 | oef_max (WFQ weight) | Legitimate goodput | Transit drop rate |
@@ -73,10 +89,10 @@ m4_mkb peak state-change speed = **218.3800 +/- 36.8013** vs m3_surgical_1d **22
 | arm | us/tick | vs 1D limiter |
 |---|---|---|
 | static_isolation | 0.2 | 0.04x |
-| m3_surgical_1d | 5.7 | 1.00x |
-| m4_oef | 218.5 | 38.12x |
-| m4_mkb | 750.6 | 130.91x |
-| m4_combined | 713.0 | 124.35x |
+| m3_surgical_1d | 5.6 | 1.00x |
+| m4_oef | 217.4 | 39.04x |
+| m4_mkb | 747.5 | 134.25x |
+| m4_combined | 710.6 | 127.61x |
 
 ## Interpretation
 

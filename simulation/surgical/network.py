@@ -497,6 +497,8 @@ class SimRun:
                                   dtype=np.float64),
             "oef_series": np.asarray(getattr(self.controller, "oef_series", []),
                                      dtype=np.float64),
+            "state_series": np.asarray(getattr(self.controller, "state_series", []),
+                                       dtype=np.float64),
             "oef_peak": float(getattr(self.controller, "oef_peak", 0.0)),
             "oef_limit_hit": bool(getattr(self.controller, "oef_limit_hit", False)),
             "mkb_spikes": np.asarray(getattr(self.controller, "mkb_spikes", []),

@@ -74,7 +74,7 @@ ATTACK_END = 40.0
 FIELDS = [
     "arm", "seed", "Total_Throughput_CBF", "Legitimate_Goodput_CMRO2",
     "OEF_Value", "Peak_State_Change_Speed", "Number_of_Edits",
-    "False_Positive_Edits", "Transit_Drop_Rate",
+    "False_Positive_Edits", "Transit_Drop_Rate", "Compensatory_Distance",
 ]
 
 
@@ -117,6 +117,7 @@ def run_benchmark(out_dir: Path, seeds: list[int]):
                 "Number_of_Edits": int(r["edits"]),
                 "False_Positive_Edits": fp,
                 "Transit_Drop_Rate": _round(1.0 - r["gp_other"]),
+                "Compensatory_Distance": _round(r["compensatory_distance"]),
             }
             rows.append(row)
             if label in ("m4_oef", "m4_combined") and len(r.get("oef_series", [])) > 4:
@@ -506,6 +507,51 @@ def _conclusion(rows: list[dict]) -> str:
     ])
 
 
+def _degeneracy_index(starvation_rows: list[dict]) -> tuple[int, int]:
+    above = [r for r in starvation_rows if r["Legitimate_Goodput"] > 0.90]
+    return len(above), len(starvation_rows)
+
+
+def _marder_metrics(rows: list[dict], starvation_rows: list[dict]) -> str:
+    n_above, n_total = _degeneracy_index(starvation_rows)
+    frac = 100.0 * n_above / max(n_total, 1)
+    lines = [
+        "## Marder & Goaillard metrics (degeneracy & compensatory distance)",
+        "",
+        f"**Degeneracy Index** = {n_above} / {n_total} distinct (oef_max x seed) "
+        f"state configurations achieve > 90 % legitimate goodput ({frac:.1f} %).",
+        "",
+        "**Compensatory Distance** — Euclidean distance the mean 4-D state "
+        "[CBF, Queue, Drop, OEF] travels from its steady baseline during the "
+        "shockwave (shorter = better homeostasis; n/a = arm does not navigate "
+        "the kinematic state):",
+        "",
+        "| arm | mean | 95% CI |",
+        "|---|---|---|",
+    ]
+    cd_oef = _arm_values(rows, "m4_oef", "Compensatory_Distance")[0]
+    cd_mkb = _arm_values(rows, "m4_mkb", "Compensatory_Distance")[0]
+    cd_comb = _arm_values(rows, "m4_combined", "Compensatory_Distance")[0]
+    for label, _ in ARMS:
+        mean, ci = _arm_values(rows, label, "Compensatory_Distance")
+        if math.isfinite(mean):
+            lines.append(f"| {label} | {mean:.4f} | +/- {ci:.4f} |")
+        else:
+            lines.append(f"| {label} | n/a | |")
+    lines += [
+        "",
+        "*Interpretation.* The degeneracy index is dominated by seed-level "
+        "routing variance rather than the OEF weight (the weight sweep is flat), "
+        "so OEF contributes little genuine degeneracy.  The compensatory "
+        f"distance is *larger* with the OEF actuator (m4_oef {cd_oef:.4f}, "
+        f"m4_combined {cd_comb:.4f}) than without it (m4_mkb {cd_mkb:.4f}): OEF "
+        "moves the 4-D state farther from baseline without improving goodput, "
+        "the opposite of the homeostasis the analogy predicts.",
+        "",
+    ]
+    return "\n".join(lines)
+
+
 def _summarise(rows: list[dict], starvation_rows: list[dict],
                overhead: dict[str, float]) -> str:
     return "\n".join([
@@ -522,6 +568,7 @@ def _summarise(rows: list[dict], starvation_rows: list[dict],
                       "Peak burst state-change speed across arms"),
         _full_table(rows),
         _significance(rows),
+        _marder_metrics(rows, starvation_rows),
         _starvation_table(starvation_rows),
         _overhead_table(overhead),
         _interpretation(rows),

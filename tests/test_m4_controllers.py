@@ -50,6 +50,12 @@ class StandaloneModuleTests(unittest.TestCase):
         self.assertLessEqual(result["oef_peak"], 1.0)
         self.assertGreater(result["goodput_shock"], 0.5)
 
+    def test_compensatory_distance_is_computed(self) -> None:
+        result = run_and_score(SimConfig(name="exp1_ddos", seed=0,
+                                         controller=OEF).child(duration=45.0))
+        self.assertTrue(math.isfinite(result["compensatory_distance"]))
+        self.assertGreaterEqual(result["compensatory_distance"], 0.0)
+
     def test_mkb_uses_vector_norm_trigger(self) -> None:
         monitor = MkbMonitor(4, 0.2, tau_s=0.3, tau_v=1.0, k=4.0,
                              floor_a=2.0, floor_v=0.08)

@@ -191,6 +191,18 @@ def run_and_score(cfg):
     g_t, g_goodput = rolling_goodput(res, 2.0, min(cfg.duration, 60.0))
     _, g_transit = rolling_goodput(res, 2.0, min(cfg.duration, 60.0),
                                    content="transit", target=tgt)
+
+    # Marder & Goaillard metric: compensatory distance = ||S_shock - S_steady||
+    # over the mean 4-D state vector [CBF, Queue, Drop, OEF] (Euclidean norm).
+    ss = res.get("state_series", np.zeros((0, 5)))
+    compensatory_distance = float("nan")
+    if len(ss):
+        steady_m = (ss[:, 0] >= base_w[0]) & (ss[:, 0] < base_w[1])
+        shock_m = (ss[:, 0] >= shock_w[0]) & (ss[:, 0] < shock_w[1])
+        base_state = ss[steady_m, 1:].mean(axis=0) if steady_m.any() else np.zeros(4)
+        shock_state = ss[shock_m, 1:].mean(axis=0) if shock_m.any() else np.zeros(4)
+        compensatory_distance = float(np.linalg.norm(shock_state - base_state))
+
     mw = (res["done_t"] >= shock_w[0]) & (res["done_t"] < shock_w[1]) & (res["done_kind"] == 0)
     ow = (res["disp_t"] >= shock_w[0]) & (res["disp_t"] < shock_w[1])
     dc = res["done_content"]
@@ -270,6 +282,7 @@ def run_and_score(cfg):
                               if len(res.get("mkb_spikes", [])) else float("nan")),
         "cbf_base": _cbf_mean(res, base_w),
         "cbf_shock": _cbf_mean(res, shock_w),
+        "compensatory_distance": compensatory_distance,
         "edit_times": res.get("edit_times", np.zeros(0)),
         "mkb_spikes": res.get("mkb_spikes", np.zeros((0, 2))),
         "reasm_peak": float(np.max(reasm)) if len(reasm) else 0.0,

@@ -58,7 +58,8 @@ class OefController(SurgicalController):
         self._prev_drops = {n: sim.tele[n].drops
                             for n in range(sim.topo.n_nodes)}
         self.oef_log = []        # (t, node, oef, speed, accel)
-        self.oef_series = []     # (t, mean_oef, total_cbf_Bps)
+        self.oef_series = []     # (t, mean_oef, total_cbf_Bps, max_oef)
+        self.state_series = []   # (t, mean_util, mean_queue, mean_loss, mean_oef)
         self.oef_peak = 0.0
         self.oef_limit_hit = False
         self._state = {}         # node -> state vector (for MKB)
@@ -75,6 +76,9 @@ class OefController(SurgicalController):
         total_cbf = 0.0
         oef_sum = 0.0
         oef_max_node = 0.0
+        util_sum = 0.0
+        queue_sum = 0.0
+        loss_sum = 0.0
         for n in range(self.sim.topo.n_nodes):
             tel = self.sim.tele[n]
             cap = self.sim.topo.node_cap[n] / 8.0
@@ -110,6 +114,10 @@ class OefController(SurgicalController):
             loss_ema = self._loss_ema.get(n, raw_loss)
             loss_ema += alpha_loss * (raw_loss - loss_ema)
             self._loss_ema[n] = loss_ema
+
+            util_sum += util
+            queue_sum += queue_dim
+            loss_sum += loss_ema
 
             ema = self._cbf_ema.get(n, cbf)
             ema += alpha * (cbf - ema)
@@ -170,6 +178,9 @@ class OefController(SurgicalController):
 
         self.oef_series.append((t, oef_sum / self.sim.topo.n_nodes, total_cbf,
                                 oef_max_node))
+        n_nodes = self.sim.topo.n_nodes
+        self.state_series.append((t, util_sum / n_nodes, queue_sum / n_nodes,
+                                  loss_sum / n_nodes, oef_sum / n_nodes))
 
     def on_tick(self, t, obs):
         dt = self._dt(t)
