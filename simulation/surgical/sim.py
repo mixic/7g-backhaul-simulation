@@ -25,6 +25,7 @@ WINDOWS = {
     "exp1_ddos": (STEADY_WINDOW, SHOCK_WINDOW),
     "exp2_churn": ((10.0, 23.0), (50.0, 60.0)),
     "exp3_boundary": ((8.0, 25.0), (26.0, 40.0)),
+    "exp4_savant": ((10.0, 30.0), (30.0, 41.0)),
 }
 
 
@@ -139,12 +140,38 @@ def run_and_score(cfg):
     gp_aff = min(1.0, aff_del / aff_off) if aff_off > 0 else float("nan")
     gp_oth = min(1.0, oth_del / oth_off) if oth_off > 0 else float("nan")
 
+    # Spillover: when a node sheds transit, its neighbours must absorb the
+    # load.  Compare neighbour throughput per second during the shock with the
+    # steady window, over the neighbours of every alpha-edited node.
+    spill, spill_nodes = float("nan"), 0
+    snaps = res.get("snapshots", {})
+    edited = res.get("alpha_nodes", np.zeros(0, dtype=np.int32))
+    shock_span = shock_w[1] - shock_w[0]
+    base_span = shock_w[0] - 20.0
+    if (20.0 in snaps and 30.0 in snaps and shock_w[1] in snaps
+            and len(edited) and base_span > 0):
+        neighbours = set()
+        for n in edited:
+            neighbours.update(sim.topo.adj[int(n)])
+        neighbours -= set(int(n) for n in edited)
+        if neighbours:
+            base_rate = sum(snaps[30.0][m] - snaps[20.0][m]
+                            for m in neighbours) / base_span
+            shock_rate = sum(snaps[shock_w[1]][m] - snaps[30.0][m]
+                             for m in neighbours) / shock_span
+            if base_rate > 0:
+                spill = shock_rate / base_rate - 1.0
+            spill_nodes = len(neighbours)
+
     out = {
         "name": name,
-        "controller": cfg.controller,
+        "controller": cfg.arm or cfg.controller,
         "seed": cfg.seed,
         "gp_affected": gp_aff,
         "gp_other": gp_oth,
+        "spillover": spill,
+        "spillover_nodes": spill_nodes,
+        "alpha_edited_nodes": int(len(edited)),
         "base": base,
         "shock": shock,
         "ratio_p95": shock["p95"] / base["p95"] if base["p95"] and base["p95"] > 0 else np.nan,

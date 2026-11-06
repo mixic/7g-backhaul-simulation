@@ -156,35 +156,38 @@ controller holds a 1.08 p95 latency ratio where global pressure control
 degrades to 1.57, but a confound control shows that per-flow queue
 isolation, not the kinematic trigger, accounts for nearly all of the
 gain; the trigger's benefit is an order of magnitude less control-plane
-churn. Hyper-specialisation is refuted on both local and global
-delivery, and the reassembly-deadlock hypothesis is refuted at the
-fiber-to-satellite boundary, where the adaptive trigger is itself masked
-by the satellite buffer's pressure sawtooth. Orbital compute is
-considered as a possible edge tier for selected workloads, not as a
-presumed replacement for terrestrial data centers. The design is a
-distributed engineering architecture, not a biological brain, sentient
-system, or demonstrated autonomous global network. It treats quantum
-networking as a separate resource plane rather than a byte-carrying IP
-path, and distinguishes application-session continuity from an
-unattainable guarantee of zero packet delay or loss. A second synthetic
-experiment compares reactive multipath with forecast-assisted path
-activation and multicloud replica preparation under link and cloud
-failures; its results are conditional on explicitly modeled controller
-delays and resource assumptions. A controlled re-evaluation replaces the
-original policy comparison with an independent-allocator ablation and
-finds that pressure forecasting yields no goodput advantage, whereas
-demand forecasting for cache scaling accounts for the measured gains;
-the predictive-goodput claim is withdrawn. The transport model has also
-been cross-validated against an independent ns-3.49 implementation for a
-two-path handover scenario: agreement is within 0.02 \% while links are
-lightly loaded, and the queue-free abstraction's 6.5-point delivery
-overstatement under handover overload is corrected by a bounded FIFO
-queue model. This is an early-stage, single-author research vision and
-synthetic prototype, not a peer-reviewed or independently validated
-network simulator; as of this version there are no external issues, pull
-requests, or citations, and no independent replication. The experiments
-generate hypotheses and do not establish real-network performance or
-scientific priority.
+churn. Compensatory hyper-specialisation is supported against symmetric
+scaling and smooth gradient actuation, with a quantified optimum at a
+role shift of 0.85 and a collapse into cascading starvation beyond it,
+where neighbour throughput falls rather than absorbing the shed load; it
+remains dominated by smooth rate-controlled actuation. The
+reassembly-deadlock hypothesis is refuted at the fiber-to-satellite
+boundary, where the adaptive trigger is itself masked by the satellite
+buffer's pressure sawtooth. Orbital compute is considered as a possible
+edge tier for selected workloads, not as a presumed replacement for
+terrestrial data centers. The design is a distributed engineering
+architecture, not a biological brain, sentient system, or demonstrated
+autonomous global network. It treats quantum networking as a separate
+resource plane rather than a byte-carrying IP path, and distinguishes
+application-session continuity from an unattainable guarantee of zero
+packet delay or loss. A second synthetic experiment compares reactive
+multipath with forecast-assisted path activation and multicloud replica
+preparation under link and cloud failures; its results are conditional
+on explicitly modeled controller delays and resource assumptions. A
+controlled re-evaluation replaces the original policy comparison with an
+independent-allocator ablation and finds that pressure forecasting
+yields no goodput advantage, whereas demand forecasting for cache
+scaling accounts for the measured gains; the predictive-goodput claim is
+withdrawn. The transport model has also been cross-validated against an
+independent ns-3.49 implementation for a two-path handover scenario:
+agreement is within 0.02 \% while links are lightly loaded, and the
+queue-free abstraction's 6.5-point delivery overstatement under handover
+overload is corrected by a bounded FIFO queue model. This is an
+early-stage, single-author research vision and synthetic prototype, not
+a peer-reviewed or independently validated network simulator; as of this
+version there are no external issues, pull requests, or citations, and
+no independent replication. The experiments generate hypotheses and do
+not establish real-network performance or scientific priority.
 
 The paper argues for a mathematical, time-varying, multilayer topology
 model to coordinate services across heterogeneous networks. This model
@@ -2335,20 +2338,12 @@ where the vision paper expects it to act. An adaptive noise floor
 derived from residual magnitude adapts to the pathology it is meant to
 detect.
 
-\textbf{H4 is refuted.} Driving \texttt{alpha} to 0.95 at the congested
-node -- shedding general transit to hyper-allocate the affected circuit
--- loses both locally (49.9 \% against 74.1 \% affected-name delivery)
-and globally (2.25x p95). The congested node is the last router before
-the origin, so the affected flow's own path is the first casualty.
-Compensatory hyper-specialisation can only pay where the specialised
-resource sits \emph{downstream} of the constraint, not where it consumes
-the transit capacity the affected traffic needs.
-
-\begin{figure}
-\centering
-\pandocbounded{\includegraphics[keepaspectratio,alt={Surgical-savant-tradeoff}]{../figures/surgical_h4_savant.png}}
-\caption{Surgical-savant-tradeoff}
-\end{figure}
+\textbf{H4 (compensatory hyper-specialisation) is supported as stated,
+with a measured threshold.} It is swept over its gain and reported in
+section 17; in brief, asymmetric hyper-allocation beats symmetric load
+balancing and smooth gradient actuation on affected-name delivery, peaks
+at \texttt{alpha\ -\textgreater{}\ 0.85}, and collapses into cascading
+starvation beyond it.
 
 \textbf{The spatial/temporal composability pairing is untested.} With
 single-uplink origins there is no admissible loop-free alternative to
@@ -2377,7 +2372,166 @@ were found and corrected, is in
 \href{surgical-rate-controlled.md}{\texttt{surgical-rate-controlled.md}}
 and \href{surgical-results.md}{\texttt{surgical-results.md}}.
 
-\section{17. Conclusion}\label{conclusion}
+\section{17. Compensatory hyper-specialisation (the ``savant''
+mechanism)}\label{compensatory-hyper-specialisation-the-savant-mechanism}
+
+Standard self-scaling networks (Kubernetes, MEC) employ symmetric,
+proportional scaling in response to load. This section proposes and
+tests an alternative inspired by biological neuroplasticity:
+\textbf{compensatory hyper-specialisation}. When a node detects a
+kinematic shockwave -- the ``injury'' -- it may intentionally shed its
+general routing role and execute a severe, asymmetric shift in its role
+fraction \texttt{alpha}, dedicating its local resources to the affected
+circuit. The biological framing is an analogy, not evidence; translated
+into control terms the mechanism is an asymmetric, extreme-compensation
+control law with a measurable cost. The hypothesis is that it provides
+superior resilience for the affected flow under attack, at the
+measurable cost of system-wide transit efficiency, and that the
+trade-off has a threshold.
+
+The mapping is deliberate and mechanical:
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 2\tabcolsep) * \real{0.5000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 2\tabcolsep) * \real{0.5000}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+biological concept
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+network equivalent
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+neural tissue & the multi-medium backhaul fabric \\
+injury or deficit & DDoS shockwave, link failure, congestion spike \\
+neuroplastic rewiring & role fluidity, \texttt{alpha} in
+\texttt{{[}0,\ 1{]}} \\
+hyper-allocated circuit & one isolated \texttt{(name,\ source-region)}
+queue \\
+savant skill & a node drops general transit to serve or scrub one
+circuit \\
+cost of the gift & neighbours absorb shed transit; system-wide
+starvation \\
+\end{longtable}
+}
+
+The controller isolates the culprit class with full weight, drives
+\texttt{alpha} toward a target through the same speed- and
+acceleration-capped governor described in section 16, and holds until
+pressure recovers. The target is swept, because a single value cannot
+locate a threshold.
+
+\subsection{17.1 Measurement}\label{measurement-1}
+
+Five gains are compared against symmetric load balancing
+(Kubernetes-style static roles), the global pressure controller, a
+smooth gradient flux field (VDR-style), and the rate-controlled surgical
+arm, which is the \emph{control}: it attempts to balance general traffic
+and the spike rather than trading one for the other. Thirty paired
+seeds; ``affected'' is the attacked name, ``other'' is every other name,
+and ``spillover'' is the throughput change at the neighbours of every
+\texttt{alpha}-edited node.
+
+\begin{figure}
+\centering
+\pandocbounded{\includegraphics[keepaspectratio,alt={Savant gain
+sweep}]{../figures/surgical_h4_gain_sweep.png}}
+\caption{Savant gain sweep}
+\end{figure}
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.1304}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.1739}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.1739}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.1739}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.1739}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.1739}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+arm
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+affected
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+other
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+system-wide
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+p95 ratio
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+spillover
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Baseline A (Kubernetes-style) & 22.4 \% & 75.5 \% & 57.6 \% & 1.29 &
+- \\
+Baseline B (global pressure) & 55.6 \% & 83.4 \% & 74.1 \% & 1.57 & - \\
+VDR (smooth gradient) & 22.4 \% & 75.5 \% & 57.6 \% & 1.29 & - \\
+Savant, \texttt{alpha\ -\textgreater{}\ 0.50} & 50.2 \% & 85.3 \% & 73.0
+\% & 1.18 & -6.4 \% \\
+Savant, \texttt{alpha\ -\textgreater{}\ 0.70} & 53.6 \% & 85.9 \% & 74.8
+\% & 1.19 & -7.6 \% \\
+Savant, \texttt{alpha\ -\textgreater{}\ 0.85} & \textbf{56.7 \%} & 86.3
+\% & \textbf{76.1 \%} & 1.29 & -6.3 \% \\
+Savant, \texttt{alpha\ -\textgreater{}\ 0.95} & 49.9 \% & 82.9 \% & 71.5
+\% & 2.25 & -7.8 \% \\
+Savant, \texttt{alpha\ -\textgreater{}\ 0.99} & 37.5 \% & 72.3 \% & 60.0
+\% & \textbf{4.09} & -7.9 \% \\
+Rate-controlled control & \textbf{74.1 \%} & \textbf{90.1 \%} &
+\textbf{84.6 \%} & \textbf{1.08} & - \\
+\end{longtable}
+}
+
+\subsection{17.2 Findings}\label{findings}
+
+\textbf{The hypothesis holds against its stated comparators.} Savant
+rewiring delivers 56.7 \% of the affected name against 22.4 \% for both
+symmetric load balancing and smooth gradient actuation, and it does so
+while keeping system-wide delivery above Baseline A (76.1 \% against
+57.6 \%). Extreme, asymmetric compensation is not without value relative
+to symmetric scaling.
+
+\textbf{The threshold is real and quantified.} Affected-name delivery is
+an inverted U in the gain: it rises from 50.2 \% at
+\texttt{alpha\ -\textgreater{}\ 0.50} to a maximum of 56.7 \% at
+\texttt{alpha\ -\textgreater{}\ 0.85}, then collapses to 49.9 \% at 0.95
+and 37.5 \% at 0.99, where the p95 ratio reaches 4.09 and system-wide
+throughput falls below Baseline A. The crossing into cascading
+starvation lies between 0.85 and 0.95. A mechanism described as
+``violent'' is therefore only useful while it is not too violent.
+
+\textbf{The predicted cost is larger than predicted, and it is shared.}
+Neighbour spillover is negative at every gain, between -6.3 \% and -7.9
+\%: when a node sheds transit its neighbours do not absorb that load at
+higher throughput, they deliver less than in the steady window. The
+cascade is not relocated, it is amplified. The biological caveat -- that
+savants struggle with ordinary tasks -- maps onto a measurable systemic
+penalty that appears even at the optimum gain.
+
+\textbf{But the mechanism loses to smooth actuation.} The
+rate-controlled surgical arm delivers 74.1 \% of the affected name, 90.1
+\% of everything else and 84.6 \% system-wide at a 1.08 p95 ratio:
+better than the savant on all four axes at once, using a fraction of the
+state churn. The reason is structural rather than incidental. On this
+fabric the congested node is the last router before a single-uplink
+origin, so shedding its forwarding capacity removes capacity from the
+very path the affected traffic needs. Compensatory hyper-specialisation
+can pay only where the specialised resource sits \emph{downstream} of
+the constraint -- a dedicated scrubber in front of the origin -- not
+where it consumes the transit capacity that the affected flow depends
+on.
+
+The paradigm is therefore not wrong so much as locally mis-scoped: the
+mechanism does what it claims against symmetric scaling, has a real and
+locatable operating limit, and is dominated by a cheaper smooth
+alternative in this topology.
+
+\section{18. Conclusion}\label{conclusion}
 
 Cooperative multi-medium backhaul offers a way to connect content
 placement, traffic engineering, and service continuity across

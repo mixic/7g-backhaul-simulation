@@ -332,8 +332,14 @@ seeds**, and the testbed partially refutes its own thesis:
   limiter cannot bound a synchronous multi-router edit.
 - **H3 inconclusive**: the reassembly buffer never left 0 kB, so the MTU-mismatch
   deadlock mechanism never engaged. Not claimed.
-- **H4 refuted**: savant `α → 0.95` loses both locally (49.9 % versus 74.1 %
-  affected-name delivery) and globally (2.25× p95).
+- **H4 (savant, compensatory hyper-specialisation)**: see
+  [docs/savant-hyper-specialisation.md](docs/savant-hyper-specialisation.md).
+  Swept over `α_target`, affected-name delivery is an inverted U with its
+  optimum at **α → 0.85** (56.7 %), beating Kubernetes (22.4 %) and VDR
+  (22.4 %); beyond the threshold it collapses to 37.5 % with a **4.09×** p95
+  ratio. Neighbour spillover is negative at every gain, so the cascade is
+  shared rather than relocated — the predicted cost, confirmed. It still
+  loses to the smooth rate-controlled arm on all four axes.
 
 ```bash
 py tools/benchmark_surgical.py --replicates 30

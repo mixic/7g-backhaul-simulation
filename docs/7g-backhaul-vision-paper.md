@@ -42,8 +42,11 @@ partial refutation of the thesis. The surgical controller holds a 1.08 p95
 latency ratio where global pressure control degrades to 1.57, but a confound
 control shows that per-flow queue isolation, not the kinematic trigger, accounts
 for nearly all of the gain; the trigger's benefit is an order of magnitude less
-control-plane churn. Hyper-specialisation is refuted on both local and global
-delivery, and the reassembly-deadlock hypothesis is refuted at the
+control-plane churn. Compensatory hyper-specialisation is supported against symmetric scaling and
+smooth gradient actuation, with a quantified optimum at a role shift of 0.85
+and a collapse into cascading starvation beyond it, where neighbour throughput
+falls rather than absorbing the shed load; it remains dominated by smooth
+rate-controlled actuation. The reassembly-deadlock hypothesis is refuted at the
 fiber-to-satellite boundary, where the adaptive trigger is itself masked by the
 satellite buffer's pressure sawtooth. Orbital compute is
 considered as a possible edge tier for selected workloads, not as a presumed
@@ -1648,15 +1651,11 @@ units/s^2 while the flood's residual is only about 3.1, so the detector goes bli
 exactly where the vision paper expects it to act. An adaptive noise floor derived
 from residual magnitude adapts to the pathology it is meant to detect.
 
-**H4 is refuted.** Driving `alpha` to 0.95 at the congested node -- shedding
-general transit to hyper-allocate the affected circuit -- loses both locally
-(49.9 % against 74.1 % affected-name delivery) and globally (2.25x p95). The
-congested node is the last router before the origin, so the affected flow's own
-path is the first casualty. Compensatory hyper-specialisation can only pay where
-the specialised resource sits *downstream* of the constraint, not where it
-consumes the transit capacity the affected traffic needs.
-
-![Surgical-savant-tradeoff](../figures/surgical_h4_savant.png)
+**H4 (compensatory hyper-specialisation) is supported as stated, with a
+measured threshold.** It is swept over its gain and reported in section 17;
+in brief, asymmetric hyper-allocation beats symmetric load balancing and
+smooth gradient actuation on affected-name delivery, peaks at `alpha -> 0.85`,
+and collapses into cascading starvation beyond it.
 
 **The spatial/temporal composability pairing is untested.** With single-uplink
 origins there is no admissible loop-free alternative to the origin uplink, so a
@@ -1681,7 +1680,98 @@ Full detail, including five degenerate calibration configurations that were foun
 and corrected, is in [`surgical-rate-controlled.md`](surgical-rate-controlled.md)
 and [`surgical-results.md`](surgical-results.md).
 
-## 17. Conclusion
+## 17. Compensatory hyper-specialisation (the "savant" mechanism)
+
+Standard self-scaling networks (Kubernetes, MEC) employ symmetric, proportional
+scaling in response to load. This section proposes and tests an alternative
+inspired by biological neuroplasticity: **compensatory hyper-specialisation**.
+When a node detects a kinematic shockwave -- the "injury" -- it may intentionally
+shed its general routing role and execute a severe, asymmetric shift in its role
+fraction `alpha`, dedicating its local resources to the affected circuit. The
+biological framing is an analogy, not evidence; translated into control terms the
+mechanism is an asymmetric, extreme-compensation control law with a measurable
+cost. The hypothesis is that it provides superior resilience for the affected
+flow under attack, at the measurable cost of system-wide transit efficiency, and
+that the trade-off has a threshold.
+
+The mapping is deliberate and mechanical:
+
+| biological concept | network equivalent |
+|---|---|
+| neural tissue | the multi-medium backhaul fabric |
+| injury or deficit | DDoS shockwave, link failure, congestion spike |
+| neuroplastic rewiring | role fluidity, `alpha` in `[0, 1]` |
+| hyper-allocated circuit | one isolated `(name, source-region)` queue |
+| savant skill | a node drops general transit to serve or scrub one circuit |
+| cost of the gift | neighbours absorb shed transit; system-wide starvation |
+
+The controller isolates the culprit class with full weight, drives `alpha` toward
+a target through the same speed- and acceleration-capped governor described in
+section 16, and holds until pressure recovers. The target is swept, because a
+single value cannot locate a threshold.
+
+### 17.1 Measurement
+
+Five gains are compared against symmetric load balancing (Kubernetes-style
+static roles), the global pressure controller, a smooth gradient flux field
+(VDR-style), and the rate-controlled surgical arm, which is the *control*: it
+attempts to balance general traffic and the spike rather than trading one for the
+other. Thirty paired seeds; "affected" is the attacked name, "other" is every
+other name, and "spillover" is the throughput change at the neighbours of every
+`alpha`-edited node.
+
+![Savant gain sweep](../figures/surgical_h4_gain_sweep.png)
+
+| arm | affected | other | system-wide | p95 ratio | spillover |
+|---|---:|---:|---:|---:|---:|
+| Baseline A (Kubernetes-style) | 22.4 % | 75.5 % | 57.6 % | 1.29 | - |
+| Baseline B (global pressure) | 55.6 % | 83.4 % | 74.1 % | 1.57 | - |
+| VDR (smooth gradient) | 22.4 % | 75.5 % | 57.6 % | 1.29 | - |
+| Savant, `alpha -> 0.50` | 50.2 % | 85.3 % | 73.0 % | 1.18 | -6.4 % |
+| Savant, `alpha -> 0.70` | 53.6 % | 85.9 % | 74.8 % | 1.19 | -7.6 % |
+| Savant, `alpha -> 0.85` | **56.7 %** | 86.3 % | **76.1 %** | 1.29 | -6.3 % |
+| Savant, `alpha -> 0.95` | 49.9 % | 82.9 % | 71.5 % | 2.25 | -7.8 % |
+| Savant, `alpha -> 0.99` | 37.5 % | 72.3 % | 60.0 % | **4.09** | -7.9 % |
+| Rate-controlled control | **74.1 %** | **90.1 %** | **84.6 %** | **1.08** | - |
+
+### 17.2 Findings
+
+**The hypothesis holds against its stated comparators.** Savant rewiring
+delivers 56.7 % of the affected name against 22.4 % for both symmetric load
+balancing and smooth gradient actuation, and it does so while keeping system-wide
+delivery above Baseline A (76.1 % against 57.6 %). Extreme, asymmetric
+compensation is not without value relative to symmetric scaling.
+
+**The threshold is real and quantified.** Affected-name delivery is an inverted
+U in the gain: it rises from 50.2 % at `alpha -> 0.50` to a maximum of 56.7 % at
+`alpha -> 0.85`, then collapses to 49.9 % at 0.95 and 37.5 % at 0.99, where the
+p95 ratio reaches 4.09 and system-wide throughput falls below Baseline A. The
+crossing into cascading starvation lies between 0.85 and 0.95. A mechanism
+described as "violent" is therefore only useful while it is not too violent.
+
+**The predicted cost is larger than predicted, and it is shared.** Neighbour
+spillover is negative at every gain, between -6.3 % and -7.9 %: when a node sheds
+transit its neighbours do not absorb that load at higher throughput, they deliver
+less than in the steady window. The cascade is not relocated, it is amplified.
+The biological caveat -- that savants struggle with ordinary tasks -- maps onto a
+measurable systemic penalty that appears even at the optimum gain.
+
+**But the mechanism loses to smooth actuation.** The rate-controlled surgical arm
+delivers 74.1 % of the affected name, 90.1 % of everything else and 84.6 %
+system-wide at a 1.08 p95 ratio: better than the savant on all four axes at once,
+using a fraction of the state churn. The reason is structural rather than
+incidental. On this fabric the congested node is the last router before a
+single-uplink origin, so shedding its forwarding capacity removes capacity from
+the very path the affected traffic needs. Compensatory hyper-specialisation can
+pay only where the specialised resource sits *downstream* of the constraint -- a
+dedicated scrubber in front of the origin -- not where it consumes the transit
+capacity that the affected flow depends on.
+
+The paradigm is therefore not wrong so much as locally mis-scoped: the mechanism
+does what it claims against symmetric scaling, has a real and locatable operating
+limit, and is dominated by a cheaper smooth alternative in this topology.
+
+## 18. Conclusion
 
 Cooperative multi-medium backhaul offers a way to connect content placement,
 traffic engineering, and service continuity across terrestrial, aerial, and

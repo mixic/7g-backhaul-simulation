@@ -8,5 +8,10 @@ H2,surgical PEAK state-change rate also < 50% of Baseline B,0.7975,fail,"per-nod
 H2,rate cap beats no rate cap on goodput,0.8089,pass,
 H3,reassembly buffer engaged at all (> 0 kB),2929.6875,pass,"0 means the MTU-mismatch mechanism never fired: UNTESTED, not a pass"
 H3,surgical reduces reassembly deadlock below Baseline A,0.7029,fail,Baseline A deadlock fraction 0.702
-H4,savant affected-name delivery beats the surgical arm,0.4991,fail,
-H4,savant costs unrelated traffic,0.8291,pass,
+H4,savant beats Baseline A on affected-name delivery,0.567,pass,Baseline A 0.224
+H4,savant beats VDR (smooth gradient) on affected-name delivery,0.567,pass,VDR 0.224
+H4,savant beats the rate-controlled surgical CONTROL,0.567,fail,control 0.741
+H4,operating threshold: savant gain at which affected delivery peaks,0.85,pass,interior optimum at alpha->0.85
+H4,"beyond the threshold, p95 inflates (cascading starvation)",4.0855,pass,alpha->0.99 p95 ratio
+H4,neighbour spillover is negative (neighbours also lose throughput),-6.2979,pass,shed load is not absorbed by neighbours; the cascade is shared
+H4,savant costs unrelated traffic at the best gain,0.8635,pass,

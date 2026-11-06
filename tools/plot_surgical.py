@@ -37,7 +37,7 @@ import matplotlib  # noqa: E402
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 
-from simulation.surgical.config import LABELS  # noqa: E402
+from simulation.surgical.config import LABELS, SAVANT_GAINS  # noqa: E402
 
 ORDER = [
     "k8s",
@@ -201,6 +201,55 @@ def main() -> int:
     fig.tight_layout()
     fig.savefig(args.figure_dir / "surgical_h4_savant.png", dpi=150)
     plt.close(fig)
+
+    # -- H4 trade-off curve across the savant gain sweep ----------------
+    e4 = _summary(summary, "exp4_savant")
+    gains, aff, oth, sysd, spill = [], [], [], [], []
+    for arm, gain in sorted(SAVANT_GAINS.items(), key=lambda kv: kv[1]):
+        if (arm, "gp_affected") not in e4:
+            continue
+        gains.append(gain)
+        aff.append(e4.get((arm, "gp_affected"), (0.0, 0.0)))
+        oth.append(e4.get((arm, "gp_other"), (0.0, 0.0)))
+        sysd.append(e4.get((arm, "goodput_shock"), (0.0, 0.0)))
+        spill.append(e4.get((arm, "spillover"), (0.0, 0.0)))
+    if gains:
+        fig, axes = plt.subplots(1, 2, figsize=(13, 4.6))
+        axes[0].errorbar(gains, [v[0] * 100 for v in aff],
+                         yerr=[v[1] * 100 for v in aff], marker="o",
+                         color="#e6b800", label="affected name")
+        axes[0].errorbar(gains, [v[0] * 100 for v in oth],
+                         yerr=[v[1] * 100 for v in oth], marker="s",
+                         color="#1f6feb", label="all other names")
+        for arm, tag in (("surgical", "surgical arm"), ("k8s", "Baseline A")):
+            ref = e4.get((arm, "gp_affected"))
+            if ref:
+                axes[0].axhline(ref[0] * 100, ls="--", lw=1,
+                                color=COLORS.get(arm, "#333333"),
+                                label=f"{tag} (affected)")
+        axes[0].set_xlabel("savant role shift (alpha target)")
+        axes[0].set_ylabel("delivery probability, shock window (%)")
+        axes[0].set_title("H4: local gain versus system-wide cost")
+        axes[0].legend(fontsize=7)
+
+        axes[1].errorbar(gains, [v[0] * 100 for v in sysd],
+                         yerr=[v[1] * 100 for v in sysd], marker="o",
+                         color="#c0392b", label="system-wide goodput")
+        ref = e4.get(("surgical", "goodput_shock"))
+        if ref:
+            axes[1].axhline(ref[0] * 100, ls="--", lw=1, color="#1f6feb",
+                            label="surgical arm")
+        twin = axes[1].twinx()
+        twin.plot(gains, [v[0] * 100 for v in spill], marker="^",
+                  color="#555555", ls=":")
+        twin.set_ylabel("neighbour throughput change (%)")
+        axes[1].set_xlabel("savant role shift (alpha target)")
+        axes[1].set_ylabel("system-wide legitimate goodput (%)")
+        axes[1].set_title("H4: cascading cost to neighbours (dotted, right axis)")
+        axes[1].legend(fontsize=7, loc="lower left")
+        fig.tight_layout()
+        fig.savefig(args.figure_dir / "surgical_h4_gain_sweep.png", dpi=150)
+        plt.close(fig)
 
     # parked copies of the machine-readable results, per repo convention
     _write_csv(args.figure_dir / "surgical_summary.csv", summary)

@@ -137,6 +137,11 @@ class SimConfig:
     # exp3 heterogeneous boundary
     force_satellite: bool = False
 
+    # exp4 savant sweep
+    arm: str = ""              # result label when an arm carries a parameter
+    snapshot_times: tuple = () # control times at which per-node byte counters
+                               # are frozen, for the spillover measurement
+
     # deadline for "useful" delivery (s)
     deadline: float = 2.0
 
@@ -195,3 +200,40 @@ def scenario_exp3(seed: int, controller: str) -> SimConfig:
                      attack_start=26.0, attack_dur=14.0,
                      src_pool=(5,), attack_src_pool=(5,),
                      n_flows=4, legit_rate=2.0, attack_rate=8000.0)
+
+
+# --------------------------------------------------------------------------
+# Experiment 4 - compensatory hyper-specialisation ("savant") gain sweep
+#
+# The claim is asymmetric, extreme compensation: shed general transit (raise
+# alpha toward 1) at the injured node and give the affected circuit everything
+# that remains.  A single gain cannot test a *threshold*, so the gain is swept
+# and the crossover reported.
+# --------------------------------------------------------------------------
+SAVANT_GAINS = {
+    "savant_a50": 0.50,
+    "savant_a70": 0.70,
+    "savant_a85": 0.85,
+    "savant_a95": 0.95,
+    "savant_a99": 0.99,
+}
+
+
+def parse_arm(arm: str) -> tuple[str, dict]:
+    """Map an arm label onto (controller name, parameter overrides)."""
+    if arm in SAVANT_GAINS:
+        return SAVANT, {"savant_alpha": SAVANT_GAINS[arm]}
+    return arm, {}
+
+
+EXP4_ARMS = [K8S, PRESSURE, SURGICAL, VDR] + list(SAVANT_GAINS)
+
+for _arm, _gain in SAVANT_GAINS.items():
+    LABELS[_arm] = f"Savant alpha->{_gain:.2f}"
+
+
+def scenario_exp4(seed: int, arm: str) -> SimConfig:
+    """Localised extreme shockwave, savant gain swept."""
+    controller, kwargs = parse_arm(arm)
+    return SimConfig(name="exp4_savant", seed=seed, controller=controller,
+                     arm=arm, snapshot_times=(20.0, 30.0, 41.0), **kwargs)

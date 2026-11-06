@@ -28,8 +28,11 @@ from simulation.surgical.config import (
     K8S,
     PRESSURE,
     SAT,
+    SAVANT,
     SURGICAL,
+    parse_arm,
     scenario_exp1,
+    scenario_exp4,
 )
 from simulation.surgical.controllers import Governor
 from simulation.surgical.link import class_id
@@ -142,6 +145,34 @@ class EndToEndTests(unittest.TestCase):
         baseline = run_and_score(scenario_exp1(3, PRESSURE))
         surgical = run_and_score(scenario_exp1(3, SURGICAL))
         self.assertGreater(baseline["churn_mean"], surgical["churn_mean"])
+
+
+class SavantSweepTests(unittest.TestCase):
+    def test_arm_label_maps_to_a_parameterised_controller(self) -> None:
+        controller, kwargs = parse_arm("savant_a85")
+        self.assertEqual(controller, SAVANT)
+        self.assertAlmostEqual(kwargs["savant_alpha"], 0.85)
+        plain, empty = parse_arm(SURGICAL)
+        self.assertEqual((plain, empty), (SURGICAL, {}))
+
+    def test_sweep_arm_records_the_parameterised_label(self) -> None:
+        result = run_and_score(scenario_exp4(0, "savant_a85").child(duration=22.0))
+        self.assertEqual(result["controller"], "savant_a85")
+
+    def test_savant_shifts_alpha_and_reports_spillover(self) -> None:
+        armed = run_and_score(scenario_exp4(0, "savant_a85"))
+        control = run_and_score(scenario_exp4(0, SURGICAL))
+        self.assertGreater(armed["alpha_edited_nodes"], 0)
+        self.assertTrue(np.isfinite(armed["spillover"]))
+        # the savant sacrifices transit, so the control keeps alpha untouched
+        self.assertEqual(int(control["alpha_edited_nodes"]), 0)
+
+    def test_both_arms_report_a_finite_affected_delivery(self) -> None:
+        for arm in ("savant_a85", SURGICAL, K8S):
+            result = run_and_score(scenario_exp4(1, arm).child(duration=45.0))
+            self.assertTrue(np.isfinite(result["gp_affected"]))
+            self.assertGreaterEqual(result["gp_affected"], 0.0)
+            self.assertLessEqual(result["gp_affected"], 1.0)
 
 
 if __name__ == "__main__":

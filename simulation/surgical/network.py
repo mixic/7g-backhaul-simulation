@@ -118,6 +118,7 @@ class SimRun:
                            for f in self.flows}
 
         self.path_cache = {}
+        self._snapshots = {}
         self.node_pressure = {}
         self._next_log = 0.0
         self._next_sample = 0.0
@@ -399,6 +400,12 @@ class SimRun:
                     acc = self._flow_acc[f.fid]
                     self._flow_acc[f.fid] = 0
                     self.flow_rates[f.fid].update(t, acc / 0.5)
+            for _ts in cfg.snapshot_times:
+                if t >= _ts and _ts not in self._snapshots:
+                    self._snapshots[_ts] = {
+                        n: self.tele[n].served_bytes
+                        for n in range(self.topo.n_nodes)
+                    }
             self.controller.on_tick(t, obs)
             for tel in self.tele.values():
                 if tel.cls_bytes:
@@ -471,6 +478,10 @@ class SimRun:
             "ns_classes_peak": (float(max(r[6] for r in self.series))
                                 if self.series else 0.0),
             "alpha_final": np.array([s.alpha for s in self.states.values()]),
+            "alpha_nodes": np.array(
+                sorted({e.node for e in self.ledger.edits
+                        if e.component == "alpha"}), dtype=np.int32),
+            "snapshots": self._snapshots,
         }
 
 

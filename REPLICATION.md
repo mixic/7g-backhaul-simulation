@@ -304,6 +304,15 @@ narrative including the refutations is
 [docs/surgical-results.md](docs/surgical-results.md). Tests:
 `py -m pytest tests/test_surgical.py -q`.
 
+## Run the savant (compensatory hyper-specialisation) sweep
+
+The H4 experiment is part of the surgical benchmark above: arm labels
+`savant_a50` ... `savant_a99` sweep the role-shift gain, and the tool reports the
+affected-name delivery, the system-wide throughput, the p95 ratio and the
+neighbour spillover for each. The pre-registered claim is
+[docs/savant-hyper-specialisation.md](docs/savant-hyper-specialisation.md); the
+measured optimum is `alpha -> 0.85` with negative spillover at every gain.
+
 ## Run the sensitivity benchmark
 
 This runs paired one-factor-at-a-time sweeps around a scenario's default
