@@ -426,8 +426,90 @@ py run_m3_experiments.py                 # 30 seeds -> results/m3/*.csv + summar
 py -m unittest discover -s tests         # CI-equivalent
 ```
 
-M3 produces bare numbers only; interpretation is deferred to M4 (Linux
-emulation) and M5 (report).
+M3 produces bare numbers only; interpretation is in the M4 benchmark below and
+the M5 report.
+
+## M4: OEF compensation and multidimensional kinematic baselining
+
+M4 replaces the 1D scalar trigger with two classical, biologically-inspired
+controllers, each grounded in a published biological theory:
+
+- **OEF (oxygen extraction fraction)** — the Fick principle
+  `CMRO2 = CBF · OEF · Ca`, mapped to *legitimate goodput = total throughput ×
+  extraction fraction × payload*. When the CBF monitor sees delivered
+  throughput collapse, the OEF actuator raises the legitimate class's WFQ
+  weight, rate-limited by a double integrator. Theory:
+  [docs/homeostasis-biological-topology.md](docs/homeostasis-biological-topology.md).
+- **MKB (multidimensional kinematic baselining)** — the network state is a 4D
+  vector `S = [CBF, OEF, Queue_Depth, Drop_Rate]`; a surgical edit fires only
+  when the Euclidean magnitude of the vector acceleration `‖A − EMA(A)‖`
+  exceeds an adaptive threshold. Theory:
+  [docs/marder-goaillard-cross-correlation.md](docs/marder-goaillard-cross-correlation.md).
+
+The controllers live in
+[`simulation/oef_controller.py`](simulation/oef_controller.py) and
+[`simulation/mkb_controller.py`](simulation/mkb_controller.py);
+[`run_m4_experiments.py`](run_m4_experiments.py) executes the benchmark.
+
+### The definitive benchmark (M4-Execution)
+
+Five arms, 30 paired seeds (the M3 `default_rng(2026)` seed set), one 60 s
+scenario — 30 s steady traffic, a 10 s massive DDoS spike at t = 30, then 20 s
+of recovery:
+
+| arm | mechanism |
+| --- | --- |
+| `static_isolation` | per-flow fair queueing, always on (the 86.5 % confound) |
+| `m3_surgical_1d` | 1D scalar-EMA trigger + surgical isolation |
+| `m4_oef` | Fick OEF actuator on the 1D base |
+| `m4_mkb` | 4D vector trigger, OEF actuator disabled |
+| `m4_combined` | OEF + MKB together |
+
+```powershell
+py run_m4_experiments.py    # 30 seeds -> results/m4/*.csv + 3 PNGs + summary
+```
+
+### Verdicts (paired t-tests, no tuning)
+
+| hypothesis | verdict | evidence |
+| --- | --- | --- |
+| **H5** OEF beats static_isolation at > 92 % goodput | **REFUTED** | 0.8465 vs 0.8648 (paired p = 0.527) |
+| **H6** MKB caps the peak burst speed | **REFUTED** | 218.4 vs 222.0 units/s (paired p = 0.891) |
+
+The honest bottom line: per-flow fair queueing remains the best known controller
+for this DDoS scenario. OEF's CBF-drop trigger never fires — a flood *raises*
+total delivered throughput rather than lowering it — so the Fick premise fails.
+MKB's apparent 3.7 units/s "cap" is statistically indistinguishable from noise.
+`m4_combined` is significantly **worse** (goodput 0.482 vs 0.846, p < 0.0001):
+the OEF weight changes feed back into the 4D vector and trip the trigger ~175
+times during steady traffic.
+
+### The three figures (mean ± 95 % CI, 30 seeds)
+
+![CBF (total throughput) rises and OEF stays low during the flood — the Fick premise does not hold](results/m4/oef_vs_goodput.png)
+
+![Peak burst state-change speed: the 1D limiter, the MKB vector trigger and the combined arm](results/m4/peak_burst_cap.png)
+
+![Transit drop rate (starvation cost) over time](results/m4/oef_starvation.png)
+
+### Supporting evidence
+
+- **Starvation threshold.** Forcing OEF to maximum and sweeping the WFQ weight
+  1×–16× leaves goodput (0.846–0.853) and transit drop (0.095–0.099) flat — no
+  destructive threshold exists because the mechanism never engages.
+- **Computational overhead.** The 4D vector math costs ~135× the 1D limiter per
+  control tick; OEF state tracking ~40× — the "curse of dimensionality" is real.
+- **Degeneracy index** (Marder & Goaillard): 102/150 (68 %) of OEF-weight × seed
+  configurations exceed 90 % goodput, but this is seed routing variance, not the
+  flat OEF sweep.
+- **Compensatory distance** (Marder & Goaillard): the OEF actuator moves the 4D
+  state *farther* from its baseline (0.0343) than the no-OEF vector trigger
+  (0.0149) — OEF perturbs the state without improving goodput.
+
+Full numbers, paired t-tests, Cohen's d and the conclusion are in
+[`results/m4/m4_summary.md`](results/m4/m4_summary.md); the raw per-seed data is
+[`results/m4/final_benchmark_raw.csv`](results/m4/final_benchmark_raw.csv) and
+[`results/m4/starvation_sweep_raw.csv`](results/m4/starvation_sweep_raw.csv).
 
 ## Repository structure
 
@@ -472,6 +554,12 @@ emulation) and M5 (report).
 │   ├── signed-trends-results.md  # Signed-trend refutation and role-churn finding
 │   ├── sdn-mapping.md            # SDN stack mapping, SD-CDN and SD-BH components
 │   ├── sdn-results.md            # SDN role-override comparison
+│   ├── surgical-rate-controlled.md # Frozen H1-H4 control-law pre-registration
+│   ├── surgical-predictions.md   # Frozen surgical hypothesis/tolerance table
+│   ├── surgical-results.md       # 840-run surgical benchmark results
+│   ├── savant-hyper-specialisation.md # H4 savant gain sweep
+│   ├── homeostasis-biological-topology.md # Fick/homeostasis theory mapping
+│   ├── marder-goaillard-cross-correlation.md # Degeneracy/homeostasis mapping
 │   ├── layering-predictions.md   # Frozen P1-P7 encapsulation predictions
 │   └── layering-results.md       # Three-fidelity layering classification
 ├── figures/
@@ -576,6 +664,10 @@ emulation) and M5 (report).
 │   ├── role_fluid.py             # Role-fluid potential-field model and controllers
 │   ├── dual_role.py              # Continuous alpha serve/balance model and DDoS scenario
 │   ├── sdn_plane.py              # Southbound messages and SDN role-override policy
+│   ├── oef_controller.py         # Fick-principle OEF controller (H5)
+│   ├── mkb_controller.py         # 4D kinematic baselining controller (H6)
+│   ├── surgical/                 # SimPy 100-node fabric, baselines, surgical controller
+│   ├── savant/                   # Compensatory hyper-specialisation (H4)
 │   ├── layering/                 # Typed C/E/T/F/S codec, stacks and survival model
 │   ├── security.py               # HMAC session credential model
 │   ├── telemetry.py              # INT-style telemetry
@@ -596,6 +688,8 @@ emulation) and M5 (report).
 │   ├── benchmark_sdn.py          # SDN role-override comparison
 │   ├── plot_sdn.py               # Delivery-by-target and steady-state plots
 │   ├── benchmark_vision.py       # CDN, handover, and backhaul policy studies
+│   ├── benchmark_surgical.py     # 840-run surgical kinematic benchmark
+│   ├── plot_surgical.py          # Surgical H1-H4 figures
 │   └── validation_io.py          # Normalize and compare simulator/testbed results
 ├── validation/
 │   ├── ns3/
@@ -635,10 +729,17 @@ emulation) and M5 (report).
 │   ├── test_layering_scenarios.py
 │   ├── test_layering_simpy.py
 │   ├── test_validation_workflow.py
+│   ├── test_surgical.py
+│   ├── test_m3_baselines.py
+│   ├── test_oef_mkb.py
+│   ├── test_m4_controllers.py
 │   └── test_vision_benchmark.py
 ├── CITATION.cff                  # Citation metadata (CFF 1.2.0)
 ├── GOAL.md                       # Current testbed goal and milestone status
 ├── REPLICATION.md                # How to replicate and report results
+├── run_m3_experiments.py         # M3 paired-seed runner -> results/m3/
+├── run_m4_experiments.py         # M4-Execution OEF/MKB benchmark -> results/m4/
+├── results/                      # Committed M3/M4 CSVs, summaries and PNGs
 ├── Ni10.pdf
 ├── LICENSE
 ├── CONTRIBUTING.md
