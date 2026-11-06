@@ -1,0 +1,2 @@
+experiment,baseline,seed,Affected_Flow_Delivery,General_Flow_Delivery,Cascading_Failure_Rate,Starvation_Other_Drops,Starvation_Affected_Drops,p95_Ratio,System_Wide_Goodput
+exp2,surgical,14,0.948113,0.986159,nan,0,0,0.917447,0.97006

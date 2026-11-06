@@ -1,0 +1,2 @@
+experiment,baseline,seed,Affected_Flow_Delivery,General_Flow_Delivery,Cascading_Failure_Rate,Starvation_Other_Drops,Starvation_Affected_Drops,p95_Ratio,System_Wide_Goodput
+exp2,savant_a70,19,0.802817,0.872,0.185185,29,28967,1.013955,0.852998

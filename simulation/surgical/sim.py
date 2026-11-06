@@ -144,6 +144,7 @@ def run_and_score(cfg):
     # load.  Compare neighbour throughput per second during the shock with the
     # steady window, over the neighbours of every alpha-edited node.
     spill, spill_nodes = float("nan"), 0
+    cascading_failure_rate = float("nan")
     snaps = res.get("snapshots", {})
     edited = res.get("alpha_nodes", np.zeros(0, dtype=np.int32))
     shock_span = shock_w[1] - shock_w[0]
@@ -162,6 +163,15 @@ def run_and_score(cfg):
             if base_rate > 0:
                 spill = shock_rate / base_rate - 1.0
             spill_nodes = len(neighbours)
+            # cascading-failure rate: the fraction of neighbours whose own
+            # throughput fell below their steady-window rate.
+            failing = 0
+            for m in neighbours:
+                base_thru = snaps[30.0][m] - snaps[20.0][m]
+                shock_thru = snaps[shock_w[1]][m] - snaps[30.0][m]
+                if base_thru > 0 and shock_thru < base_thru:
+                    failing += 1
+            cascading_failure_rate = failing / len(neighbours)
 
     out = {
         "name": name,
@@ -171,6 +181,9 @@ def run_and_score(cfg):
         "gp_other": gp_oth,
         "spillover": spill,
         "spillover_nodes": spill_nodes,
+        "cascading_failure_rate": cascading_failure_rate,
+        "savant_other_drops": res.get("savant_other_drops", 0),
+        "savant_affected_drops": res.get("savant_affected_drops", 0),
         "alpha_edited_nodes": int(len(edited)),
         "base": base,
         "shock": shock,
@@ -203,6 +216,8 @@ def run_and_score(cfg):
         "nclass_series": s[:, 6] if len(s) else np.zeros(1),
         "series_t": s[:, 0] if len(s) else np.zeros(1),
         "churn_rate": churn_rate if churn_rate is not None else np.zeros(1),
+        "churn_accel": res["churn_accel"],
+        "churn_speed": res["churn_speed"],
         "churn_t": res["churn_t"],
         "roll_t": ts, "roll_p95": p95s, "roll_mean": means, "roll_n": cnts,
         "alpha_final": res["alpha_final"],

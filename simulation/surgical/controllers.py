@@ -551,53 +551,6 @@ class FluxController(Controller):
         self.sim.invalidate_paths()
 
 
-class SavantController(SurgicalController):
-    """H4: compensatory hyper-specialisation (the "savant" mechanism).
-
-    On a kinematic shockwave the node deliberately sheds its general transit
-    role: alpha is driven to `savant_alpha`, sacrificing forwarding capacity at
-    that node, and the affected class is given full priority on what remains.
-    The biological analogy is only an analogy; operationally this is an
-    asymmetric, extreme-compensation control law.  The cost -- cascading
-    starvation for unrelated traffic and the neighbour nodes that must absorb
-    the shed transit load -- is measured, not assumed.
-    """
-
-    name = SAVANT
-
-    def on_tick(self, t, obs):
-        dt = self._dt(t)
-        self._step_governors(t, dt)
-        self._release(t, obs)
-        self._detect(t, obs)
-        self._top_up(t, obs)
-
-    def _edit(self, node, cls, t):
-        if not self._spend(node, self._cost(), t):
-            return False
-        self.sim.enable_class(node, cls, 1.0, 1.0)
-        self.sim.set_weight(node, cls, 1.0)       # the affected circuit gets the lane
-        self.sim.set_limit(node, cls, 0.60)
-        self.active[node] = {"phase": "in", "cls": cls,
-                             "until": t + self.cfg.edit_hold,
-                             "p0": max(0.2, self.sim.node_pressure.get(node, 0.5))}
-        # the sacrifice: shed general transit at this node
-        self._gov(node, ("a", 0), self.sim.states[node].alpha,
-                  self.cfg.savant_alpha)
-        return True
-
-    def _release(self, t, obs):
-        super()._release(t, obs)
-        for node, e in list(self.active.items()):
-            if e["phase"] != "out":
-                continue
-            if e.get("alpha_restored"):
-                continue
-            e["alpha_restored"] = True
-            self._gov(node, ("a", 0), self.sim.states[node].alpha,
-                      self.sim.topo.alpha0[node])
-
-
 def make_controller(cfg, sim):
     c = cfg.controller
     if c == K8S:
@@ -621,5 +574,6 @@ def make_controller(cfg, sim):
     if c == VDR_SURGICAL:
         return FluxController(cfg, sim, wrap=True)
     if c == SAVANT:
+        from simulation.savant.controller import SavantController
         return SavantController(cfg, sim)
     raise ValueError(f"unknown controller {c}")

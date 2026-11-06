@@ -109,9 +109,6 @@ class StateLedger:
 
     def __init__(self):
         self.edits = []          # list[Edit]
-        self.series = []         # (t, node, speed, accel, magnitude)
-        self._last_t = {}
-        self._last_speed = {}
 
     def record(self, t: float, node: int, component: str, key, old, new,
                scale: float) -> float:
@@ -119,14 +116,6 @@ class StateLedger:
         if mag <= 0.0:
             return 0.0
         self.edits.append(Edit(t, node, component, key, float(old), float(new), mag))
-        last = self._last_t.get(node, 0.0)
-        dt = max(t - last, 1e-3)
-        speed = mag / dt
-        prev_speed = self._last_speed.get(node, 0.0)
-        accel = abs(speed - prev_speed) / dt
-        self._last_t[node] = t
-        self._last_speed[node] = speed
-        self.series.append((t, node, speed, accel, mag))
         return mag
 
     # convenience wrappers -- all edits must land in the ledger -------------
@@ -163,16 +152,23 @@ class StateLedger:
 
     # ------------------------------------------------------------------
     def churn_series(self, duration: float, dt: float = 0.25):
-        """Aggregate state-change speed/acceleration onto a uniform grid."""
+        """Aggregate state-change speed/acceleration onto a uniform grid.
+
+        ``speed[i]`` is the total magnitude edited in bin ``i`` divided by the
+        bin width -- a sustained state-change rate in normalised units/second.
+        ``accel[i]`` is the discrete derivative of that rate, again per second.
+        Deriving acceleration from the magnitude histogram rather than from
+        per-edit inter-arrival gaps avoids a spurious 1/dt blow-up when several
+        knobs of one edit land in the same control tick.
+        """
         import numpy as np
         n = int(round(duration / dt)) + 1
-        speed = np.zeros(n)
-        accel = np.zeros(n)
         mag = np.zeros(n)
-        if self.edits:
-            for (t, node, sp, ac, m) in self.series:
-                i = min(n - 1, max(0, int(round(t / dt))))
-                speed[i] += sp * dt      # integral of speed = total |dS| this bin
-                accel[i] = max(accel[i], ac)
-                mag[i] += m
+        for edit in self.edits:
+            i = min(n - 1, max(0, int(round(edit.t / dt))))
+            mag[i] += edit.magnitude
+        speed = mag / dt
+        accel = np.zeros(n)
+        if n > 1:
+            accel[1:] = np.abs(np.diff(speed)) / dt
         return np.arange(n) * dt, speed, accel, mag

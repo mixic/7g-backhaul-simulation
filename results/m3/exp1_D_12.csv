@@ -1,0 +1,2 @@
+experiment,baseline,seed,Goodput_Legitimate,p95_Latency,State_Change_Speed,State_Change_Acceleration,State_Change_Acceleration_Max
+exp1,D,12,0.971067,0.275631,0.761231,15.224626,2562.0

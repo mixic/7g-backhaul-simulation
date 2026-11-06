@@ -4,3 +4,5 @@ networkx>=3.0
 matplotlib>=3.7.0
 # Test-only: property-based tests for the layering model.
 hypothesis>=6.0.0
+
+cryptography>=41.0.0

@@ -313,6 +313,28 @@ neighbour spillover for each. The pre-registered claim is
 [docs/savant-hyper-specialisation.md](docs/savant-hyper-specialisation.md); the
 measured optimum is `alpha -> 0.85` with negative spillover at every gain.
 
+## Run the M3 surgical/savant experiments
+
+```bash
+py run_m3_experiments.py                 # 30 paired seeds, all three experiments
+py run_m3_experiments.py --seeds 3       # fast smoke for CI or local checks
+```
+
+Experiment 1 compares Baselines A/B/C against the surgical controller (H1, H2);
+Experiment 2 sweeps the savant gain against the symmetric control (H4);
+Experiment 3 applies the four layer orderings (`CF`, `FC`, `EF`, `FE`) at the
+fiber->satellite boundary with real AES-GCM (H3). Outputs, per run:
+
+* `results/m3/{experiment}_{baseline}_{seed}.csv` — one row per run;
+* `results/m3_summary.md` — bare means and 95% confidence intervals, no
+  interpretation (M4/M5 follow);
+* `results/m3_state_change_acceleration.png` — raw state-change acceleration,
+  Baseline C versus Surgical.
+
+The pre-registration is
+[docs/surgical-predictions.md](docs/surgical-predictions.md). Tests for the four
+modules run under `py -m unittest discover -s tests`.
+
 ## Run the sensitivity benchmark
 
 This runs paired one-factor-at-a-time sweeps around a scenario's default

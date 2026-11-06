@@ -1,0 +1,2 @@
+experiment,baseline,seed,Reordering_Buffer_Occupancy,Fragment_Drop_Rate,Fragments,Wire_Bytes,Object_Loss_Rate
+exp3,CF,12,204,0.019608,204,101673,1.0

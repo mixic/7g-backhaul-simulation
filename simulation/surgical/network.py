@@ -124,6 +124,9 @@ class SimRun:
         self._next_sample = 0.0
         self._flow_acc = {f.fid: 0 for f in self.flows}
         self._vcache = {}
+        # savant starvation accounting, populated by simulation.savant.controller
+        self.savant_active_nodes = set()
+        self.savant_log = None
 
         self._setup_metrics()
         from .controllers import make_controller
@@ -274,6 +277,8 @@ class SimRun:
         self.drop_cnt.append(batch.count)
         self.drop_node.append(node)
         self.drop_kind.append(1 if batch.flow.kind == "attack" else 0)
+        if self.savant_log is not None and node in self.savant_active_nodes:
+            self.savant_log.record(node, batch.flow.content == self.attack_target)
 
     def _complete(self, batch, lat):
         self.done_content.append(batch.flow.content)
@@ -482,6 +487,12 @@ class SimRun:
                 sorted({e.node for e in self.ledger.edits
                         if e.component == "alpha"}), dtype=np.int32),
             "snapshots": self._snapshots,
+            "savant_other_drops": (self.savant_log.total_other()
+                                   if self.savant_log is not None else 0),
+            "savant_affected_drops": (self.savant_log.total_affected()
+                                      if self.savant_log is not None else 0),
+            "savant_drops_per_node": (self.savant_log.per_node()
+                                      if self.savant_log is not None else {}),
         }
 
 

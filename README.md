@@ -413,6 +413,22 @@ comparisons, independent review and replication. See the
 [vision paper](docs/7g-backhaul-vision-paper.md) for the staged evaluation
 plan.
 
+## M3: runnable models and paired-seed CSVs
+
+The executable models live in `simulation/surgical/` (topology, baselines,
+kinematic monitor, rate-limited controller, AES-GCM boundary layering) and
+`simulation/savant/` (compensatory hyper-specialisation with starvation
+accounting). The frozen pre-registration is
+[docs/surgical-predictions.md](docs/surgical-predictions.md).
+
+```bash
+py run_m3_experiments.py                 # 30 seeds -> results/m3/*.csv + summary + PNG
+py -m unittest discover -s tests         # CI-equivalent
+```
+
+M3 produces bare numbers only; interpretation is deferred to M4 (Linux
+emulation) and M5 (report).
+
 ## Repository structure
 
 ```text

@@ -32,6 +32,7 @@ Both expose the same interface: .update(t, v) -> Observation
 """
 from __future__ import annotations
 
+import bisect
 import math
 from dataclasses import dataclass
 
@@ -218,3 +219,37 @@ class ABMonitor(KinematicMonitor):
         # is the EWMA of that estimate, exactly as in the EMA monitor.  Mixing
         # units here (pressure vs 1/s) would silently disable the trigger.
         return self._finish(t, self.v_hat)
+
+
+class ArrivalAccelerometer:
+    """Second derivative of the arrival-count process, from raw timestamps.
+
+    The anti-cheat rule requires the acceleration to be computed from raw arrival
+    times, never from smoothed averages.  ``note(t)`` records a raw arrival;
+    ``sample(t, dt)`` returns
+
+        a(t) = ( N(t) - 2 N(t-dt) + N(t-2dt) ) / dt^2
+
+    where ``N(x)`` is the number of arrivals in ``(x - window, x]``.  This is a
+    finite difference of an unsmoothed counting process, so it is noisy by
+    construction; that is the point.
+    """
+
+    __slots__ = ("window", "_times")
+
+    def __init__(self, window: float = 1.0):
+        self.window = window
+        self._times: list = []
+
+    def note(self, t: float) -> None:
+        bisect.insort(self._times, t)
+
+    def _count(self, t: float) -> int:
+        return (bisect.bisect_right(self._times, t)
+                - bisect.bisect_right(self._times, t - self.window))
+
+    def sample(self, t: float, dt: float) -> float:
+        n0 = self._count(t)
+        n1 = self._count(t - dt)
+        n2 = self._count(t - 2.0 * dt)
+        return (n0 - 2.0 * n1 + n2) / (dt * dt)
