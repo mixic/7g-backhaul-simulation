@@ -1,2 +1,2 @@
-experiment,baseline,seed,Total_Throughput_CBF,Legitimate_Goodput_CMRO2,OEF_Value,OEF_Change_Speed,OEF_Change_Acceleration,OEF_Limit_Hit,p95_Ratio,Goodput_Base
-exp1,oef_surgical,13,363964236.1111,0.559761,1.0,0.5,0.4,1,1.288842,0.958511
+experiment,baseline,seed,Legitimate_Goodput_CMRO2,Total_Throughput_CBF,OEF_Value,Transit_Drop_Rate,p95_Ratio,Goodput_Base
+exp1,oef_surgical,13,0.559761,363964236.1111,1.0,0.225914,1.288842,0.958511

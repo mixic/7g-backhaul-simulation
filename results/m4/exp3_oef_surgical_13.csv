@@ -1,2 +1,0 @@
-experiment,baseline,seed,Trigger_Latency_s,False_Positives,Legitimate_Goodput,p95_Ratio,OEF_Limit_Hit
-exp3,oef_surgical,13,,0,0.559761,1.288842,1
