@@ -297,6 +297,49 @@ serving capacity pinned, not from dropping attack volume. The alert is
 stipulated perfect, only `set_alpha` is implemented, and RFMP epochs remain
 scripted. See [docs/sdn-results.md](docs/sdn-results.md).
 
+## Surgical, rate-controlled state updates
+
+[docs/surgical-rate-controlled.md](docs/surgical-rate-controlled.md) supplies the
+layer the vision paper leaves unspecified: the **control law** that maps the
+observation layer (pressure `p`, velocity `dp/dt`, acceleration `d²p/dt²`) to
+changes in a node's state vector `S = (α, queue policy, FIB overrides)`.
+
+The prior dual-role controller already consumed velocity and acceleration, but
+applied them **globally** to `α` on every node. The claim tested here is
+therefore not "kinematics versus no kinematics" but *localised, rate-capped
+actuation* versus *global actuation* built from the same observations. Discrete
+edits are bounded by a per-node token bucket; continuous knobs move through a
+double integrator with explicit speed and acceleration caps; hysteresis is a
+pressure test, because a sustained flood has zero acceleration and high pressure.
+
+`simulation/surgical/` implements the 100-node three-medium fabric (SimPy, not
+ns-3), the EMA and α-β kinematic monitors, weighted-fair-queueing plus drop-tail
+substrate, and eleven arms: two baselines, four ablations, a confound control,
+two composability arms and the savant arm.
+
+[docs/surgical-results.md](docs/surgical-results.md) reports **840 runs, 30 paired
+seeds**, and the testbed partially refutes its own thesis:
+
+- **H1 refuted** (2 of 4 clauses). The surgical arm holds a **1.08** p95 ratio
+  against Baseline B's 1.57 and recovers 11 goodput points, but legitimate
+  goodput is 84.6 %, not > 95 %, and Baseline B never starves the fabric to 2.2×.
+- **The confound control matters most.** `static_isolation` — per-flow fair
+  queueing always on, no sensing at all — reaches 86.5 %. Most of H1's gain is
+  queue isolation, a pre-existing deployment practice; what the trigger buys is
+  **state economy** (45 edits and 12 isolated classes versus 215 and 215).
+- **H2 supported in part.** Sustained state-change rate falls to 21 % of Baseline
+  B with 68× fewer edits, but peak burst speed is *not* capped — a per-node
+  limiter cannot bound a synchronous multi-router edit.
+- **H3 inconclusive**: the reassembly buffer never left 0 kB, so the MTU-mismatch
+  deadlock mechanism never engaged. Not claimed.
+- **H4 refuted**: savant `α → 0.95` loses both locally (49.9 % versus 74.1 %
+  affected-name delivery) and globally (2.25× p95).
+
+```bash
+py tools/benchmark_surgical.py --replicates 30
+py tools/plot_surgical.py
+```
+
 ## Layered-protocol testbed (phase 0)
 
 The repository also contains a three-fidelity testbed for encapsulated stacks.

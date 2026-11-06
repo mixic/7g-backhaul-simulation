@@ -288,6 +288,22 @@ window-level model, not an MPTCP stack: do not present it as conformance
 evidence, and state the RTT source, step size and queue size with any
 comparison.
 
+## Run the surgical state-update benchmark
+
+```bash
+py tools/benchmark_surgical.py --replicates 30
+py tools/plot_surgical.py
+```
+
+840 runs (three experiments × 30 paired seeds × eleven arms) in about 15 s on
+16 workers. Writes `output/surgical/{per_seed,summary,timeseries,verdict,failures}.csv`
+and `figures/surgical_*.png`. The `verdict.csv` file is machine-generated from
+the pre-registered conditions in
+[docs/surgical-rate-controlled.md](docs/surgical-rate-controlled.md); the
+narrative including the refutations is
+[docs/surgical-results.md](docs/surgical-results.md). Tests:
+`py -m pytest tests/test_surgical.py -q`.
+
 ## Run the sensitivity benchmark
 
 This runs paired one-factor-at-a-time sweeps around a scenario's default

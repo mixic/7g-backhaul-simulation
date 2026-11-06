@@ -44,4 +44,9 @@ Repository = "https://github.com/mixic/7g-backhaul-simulation"
 model-export = ["onnx>=1.16"]
 
 [tool.setuptools]
-packages = ["backhaul_sim", "simulation", "simulation.layering"]
+packages = [
+    "backhaul_sim",
+    "simulation",
+    "simulation.layering",
+    "simulation.surgical",
+]

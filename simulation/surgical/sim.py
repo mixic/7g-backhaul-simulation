@@ -1,0 +1,186 @@
+# 7g-backhaul-simulation
+# Copyright (C) 2026 MILAN NIKOLIC
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+
+"""Run one scenario and reduce it to the metrics the hypotheses need."""
+from __future__ import annotations
+
+import numpy as np
+
+from .config import SHOCK_WINDOW, STEADY_WINDOW
+from .network import SimRun
+
+WINDOWS = {
+    "exp1_ddos": (STEADY_WINDOW, SHOCK_WINDOW),
+    "exp2_churn": ((10.0, 23.0), (50.0, 60.0)),
+    "exp3_boundary": ((8.0, 25.0), (26.0, 40.0)),
+}
+
+
+def offered_legit(sim, t0, t1, step=0.05):
+    """Offered legitimate requests in [t0, t1), from the demand model."""
+    tot = 0.0
+    t = t0
+    while t < t1:
+        m = sim.demand.multiplier(t)
+        for f in sim.flows:
+            if f.kind != "legit" or not f.active(t):
+                continue
+            tot += f.rate * m * step
+        t += step
+    return tot
+
+
+def _p95(x):
+    if len(x) == 0:
+        return float("nan")
+    return float(np.percentile(x, 95))
+
+
+def window_stats(sim, res, t0, t1, deadline):
+    t = res["done_t"]
+    kind = res["done_kind"]
+    lat = res["done_lat"]
+    cnt = res["done_cnt"]
+    m = (kind == 0) & (t >= t0) & (t < t1)
+    lat_w = lat[m]
+    cnt_w = cnt[m]
+    delivered = float(cnt_w.sum())
+    # offered == what the generator actually dispatched, so goodput cannot
+    # exceed 1 through a mismatch between the demand model and the RNG.
+    mo = (res["disp_t"] >= t0) & (res["disp_t"] < t1)
+    offered = float(res["disp_cnt"][mo].sum())
+    # Border effects: a batch dispatched just before the window completes
+    # inside it, so offered and delivered are the same units but not the same
+    # cohorts.  Clip at 1.0 rather than report a physically impossible ratio.
+    goodput = min(1.0, delivered / offered) if offered > 0 else 0.0
+    p95 = _p95(lat_w)
+    # loss-aware p95: a dropped request is censored at the deadline.  A
+    # controller that simply drops everything must not look good here.
+    lost = max(0.0, offered - delivered)
+    if offered > 0 and len(lat_w):
+        eff = np.concatenate([np.minimum(lat_w, deadline),
+                              np.full(int(min(lost, 400_000)), deadline)])
+        p95_eff = _p95(eff)
+    else:
+        p95_eff = deadline
+    return {"p95": p95, "p95_eff": p95_eff, "goodput": goodput,
+            "delivered": delivered, "offered": offered,
+            "loss": 1.0 - goodput, "n": int(len(lat_w)),
+            "mean_lat": float(np.mean(lat_w)) if len(lat_w) else float("nan")}
+
+
+def rolling_series(res, t0, t1, win=2.0, step=0.5):
+    t = res["done_t"]
+    kind = res["done_kind"]
+    lat = res["done_lat"]
+    m = kind == 0
+    t, lat = t[m], lat[m]
+    order = np.argsort(t)
+    t, lat = t[order], lat[order]
+    ts, p95s, means, cnts = [], [], [], []
+    tt = t0
+    while tt < t1:
+        a = np.searchsorted(t, tt - win, "left")
+        b = np.searchsorted(t, tt, "left")
+        seg = lat[a:b]
+        ts.append(tt)
+        p95s.append(_p95(seg) if len(seg) else np.nan)
+        means.append(float(seg.mean()) if len(seg) else np.nan)
+        cnts.append(len(seg))
+        tt += step
+    return np.array(ts), np.array(p95s), np.array(means), np.array(cnts)
+
+
+def run_and_score(cfg):
+    sim = SimRun(cfg)
+    res = sim.run()
+    name = cfg.name
+    base_w, shock_w = WINDOWS.get(name, (STEADY_WINDOW, SHOCK_WINDOW))
+    deadline = cfg.deadline
+    base = window_stats(sim, res, base_w[0], base_w[1], deadline)
+    shock = window_stats(sim, res, shock_w[0], shock_w[1], deadline)
+
+    s = res["series"]
+    churn_rate = None
+    if len(res["churn_mag"]):
+        cm = res["churn_mag"]
+        dt = 0.1
+        churn_rate = cm / dt          # normalised state units per second
+
+    gov = res["governor"]
+    ts, p95s, means, cnts = rolling_series(res, base_w[0], min(cfg.duration, 60.0))
+
+    reasm = s[:, 3] if len(s) else np.zeros(1)
+    reasm_cap = 262_144.0
+    deadlock_frac = float(np.mean(reasm > 0.8 * reasm_cap)) if len(reasm) else 0.0
+
+    # H4: delivery of the affected name vs everything else, in the shock window
+    tgt = res.get("attack_target", 0)
+    mw = (res["done_t"] >= shock_w[0]) & (res["done_t"] < shock_w[1]) & (res["done_kind"] == 0)
+    ow = (res["disp_t"] >= shock_w[0]) & (res["disp_t"] < shock_w[1])
+    dc = res["done_content"]
+    ddc = res["disp_content"]
+    aff_del = float(res["done_cnt"][mw & (dc == tgt)].sum())
+    aff_off = float(res["disp_cnt"][ow & (ddc == tgt)].sum())
+    oth_del = float(res["done_cnt"][mw & (dc != tgt)].sum())
+    oth_off = float(res["disp_cnt"][ow & (ddc != tgt)].sum())
+    gp_aff = min(1.0, aff_del / aff_off) if aff_off > 0 else float("nan")
+    gp_oth = min(1.0, oth_del / oth_off) if oth_off > 0 else float("nan")
+
+    out = {
+        "name": name,
+        "controller": cfg.controller,
+        "seed": cfg.seed,
+        "gp_affected": gp_aff,
+        "gp_other": gp_oth,
+        "base": base,
+        "shock": shock,
+        "ratio_p95": shock["p95"] / base["p95"] if base["p95"] and base["p95"] > 0 else np.nan,
+        "ratio_p95_eff": (shock["p95_eff"] / base["p95_eff"]
+                          if base["p95_eff"] and base["p95_eff"] > 0 else np.nan),
+        "goodput_shock": shock["goodput"],
+        "goodput_loss": shock["loss"],
+        "goodput_base": base["goodput"],
+        "edits": res["edits"],
+        "ns_classes_peak": res["ns_classes_peak"],
+        "reasm_peak": float(np.max(reasm)) if len(reasm) else 0.0,
+        "reasm_deadlock_frac": deadlock_frac,
+        "reasm_drops": int((res["drop_reason"] == "reorder_overflow").sum()),
+        "reorder_drops": int((res["drop_reason"] == "reorder_overflow").sum()),
+        "loop_drops": int((res["drop_reason"] == "routing_loop").sum()),
+        "buffer_drops": int((res["drop_reason"] == "buffer_full").sum()),
+        "loss_drops": int((res["drop_reason"] == "link_loss").sum()),
+        "churn_max": float(np.max(churn_rate)) if churn_rate is not None else 0.0,
+        "churn_mean": float(np.mean(churn_rate)) if churn_rate is not None else 0.0,
+        "churn_total": float(np.sum(res["churn_mag"])),
+        "churn_accel_max": float(np.max(res["churn_accel"])) if len(res["churn_accel"]) else 0.0,
+        "churn_accel_mean": float(np.mean(res["churn_accel"])) if len(res["churn_accel"]) else 0.0,
+        "gov_max_speed": float(gov[:, 2].max()) if len(gov) else 0.0,
+        "gov_max_accel": float(gov[:, 3].max()) if len(gov) else 0.0,
+        "gov_edges": int(len(gov)),
+        "util_max_series": s[:, 1] if len(s) else np.zeros(1),
+        "qmax_series": s[:, 2] if len(s) else np.zeros(1),
+        "pmax_series": s[:, 4] if len(s) else np.zeros(1),
+        "nclass_series": s[:, 6] if len(s) else np.zeros(1),
+        "series_t": s[:, 0] if len(s) else np.zeros(1),
+        "churn_rate": churn_rate if churn_rate is not None else np.zeros(1),
+        "churn_t": res["churn_t"],
+        "roll_t": ts, "roll_p95": p95s, "roll_mean": means, "roll_n": cnts,
+        "alpha_final": res["alpha_final"],
+        "attack_target": res["attack_target"],
+        "base_window": base_w,
+        "shock_window": shock_w,
+    }
+    return out

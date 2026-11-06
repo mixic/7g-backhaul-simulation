@@ -1,0 +1,12 @@
+hypothesis,condition,value,verdict,note
+H1,surgical p95 ratio <= 1.5,1.0834,pass,
+H1,surgical goodput > 95%,84.611,fail,
+H1,Baseline B p95 ratio > 2.2,1.5685,fail,
+H1,Baseline B goodput loss > 10%,25.9354,pass,
+H2,surgical sustained state-change rate < 50% of Baseline B,0.2136,pass,
+H2,surgical PEAK state-change rate also < 50% of Baseline B,0.7975,fail,"per-node token bucket bounds edit frequency, not fleet-wide burst"
+H2,rate cap beats no rate cap on goodput,0.8089,pass,
+H3,reassembly buffer engaged at all (> 0 kB),0.0,fail,"0 means the MTU-mismatch mechanism never fired: UNTESTED, not a pass"
+H3,surgical deadlock fraction ~ 0,0.0,pass,vacuous if above fails
+H4,savant affected-name delivery beats the surgical arm,0.4991,fail,
+H4,savant costs unrelated traffic,0.8291,pass,
