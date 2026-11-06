@@ -37,6 +37,7 @@ import argparse
 import csv
 import math
 import sys
+import time
 from pathlib import Path
 
 import numpy as np
@@ -156,6 +157,98 @@ def _write_raw(path: Path, rows: list[dict]) -> None:
         writer.writerows(rows)
 
 
+def _write_csv(path: Path, rows: list[dict], fields: list[str]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", newline="", encoding="utf-8") as file:
+        writer = csv.DictWriter(file, fieldnames=fields, extrasaction="ignore")
+        writer.writeheader()
+        writer.writerows(rows)
+
+
+# --------------------------------------------------------------------------
+# Starvation threshold and computational overhead (reviewer requirements W2/W3)
+# --------------------------------------------------------------------------
+STARVATION_SWEEP = [1.0, 2.0, 4.0, 8.0, 16.0]
+
+
+def run_starvation_sweep(seeds: list[int]) -> list[dict]:
+    """Force OEF to its maximum and sweep the WFQ weight multiplier, to locate
+    the point where OEF compensation becomes destructive (transit drop climbs).
+    """
+    rows = []
+    for oef_max in STARVATION_SWEEP:
+        for seed in seeds:
+            cfg = _cfg(seed, OEF).child(oef_force_max=True, oef_max=oef_max)
+            r = run_and_score(cfg)
+            rows.append({
+                "oef_max": oef_max,
+                "seed": seed,
+                "Legitimate_Goodput": r["goodput_shock"],
+                "Transit_Drop_Rate": 1.0 - r["gp_other"],
+            })
+    return rows
+
+
+def _starvation_table(rows: list[dict]) -> str:
+    lines = ["## Starvation threshold (OEF forced to max, weight swept)",
+             "", "| oef_max (WFQ weight) | Legitimate goodput | Transit drop rate |",
+             "|---|---|---|"]
+    for oef_max in STARVATION_SWEEP:
+        sub = [r for r in rows if r["oef_max"] == oef_max]
+        gp, gp_ci = _mean_ci([r["Legitimate_Goodput"] for r in sub])
+        dr, dr_ci = _mean_ci([r["Transit_Drop_Rate"] for r in sub])
+        lines.append(f"| {oef_max:g} | {gp:.4f} +/- {gp_ci:.4f} | {dr:.4f} +/- {dr_ci:.4f} |")
+    lines.append("")
+    return "\n".join(lines)
+
+
+def measure_overhead(seed: int = 42, reps: int = 3) -> dict[str, float]:
+    """Controller CPU cost per control tick (seconds), best of ``reps`` runs.
+
+    Wraps ``controller.on_tick`` so only the control law -- the OEF state update
+    and the 1D/vector trigger -- is timed, not the queueing substrate.
+    """
+    from simulation.surgical.network import SimRun
+
+    out: dict[str, float] = {}
+    for label, controller in ARMS:
+        cfg = _cfg(seed, controller)
+        best = float("inf")
+        best_ticks = 1
+        for _ in range(reps):
+            sim = SimRun(cfg)
+            ctrl = sim.controller
+            orig = ctrl.on_tick
+            acc = [0.0]
+            ticks = [0]
+
+            def wrapped(t, obs):
+                t0 = time.perf_counter()
+                orig(t, obs)
+                acc[0] += time.perf_counter() - t0
+                ticks[0] += 1
+
+            ctrl.on_tick = wrapped
+            sim.run()
+            if acc[0] < best:
+                best = acc[0]
+                best_ticks = ticks[0]
+        out[label] = best / max(best_ticks, 1)
+    return out
+
+
+def _overhead_table(overhead: dict[str, float]) -> str:
+    base = overhead.get("m3_surgical_1d", 0.0) or 1.0
+    lines = ["## Computational overhead (controller CPU per tick)",
+             "", "| arm | us/tick | vs 1D limiter |", "|---|---|---|"]
+    for label, _ in ARMS:
+        us = overhead.get(label, 0.0) * 1e6
+        ratio = us / (base * 1e6) if base > 0 else float("nan")
+        lines.append(f"| {label} | {us:.1f} | {ratio:.2f}x |")
+    lines.append("")
+    return "\n".join(lines)
+
+
 # --------------------------------------------------------------------------
 # Summary
 # --------------------------------------------------------------------------
@@ -225,7 +318,15 @@ def _full_table(rows: list[dict]) -> str:
     return "\n".join(lines)
 
 
-def _interpretation() -> str:
+def _interpretation(rows: list[dict]) -> str:
+    oef_gp = _arm_values(rows, "m4_oef", "Legitimate_Goodput_CMRO2")[0]
+    s1d_gp = _arm_values(rows, "m3_surgical_1d", "Legitimate_Goodput_CMRO2")[0]
+    iso_gp = _arm_values(rows, "static_isolation", "Legitimate_Goodput_CMRO2")[0]
+    mkb_peak = _arm_values(rows, "m4_mkb", "Peak_State_Change_Speed")[0]
+    s1d_peak = _arm_values(rows, "m3_surgical_1d", "Peak_State_Change_Speed")[0]
+    comb_gp = _arm_values(rows, "m4_combined", "Legitimate_Goodput_CMRO2")[0]
+    comb_fp = _arm_values(rows, "m4_combined", "False_Positive_Edits")[0]
+
     return "\n".join([
         "## Interpretation",
         "",
@@ -234,28 +335,54 @@ def _interpretation() -> str:
         "bytes are served too), so the CBF-drop trigger never fires during the "
         "attack.  ``OEF_Value`` reaches 1.0 only when traffic stops at "
         "end-of-run.  Hence m4_oef is indistinguishable from m3_surgical_1d "
-        "(0.8465 vs 0.8461) and stays below static_isolation (0.8648).  The "
-        "Fick premise — that a DDoS lowers delivered CBF — does not hold in "
-        "this testbed, so the compensation has nothing to compensate.",
+        f"({oef_gp:.4f} vs {s1d_gp:.4f}) and stays below static_isolation "
+        f"({iso_gp:.4f}).  The Fick premise — that a DDoS lowers delivered CBF "
+        "— does not hold in this testbed, so the compensation has nothing to "
+        "compensate.",
         "",
         "**H6 (MKB) — CONFIRMED, with a caveat.** m4_mkb keeps false-positive "
         "edits at exactly zero during steady state, satisfying that clause.  "
-        "Its peak burst speed (218.4) is slightly below the 1D limiter (222.0), "
-        "but the confidence intervals overlap heavily, so the \"cap\" is "
-        "marginal — a few percent at best — because both arms share the same "
-        "discrete surgical edit.  The vector trigger does not make the burst "
-        "worse, but it does not clearly bound it either.",
+        f"Its peak burst speed ({mkb_peak:.1f}) is slightly below the 1D limiter "
+        f"({s1d_peak:.1f}), but the confidence intervals overlap heavily, so the "
+        "\"cap\" is marginal — a few percent at best — because both arms share "
+        "the same discrete surgical edit.  The vector trigger does not make the "
+        "burst worse, but it does not clearly bound it either.",
         "",
         "**m4_combined — negative result.** Running OEF and MKB together is "
-        "strictly worse than either alone (goodput 0.4823 vs 0.8465): the OEF "
-        "actuator's weight changes feed back into the 4-D state vector and trip "
-        "the MKB trigger ~175 times during steady traffic, isolating innocent "
-        "classes and roughly halving delivery.",
+        f"strictly worse than either alone (goodput {comb_gp:.4f} vs {oef_gp:.4f}): "
+        "the OEF actuator's weight changes feed back into the 4-D state vector "
+        f"and trip the MKB trigger ~{comb_fp:.0f} times during steady traffic, "
+        "isolating innocent classes and roughly halving delivery.",
         "",
     ])
 
 
-def _summarise(rows: list[dict]) -> str:
+def _answers(rows: list[dict]) -> str:
+    oef_gp, oef_ci = _arm_values(rows, "m4_oef", "Legitimate_Goodput_CMRO2")
+    iso_gp, iso_ci = _arm_values(rows, "static_isolation", "Legitimate_Goodput_CMRO2")
+    oef_drop, oef_drop_ci = _arm_values(rows, "m4_oef", "Transit_Drop_Rate")
+    mkb_peak, mkb_ci = _arm_values(rows, "m4_mkb", "Peak_State_Change_Speed")
+    s1d_peak, s1d_ci = _arm_values(rows, "m3_surgical_1d", "Peak_State_Change_Speed")
+    mkb_fp, _ = _arm_values(rows, "m4_mkb", "False_Positive_Edits")
+    return "\n".join([
+        "## Direct answers to the review questions",
+        "",
+        "1. **Did OEF beat static_isolation (86.5 %)?** "
+        f"{'**No.**' if oef_gp <= iso_gp else 'Yes.'} m4_oef = {oef_gp:.4f} +/- {oef_ci:.4f} "
+        f"vs static_isolation = {iso_gp:.4f} +/- {iso_ci:.4f}.",
+        "2. **Did MKB cap the peak burst speed?** "
+        f"{'Yes (marginal).' if mkb_peak < s1d_peak else '**No.**'} "
+        f"m4_mkb = {mkb_peak:.2f} +/- {mkb_ci:.2f} vs m3_surgical_1d = {s1d_peak:.2f} +/- {s1d_ci:.2f}; "
+        f"false-positive edits = {mkb_fp:.0f}.",
+        "3. **What is the exact starvation cost?** Transit drop rate = "
+        f"{oef_drop:.4f} +/- {oef_drop_ci:.4f} (m4_oef); the destructive threshold "
+        "is in the starvation table below.",
+        "",
+    ])
+
+
+def _summarise(rows: list[dict], starvation_rows: list[dict],
+               overhead: dict[str, float]) -> str:
     return "\n".join([
         "# M4-Execution: definitive benchmark (30 paired seeds)",
         "",
@@ -263,12 +390,15 @@ def _summarise(rows: list[dict]) -> str:
         "`default_rng(2026)` seed set).  No tuning, no cherry-picking.",
         "",
         _verdicts(rows),
+        _answers(rows),
         _metric_table(rows, "Legitimate_Goodput_CMRO2",
                       "Legitimate goodput (CMRO2) across arms"),
         _metric_table(rows, "Peak_State_Change_Speed",
                       "Peak burst state-change speed across arms"),
         _full_table(rows),
-        _interpretation(),
+        _starvation_table(starvation_rows),
+        _overhead_table(overhead),
+        _interpretation(rows),
     ])
 
 
@@ -363,7 +493,15 @@ def main() -> int:
     print(f"running benchmark ({len(ARMS)} arms x {len(seeds)} seeds) ...", flush=True)
     rows, series = run_benchmark(args.out_dir, seeds)
 
-    summary = _summarise(rows)
+    print("running starvation threshold sweep ...", flush=True)
+    starvation_rows = run_starvation_sweep(seeds)
+    _write_csv(args.out_dir / "starvation_sweep_raw.csv", starvation_rows,
+               ["oef_max", "seed", "Legitimate_Goodput", "Transit_Drop_Rate"])
+
+    print("measuring computational overhead ...", flush=True)
+    overhead = measure_overhead()
+
+    summary = _summarise(rows, starvation_rows, overhead)
     (args.out_dir / "m4_summary.md").write_text(summary, encoding="utf-8")
     (REPO / "results" / "m4_summary.md").write_text(summary, encoding="utf-8")
     plot_oef(series, args.out_dir)
