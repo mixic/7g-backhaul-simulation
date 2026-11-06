@@ -115,6 +115,54 @@ def rolling_series(res, t0, t1, win=2.0, step=0.5):
     return np.array(ts), np.array(p95s), np.array(means), np.array(cnts)
 
 
+def rolling_goodput(res, t0, t1, win=2.0, step=0.5, content=None, target=0):
+    """Rolling legitimate goodput (delivered / offered) over [t0, t1).
+
+    ``content`` selects which legitimate requests count: ``None`` counts every
+    legitimate request, ``"transit"`` counts every legitimate request whose
+    content differs from ``target`` (the attack target).  This is the raw,
+    unsmoothed delivered/offered ratio -- the CMRO2 proxy for H5.
+    """
+    t = res["done_t"]
+    kind = res["done_kind"]
+    cnt = res["done_cnt"]
+    c_arr = res["done_content"]
+    m = kind == 0
+    if content == "transit":
+        m = m & (c_arr != target)
+    elif content is not None:
+        m = m & (c_arr == content)
+    dt_, dc = t[m], cnt[m]
+    order = np.argsort(dt_)
+    dt_, dc = dt_[order], dc[order]
+
+    ot = res["disp_t"]
+    oc = res["disp_cnt"]
+    o_arr = res["disp_content"]
+    om = np.ones(len(ot), dtype=bool)
+    if content == "transit":
+        om = o_arr != target
+    elif content is not None:
+        om = o_arr == content
+    ot_, oc_ = ot[om], oc[om]
+    order2 = np.argsort(ot_)
+    ot_, oc_ = ot_[order2], oc_[order2]
+
+    ts, gps = [], []
+    tt = t0
+    while tt < t1:
+        a = np.searchsorted(dt_, tt - win, "left")
+        b = np.searchsorted(dt_, tt, "left")
+        delivered = float(dc[a:b].sum())
+        a2 = np.searchsorted(ot_, tt - win, "left")
+        b2 = np.searchsorted(ot_, tt, "left")
+        offered = float(oc_[a2:b2].sum())
+        ts.append(tt)
+        gps.append(min(1.0, delivered / offered) if offered > 0 else float("nan"))
+        tt += step
+    return np.array(ts), np.array(gps)
+
+
 def run_and_score(cfg):
     sim = SimRun(cfg)
     res = sim.run()
@@ -140,6 +188,9 @@ def run_and_score(cfg):
 
     # H4: delivery of the affected name vs everything else, in the shock window
     tgt = res.get("attack_target", 0)
+    g_t, g_goodput = rolling_goodput(res, 2.0, min(cfg.duration, 60.0))
+    _, g_transit = rolling_goodput(res, 2.0, min(cfg.duration, 60.0),
+                                   content="transit", target=tgt)
     mw = (res["done_t"] >= shock_w[0]) & (res["done_t"] < shock_w[1]) & (res["done_kind"] == 0)
     ow = (res["disp_t"] >= shock_w[0]) & (res["disp_t"] < shock_w[1])
     dc = res["done_content"]
@@ -246,6 +297,9 @@ def run_and_score(cfg):
         "churn_speed": res["churn_speed"],
         "churn_t": res["churn_t"],
         "roll_t": ts, "roll_p95": p95s, "roll_mean": means, "roll_n": cnts,
+        "roll_goodput_t": g_t,
+        "roll_goodput": g_goodput,
+        "roll_transit_goodput": g_transit,
         "alpha_final": res["alpha_final"],
         "attack_target": res["attack_target"],
         "base_window": base_w,

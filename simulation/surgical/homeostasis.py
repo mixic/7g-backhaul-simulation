@@ -31,10 +31,12 @@ __all__ = ["OefController", "OefSurgicalController", "MkbController",
 
 
 def make_homeostasis_controller(cfg, sim):
-    from .config import MKB, OEF
+    from .config import MKB, MKB_NO_OEF, OEF
 
     if cfg.controller == OEF:
         return OefController(cfg, sim)
     if cfg.controller == MKB:
-        return MkbController(cfg, sim)
+        return MkbController(cfg, sim, oef_on=True)
+    if cfg.controller == MKB_NO_OEF:
+        return MkbController(cfg, sim, oef_on=False)
     return None

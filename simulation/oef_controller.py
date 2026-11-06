@@ -48,8 +48,9 @@ class OefController(SurgicalController):
 
     name = OEF
 
-    def __init__(self, cfg, sim):
+    def __init__(self, cfg, sim, oef_on: bool = True):
         super().__init__(cfg, sim)
+        self.oef_on = oef_on
         self.oef_govs = {}
         self._cbf_ema = {}
         self._prev_served = {n: sim.tele[n].served_bytes
@@ -73,6 +74,7 @@ class OefController(SurgicalController):
         alpha = 1.0 - math.exp(-dt / max(cfg.oef_cbf_tau, 1e-6))
         total_cbf = 0.0
         oef_sum = 0.0
+        oef_max_node = 0.0
         for n in range(self.sim.topo.n_nodes):
             tel = self.sim.tele[n]
             cap = self.sim.topo.node_cap[n] / 8.0
@@ -113,7 +115,9 @@ class OefController(SurgicalController):
             ema += alpha * (cbf - ema)
             self._cbf_ema[n] = ema
 
-            if t < cfg.warmup:
+            if not self.oef_on:
+                target = 0.0
+            elif t < cfg.warmup:
                 # cold start: the CBF baseline has not settled yet, so a zero or
                 # rising throughput is not a collapse; update the EMA only.
                 target = 0.0
@@ -153,16 +157,19 @@ class OefController(SurgicalController):
                 g.value, g.vel = 0.0, 0.0
             self.oef_peak = max(self.oef_peak, g.value)
             oef_sum += g.value
+            oef_max_node = max(oef_max_node, g.value)
             if abs(g.value - prev) > 1e-9:
                 self.oef_log.append((t, float(n), g.value, sp, ac))
                 if sp >= cfg.oef_speed_max - 1e-9:
                     self.oef_limit_hit = True
             # apply extraction: legitimate (bulk) class weight rises with OEF
-            weight = 1.0 + (cfg.oef_max - 1.0) * g.value
-            self.sim.states[n].policy.weights[BULK] = weight
+            if self.oef_on:
+                weight = 1.0 + (cfg.oef_max - 1.0) * g.value
+                self.sim.states[n].policy.weights[BULK] = weight
             self._state[n] = [util, queue_dim, loss_ema, g.value]
 
-        self.oef_series.append((t, oef_sum / self.sim.topo.n_nodes, total_cbf))
+        self.oef_series.append((t, oef_sum / self.sim.topo.n_nodes, total_cbf,
+                                oef_max_node))
 
     def on_tick(self, t, obs):
         dt = self._dt(t)

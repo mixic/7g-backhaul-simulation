@@ -28,7 +28,7 @@ import unittest
 
 from simulation.mkb_controller import MkbController, MkbMonitor
 from simulation.oef_controller import OefController, OefSurgicalController
-from simulation.surgical.config import MKB, OEF, SimConfig
+from simulation.surgical.config import MKB, MKB_NO_OEF, OEF, SimConfig
 from simulation.surgical.network import SimRun
 from simulation.surgical.sim import run_and_score
 
@@ -63,6 +63,24 @@ class StandaloneModuleTests(unittest.TestCase):
         result = run_and_score(SimConfig(name="exp1_ddos", seed=0,
                                          controller=MKB).child(duration=45.0))
         self.assertGreaterEqual(result["mkb_spike_count"], 0)
+        self.assertGreater(result["goodput_shock"], 0.0)
+
+
+class MkbNoOefTests(unittest.TestCase):
+    def test_no_oef_variant_disables_actuator(self) -> None:
+        sim = SimRun(SimConfig(name="exp1_ddos", seed=0, controller=MKB_NO_OEF))
+        self.assertIsInstance(sim.controller, MkbController)
+        self.assertFalse(sim.controller.oef_on)
+
+    def test_combined_variant_enables_actuator(self) -> None:
+        sim = SimRun(SimConfig(name="exp1_ddos", seed=0, controller=MKB))
+        self.assertIsInstance(sim.controller, MkbController)
+        self.assertTrue(sim.controller.oef_on)
+
+    def test_no_oef_peak_stays_zero(self) -> None:
+        result = run_and_score(SimConfig(name="exp1_ddos", seed=0,
+                                         controller=MKB_NO_OEF).child(duration=45.0))
+        self.assertEqual(result["oef_peak"], 0.0)
         self.assertGreater(result["goodput_shock"], 0.0)
 
 

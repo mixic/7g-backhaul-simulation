@@ -1,2 +1,0 @@
-experiment,baseline,seed,Legitimate_Goodput_CMRO2,Total_Throughput_CBF,OEF_Value,Transit_Drop_Rate,p95_Ratio,Goodput_Base
-exp1,static_isolation,1,0.887574,0.0,0.0,0.040752,1.233523,0.961224

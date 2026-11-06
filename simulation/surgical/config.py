@@ -74,6 +74,7 @@ VDR_SURGICAL     = "vdr_surgical"       # the SAME target field, rate-controlled
 SAVANT           = "savant"             # compensatory hyper-specialisation (H4)
 OEF              = "oef_surgical"       # M4: OEF-compensated surgical control
 MKB              = "mkb"                # M4: multidimensional kinematic baselining
+MKB_NO_OEF       = "mkb_no_oef"         # M4: MKB vector trigger, OEF actuator disabled
 
 MAIN_CONTROLLERS = [K8S, PRESSURE, SURGICAL]
 ALL_CONTROLLERS = [K8S, PRESSURE, PRESSURE_TUNED, SURGICAL, SURGICAL_UNLIM,
@@ -95,6 +96,7 @@ LABELS = {
     SAVANT: "Savant (compensatory hyper-specialisation)",
     OEF: "OEF-compensated surgical control",
     MKB: "Multidimensional kinematic baselining",
+    MKB_NO_OEF: "MKB vector trigger (OEF actuator disabled)",
 }
 
 

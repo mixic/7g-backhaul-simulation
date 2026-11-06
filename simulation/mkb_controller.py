@@ -111,8 +111,8 @@ class MkbController(OefController):
 
     name = MKB
 
-    def __init__(self, cfg, sim):
-        super().__init__(cfg, sim)
+    def __init__(self, cfg, sim, oef_on: bool = True):
+        super().__init__(cfg, sim, oef_on=oef_on)
         self.monitors = {n: MkbMonitor(4, cfg.tick, 0.3, cfg.mkb_tau_v,
                                        cfg.mkb_k, cfg.mkb_angle_deg,
                                        cfg.mkb_floor_a, cfg.mkb_floor_v)

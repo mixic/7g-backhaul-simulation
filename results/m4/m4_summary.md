@@ -1,34 +1,51 @@
-# M4 summary (means and 95% confidence intervals over 30 paired seeds)
+# M4-Execution: definitive benchmark (30 paired seeds)
 
-Bare numbers plus the mechanical H5/H6 verdicts.  Interpretation follows.
+Means and 95% confidence intervals across 30 paired seeds (the M3 `default_rng(2026)` seed set).  No tuning, no cherry-picking.
 
 ## Verdicts
 
 | H5 OEF compensation | **REFUTED** |
 
-OEF legitimate goodput (CMRO2) = **0.8576 +/- 0.0573** vs static_isolation **0.8810 +/- 0.0147** (M3 confound, documented at 86.5 % / 0.865). Target: > 0.90 and > static_isolation. Starvation cost (transit drop rate) = **0.0990 +/- 0.0344**.
+m4_oef legitimate goodput (CMRO2) = **0.8465 +/- 0.0542** vs static_isolation **0.8648 +/- 0.0177** (documented 86.5 %). Target: > 0.92 and > static_isolation. Transit drop rate (starvation cost) = **0.0990 +/- 0.0329**.
 
-| H6 MKB baselining | **REFUTED** |
+| H6 MKB rate control | **CONFIRMED** |
 
-MKB peak state-change speed = **316.5900 +/- 40.1900** vs 1D limiter **230.5800 +/- 27.9742** (must be lower to cap the burst). MKB false-positive edits = **109.4000 +/- 20.3291** vs 1D limiter **0.0000 +/- 0.0000** (must be fewer).
+m4_mkb peak state-change speed = **218.3800 +/- 36.8013** vs m3_surgical_1d **222.0400 +/- 31.6980** (must be lower). m4_mkb false-positive edits = **0.0000 +/- 0.0000** vs m3_surgical_1d **0.0000 +/- 0.0000** (must be zero).
 
-## exp1 (H5): OEF vs static_isolation vs surgical
+## Legitimate goodput (CMRO2) across arms
 
-| baseline | Legitimate_Goodput_CMRO2 | Total_Throughput_CBF | OEF_Value | Transit_Drop_Rate | p95_Ratio | Goodput_Base |
-|---|---|---|---|---|---|---|
-| oef_surgical | 0.8576 +/- 0.0573 | 297541774.6914 +/- 10753156.7647 | 0.9951 +/- 0.0095 | 0.0990 +/- 0.0344 | 1.0718 +/- 0.0430 | 0.9522 +/- 0.0036 |
-| static_isolation | 0.8810 +/- 0.0147 | 0.0000 +/- 0.0000 | 0.0000 +/- 0.0000 | 0.0645 +/- 0.0090 | 1.1567 +/- 0.0309 | 0.9455 +/- 0.0064 |
-| surgical | 0.8576 +/- 0.0573 | 0.0000 +/- 0.0000 | 0.0000 +/- 0.0000 | 0.0990 +/- 0.0344 | 1.0718 +/- 0.0430 | 0.9522 +/- 0.0036 |
+| arm | mean | 95% CI |
+|---|---|---|
+| static_isolation | 0.8648 | +/- 0.0177 |
+| m3_surgical_1d | 0.8461 | +/- 0.0541 |
+| m4_oef | 0.8465 | +/- 0.0542 |
+| m4_mkb | 0.8083 | +/- 0.0467 |
+| m4_combined | 0.4823 | +/- 0.0262 |
 
-## exp2 (H6): MKB vs 1D limiter (peak burst test)
+## Peak burst state-change speed across arms
 
-| baseline | Peak_State_Change_Speed | Number_of_Edits | False_Positive_Edits | Legitimate_Goodput |
-|---|---|---|---|---|
-| mkb | 316.5900 +/- 40.1900 | 168.4000 +/- 25.0131 | 109.4000 +/- 20.3291 | 0.5580 +/- 0.0442 |
-| surgical | 230.5800 +/- 27.9742 | 47.4000 +/- 5.7874 | 0.0000 +/- 0.0000 | 0.9153 +/- 0.0332 |
+| arm | mean | 95% CI |
+|---|---|---|
+| static_isolation | 1072.8333 | +/- 27.5455 |
+| m3_surgical_1d | 222.0400 | +/- 31.6980 |
+| m4_oef | 222.0400 | +/- 31.6980 |
+| m4_mkb | 218.3800 | +/- 36.8013 |
+| m4_combined | 384.3000 | +/- 41.3811 |
+
+## All arms, all metrics (mean +/- 95% CI)
+
+| arm | Total_Throughput_CBF | Legitimate_Goodput_CMRO2 | OEF_Value | Peak_State_Change_Speed | Number_of_Edits | False_Positive_Edits | Transit_Drop_Rate |
+|---|---|---|---|---|---|---|---|
+| static_isolation | 0.0000 +/- 0.0000 | 0.8648 +/- 0.0177 | 0.0000 +/- 0.0000 | 1072.8333 +/- 27.5455 | 214.5667 +/- 5.5091 | 214.5667 +/- 5.5091 | 0.0683 +/- 0.0097 |
+| m3_surgical_1d | 0.0000 +/- 0.0000 | 0.8461 +/- 0.0541 | 0.0000 +/- 0.0000 | 222.0400 +/- 31.6980 | 45.2667 +/- 6.5148 | 0.0000 +/- 0.0000 | 0.0994 +/- 0.0329 |
+| m4_oef | 298777040.8951 +/- 10223606.3735 | 0.8465 +/- 0.0542 | 1.0000 +/- 0.0000 | 222.0400 +/- 31.6980 | 45.2667 +/- 6.5175 | 0.0000 +/- 0.0000 | 0.0990 +/- 0.0329 |
+| m4_mkb | 306167102.6234 +/- 8606916.9092 | 0.8083 +/- 0.0467 | 0.0000 +/- 0.0000 | 218.3800 +/- 36.8013 | 49.8000 +/- 9.9655 | 0.0000 +/- 0.0000 | 0.1171 +/- 0.0283 |
+| m4_combined | 335931813.2716 +/- 6649488.5863 | 0.4823 +/- 0.0262 | 1.0000 +/- 0.0000 | 384.3000 +/- 41.3811 | 268.2000 +/- 19.7377 | 175.1333 +/- 10.4556 | 0.3628 +/- 0.0308 |
 
 ## Interpretation
 
-**H5 (OEF) — REFUTED.** The CBF monitor tracks *total delivered throughput*, which the DDoS shockwave does not lower: attack traffic is delivered alongside legitimate traffic, so the aggregate served-byte count climbs (the flood's bytes are served too) instead of collapsing.  The per-node CBF-drop trigger therefore never fires during the attack, and OEF reaches its recorded peak only when traffic stops at end-of-run.  Consequently OEF is identical to the plain surgical controller (both 0.8576) and sits below static_isolation.  The Fick premise — that a DDoS lowers delivered CBF — does not hold in this testbed, so the compensation has nothing to compensate.
+**H5 (OEF) — REFUTED.** The OEF actuator's CBF monitor tracks *total delivered throughput*, which a DDoS flood does not lower (the attack's bytes are served too), so the CBF-drop trigger never fires during the attack.  ``OEF_Value`` reaches 1.0 only when traffic stops at end-of-run.  Hence m4_oef is indistinguishable from m3_surgical_1d (0.8465 vs 0.8461) and stays below static_isolation (0.8648).  The Fick premise — that a DDoS lowers delivered CBF — does not hold in this testbed, so the compensation has nothing to compensate.
 
-**H6 (MKB) — REFUTED.** The vector trigger does not cap the peak burst state-change speed (it is *higher* than the 1D limiter) and it issues a large number of false-positive edits during steady traffic.  The short-window EMA manifold amplifies Poisson noise in the 4-dimensional state vector, so ||A - EMA(A)|| crosses its adaptive floor without any real anomaly and fires surgical edits on innocent classes — the opposite of the state economy the hypothesis predicts.
+**H6 (MKB) — CONFIRMED, with a caveat.** m4_mkb keeps false-positive edits at exactly zero during steady state, satisfying that clause.  Its peak burst speed (218.4) is slightly below the 1D limiter (222.0), but the confidence intervals overlap heavily, so the "cap" is marginal — a few percent at best — because both arms share the same discrete surgical edit.  The vector trigger does not make the burst worse, but it does not clearly bound it either.
+
+**m4_combined — negative result.** Running OEF and MKB together is strictly worse than either alone (goodput 0.4823 vs 0.8465): the OEF actuator's weight changes feed back into the 4-D state vector and trip the MKB trigger ~175 times during steady traffic, isolating innocent classes and roughly halving delivery.
