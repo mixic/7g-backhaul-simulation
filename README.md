@@ -432,18 +432,19 @@ the M5 report.
 ## M4: OEF compensation and multidimensional kinematic baselining
 
 M4 replaces the 1D scalar trigger with two classical, biologically-inspired
-controllers, each grounded in a published biological theory:
+controllers, each motivated by — but not derived from — a published biological
+analogy:
 
 - **OEF (oxygen extraction fraction)** — the Fick principle
   `CMRO2 = CBF · OEF · Ca`, mapped to *legitimate goodput = total throughput ×
   extraction fraction × payload*. When the CBF monitor sees delivered
   throughput collapse, the OEF actuator raises the legitimate class's WFQ
-  weight, rate-limited by a double integrator. Theory:
+  weight, rate-limited by a double integrator. Analogy:
   [docs/homeostasis-biological-topology.md](docs/homeostasis-biological-topology.md).
 - **MKB (multidimensional kinematic baselining)** — the network state is a 4D
   vector `S = [CBF, OEF, Queue_Depth, Drop_Rate]`; a surgical edit fires only
   when the Euclidean magnitude of the vector acceleration `‖A − EMA(A)‖`
-  exceeds an adaptive threshold. Theory:
+  exceeds an adaptive threshold. Analogy:
   [docs/marder-goaillard-cross-correlation.md](docs/marder-goaillard-cross-correlation.md).
 
 The controllers live in

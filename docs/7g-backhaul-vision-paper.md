@@ -1826,50 +1826,7 @@ only where a node meaningfully serves traffic locally, and multidimensional
 triggering requires excluding self-inflicted state before it can outperform a
 scalar baseline.
 
-## 19. Beyond classical layering: towards a multidimensional state manifold
-
-The mechanisms presented in this paper — VDR, surgical control, savant
-hyper-specialisation, OEF, and multidimensional baselining — are implemented
-within a classical networking paradigm. This section is deliberately
-speculative. It is not a result; it is a statement of the theoretical
-destination that the empirical work above is, at best, approximating. The
-empirical core of the paper (sections 1–18) makes no claim that depends on it,
-and its refutations stand or fall on the classical measurements alone.
-
-The underlying assumption of strict ISO/OSI layering and sequential
-encapsulation/decapsulation may ultimately be an engineering convenience rather
-than a fundamental physical truth. We hypothesise that the optimal state space
-of a highly dynamic multi-medium backhaul is not a linear stack of independent
-layers but a highly coupled, multidimensional state manifold, in which network
-states exhibit non-local correlations structurally analogous to quantum
-entanglement. A "surgical edit" at a local node would then not be an isolated
-event but an operation that re-weights the global network state at once.
-
-An eleven-dimensional framework, rooted in M-theory, offers a mathematical lens
-for these hidden symmetries. Our current kinematic controller — velocity and
-acceleration over a moving-average baseline, and the multidimensional
-generalisation of section 18 — approximates this behaviour classically. We
-postulate that a fully optimal controller requires a tensor-network formulation
-in which encapsulation and decapsulation are replaced by topological projections
-across an eleven-dimensional state space, and in which a congestion event is a
-projection of a correlated state change rather than a local queue crossing.
-
-The derivation of the exact mapping between discrete network telemetry and this
-manifold is an open problem, and we do not claim to have constructed a quantum
-simulator or a quantum network. What the empirical results do establish is the
-set of macroscopic boundaries — rate limits, OEF starvation thresholds, the
-self-referential failure of multidimensional triggering — that any future
-topological or quantum-inspired model must respect. Multidimensional kinematic
-baselining is the first classical step toward that goal: by tracking velocity
-and acceleration vectors across several dimensions simultaneously, it
-empirically approximates the curvature of a manifold it cannot yet observe
-directly. The thresholding mechanism is, in this reading, a classical boundary
-condition imposed on a state space whose fuller geometry remains to be derived.
-
-We leave the formalisation of this entanglement-based networking paradigm to
-future research.
-
-## 20. Conclusion
+## 19. Conclusion
 
 Cooperative multi-medium backhaul offers a way to connect content placement,
 traffic engineering, and service continuity across terrestrial, aerial, and

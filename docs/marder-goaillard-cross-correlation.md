@@ -1,37 +1,41 @@
 # Theoretical Cross-Correlation: Neuronal Degeneracy and Network Homeostasis
 
+**Document Status:** Motivation and analogy, not derivation
 **Target Reference:** Marder, E., & Goaillard, J. M. (2006). *Variability, compensation and homeostasis in neuron and network function.* Nature Reviews Neuroscience, 7(7), 563-574.
 **Project Context:** 7G-Backhaul-Simulation (Surgical, Rate-Controlled Multicooperative Backhauls)
 
-## 1. Executive Summary
-This document establishes the cross-correlation between the biological principles of **neuronal degeneracy and compensatory homeostasis** (Marder & Goaillard, 2006) and the classical network control mechanisms implemented in our project (OEF and MKB). The paper provides the theoretical justification for why our network controllers must operate in a **multidimensional parameter space** and why "static isolation" is fundamentally insufficient for maintaining long-term network stability under shockwaves.
+## 1. Purpose and Disclaimer
+This document records the neuroscience analogy that motivated the MKB/OEF framing and the two metrics we derived from it. It is not a derivation, and it transfers no theorem.
+
+Marder & Goaillard (2006) is a **review** of neuronal variability, compensation and homeostasis. It synthesises electrophysiology and modelling results about ion-channel densities and firing patterns; it is not a control-theory result and it says nothing about packet networks, queues or congestion. No quantity in the review corresponds to a network state vector, and nothing in it predicts how a queueing controller will behave.
+
+What follows is therefore an analogy. It suggests *what to measure* (degeneracy and compensatory distance) and *why a designer might try* multidimensional compensation. The measurements are reported honestly and do not confirm the analogy.
 
 ## 2. Core Concepts from Marder & Goaillard (2006)
-The paper addresses a fundamental problem in neuroscience: how do biological networks maintain stable function over time despite continuous turnover and external perturbations?
-*   **Degeneracy:** Multiple different combinations of underlying parameters (e.g., ion channel densities) can produce the same functional output (e.g., a specific firing pattern). There is no single "correct" state.
-*   **Compensation:** When a parameter is artificially altered, the system invokes slow, compensatory mechanisms to restore normal function.
-*   **Multidimensional Parameter Spaces:** The system operates within a vast multidimensional space of possible states, and homeostasis is the process of keeping the system within a stable "region" of that space.
+The review addresses how biological neurons maintain stable function despite continuous turnover and external perturbation:
+*   **Degeneracy:** Multiple combinations of underlying parameters (for example ion-channel densities) can produce the same functional output (a firing pattern). There is no single "correct" parameter set.
+*   **Compensation:** When a parameter is artificially altered, the system invokes slow compensatory mechanisms to restore normal function.
+*   **Multidimensional parameter spaces:** The system operates within a high-dimensional space of possible states, and homeostasis keeps it within a stable region of that space.
 
-## 3. Direct Conceptual Mapping to 7G-Backhaul
+## 3. Direct Conceptual Mapping (analogy, not equivalence)
 
 ### 3.1. MKB as "Multidimensional Parameter Space" Navigation
-*   **Biological Analog:** The neuron operates in a multidimensional parameter space (conductances, time constants). 
-*   **Network Implementation:** Our **Multidimensional Kinematic Baselining (MKB)** treats the network state as a 4D vector (`CBF, OEF, Queue_Depth, Drop_Rate`). Just as a neuron navigates its parameter space to maintain firing, the MKB controller navigates this 4D space to maintain stability. The MKB vector acceleration \(\mathbf{A}(t)\) is the measure of how rapidly the network is moving through this parameter space.
+*   **Biological analog:** The neuron operates in a multidimensional parameter space (conductances, time constants).
+*   **Network implementation:** Our MKB controller tracks a 4-D telemetry vector (`CBF, OEF, Queue_Depth, Drop_Rate`) and thresholds on its acceleration. The analogy is that a neuron navigates a parameter space while a switch navigates a telemetry space; the two spaces are only structurally similar. The M4 benchmark refutes the mechanism: the peak burst speed is statistically unchanged relative to the 1D limiter (218.4 vs 222.0 units/s, paired p = 0.89).
 
 ### 3.2. OEF as "Compensatory Homeostasis" and "Degeneracy"
-*   **Biological Analog:** When a neuron's primary conductance is blocked, it doesn't just fail; it compensates by upregulating other channels to maintain activity. This is **degeneracy** in action.
-*   **Network Implementation:** When \(CBF\) (throughput) collapses due to a DDoS attack, the **OEF controller** does not simply drop packets (static isolation). It invokes a compensatory mechanism by increasing the extraction fraction (\(OEF\)) of legitimate flows. It finds a *degenerate* solution—a different combination of throughput and extraction—to maintain the same functional output (\(CMRO_2\), legitimate goodput).
+*   **Biological analog:** When a neuron's primary conductance is blocked, it may upregulate other channels to maintain activity — degeneracy in action.
+*   **Network implementation:** When CBF (throughput) falls, the OEF controller raises the legitimate class's queue weight instead of dropping packets. That is the intended "degenerate solution". The M4 benchmark does not confirm it: OEF does not beat `static_isolation` on goodput (0.8465 vs 0.8648, paired p = 0.53).
 
 ### 3.3. Savant as Extreme "Compensation"
-*   **Biological Analog:** The paper discusses how systems can exhibit "multiple solutions to the production of similar behaviour."
-*   **Network Implementation:** The **Savant** mechanism is an extreme compensatory solution. To save a critical local circuit (the attacked flow), the network sacrifices global transit (the parameter space is drastically narrowed). It is a biological trade-off: extreme localized function at the cost of global homeostasis.
+*   **Biological analog:** Systems can exhibit "multiple solutions to the production of similar behaviour".
+*   **Network implementation:** The Savant mechanism saves a critical local circuit by sacrificing global transit. The measured cost is negative neighbour spillover and neighbour cascading failure — a biological trade-off in spirit, but not a quantity the review defines.
 
-## 4. Scientific Significance & Required Metrics
-This paper mandates that we stop evaluating our controllers solely on average goodput and start evaluating them on their **ability to navigate the parameter space**. 
+## 4. Metrics Derived from the Analogy
+The analogy suggested two measurements, which the M4 runner implements. They are derived *from* the analogy, not validated by it, and the measured values do not support a "degenerate" or "homeostatic" claim.
 
-To scientifically prove this correlation, the M4 simulation must calculate two new metrics:
-1.  **Degeneracy Index:** The number of distinct state configurations (different combinations of path routing and OEF values) that successfully achieve >90% legitimate goodput. A high index means the network is robust (like a degenerate neuron).
-2.  **Compensatory Distance:** The Euclidean distance the network state travels in the 4D space from its baseline during a DDoS attack. A shorter distance means better homeostasis.
+1.  **Degeneracy Index** — a 10×10 grid over `(Path_Utilization, OEF)`; the count of occupied bins whose mean goodput exceeds 90 %. Measured: **5 of 37 occupied bins** (13.5 %), with the grid only partially populated along the OEF axis (6 of 10 OEF bins) because the actuator barely moves off `OEF = 0`.
+2.  **Compensatory Distance** — the Euclidean distance the mean 4-D state travels from its steady baseline during the shockwave. Measured: `m4_oef` 0.0343, `m4_combined` 0.0389, `m4_mkb` 0.0149. The OEF actuator moves the state *farther* from baseline than the no-OEF trigger — the opposite of what the homeostatic analogy predicts.
 
 ## 5. Conclusion
-Marder & Goaillard (2006) proves that biological networks survive not through rigid, static isolation, but through dynamic, multidimensional compensation. Our OEF and MKB controllers are the network-engineering equivalents of these biological mechanisms.
+Marder & Goaillard (2006) motivates a multidimensional, compensatory view of a neuron. It does **not** prove that a network controller should behave the same way, and the M4 measurements do not confirm that it does. The analogy is useful for organising hypotheses and for defining two honest metrics; it is not evidence that the OEF or MKB mechanisms work. The intended empirical validation has been run and is largely negative (see `results/m4/m4_summary.md`).

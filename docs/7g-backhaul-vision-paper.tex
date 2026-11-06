@@ -2531,7 +2531,72 @@ mechanism does what it claims against symmetric scaling, has a real and
 locatable operating limit, and is dominated by a cheaper smooth
 alternative in this topology.
 
-\section{18. Conclusion}\label{conclusion}
+\section{18. OEF compensation and multidimensional
+baselining}\label{oef-compensation-and-multidimensional-baselining}
+
+Two extensions to the surgical controller are tested as pre-registered
+hypotheses in \href{oef-mkb.md}{\texttt{oef-mkb.md}}; both are framed as
+control theory, with the biological language kept strictly as analogy.
+
+\subsection{18.1 The Fick-principle mapping
+(OEF)}\label{the-fick-principle-mapping-oef}
+
+The brain holds metabolic rate \texttt{CMRO2} constant when cerebral
+blood flow \texttt{CBF} falls by raising the oxygen extraction fraction
+\texttt{OEF}: \texttt{CMRO2\ =\ CBF\ x\ OEF\ x\ Ca}. Mapped to the
+fabric, CBF is delivered throughput, Ca the nominal capacity, CMRO2
+legitimate goodput, and OEF the weighted-fair-queueing weight of the
+legitimate class. When a node's windowed CBF falls below 0.8 of its
+moving average for three consecutive ticks, an OEF actuator raises the
+legitimate class's weight \texttt{1\ -\textgreater{}\ oef\_max},
+proportional to the measured CBF deficit and bounded by a double
+integrator with explicit speed and acceleration caps.
+
+\textbf{The hypothesis is refuted, and the zero-sum trap is confirmed.}
+Over 30 paired seeds the OEF arm is statistically indistinguishable from
+the surgical arm it extends: legitimate goodput is 0.949 with or without
+OEF, at a 0.92 p95 ratio. The reason is structural rather than
+incidental. On this fabric the congested node is the last router before
+a single-uplink origin and is a pure forwarder (\texttt{alpha\ =\ 0});
+once the attack is name-isolated, the legitimate class already receives
+roughly 95 \% of the link, so ``extraction efficiency'' has no further
+degree of freedom to exercise. Unlike a capillary bed, a drop-tail
+weighted-fair-queueing router cannot recruit additional service for one
+class without removing it from another, and the other class is already
+throttled. The OEF actuator is not inert --- it reaches its full
+excursion and its speed limit is hit --- but the excursion purchases
+nothing. This is the ``zero-sum'' boundary the concept was designed to
+find, and it is reported as a refutation, not hidden.
+
+\subsection{18.2 Multidimensional kinematic baselining
+(MKB)}\label{multidimensional-kinematic-baselining-mkb}
+
+The network state is a vector
+\texttt{S(t)\ =\ {[}utilisation,\ queue\ delay,\ loss,\ OEF{]}}.
+Velocity and acceleration are the curvature of a short-window manifold
+of \texttt{S}, and a surgical edit fires when the acceleration vector
+leaves its moving-average baseline or the velocity vector turns away
+from its own trajectory. The intent is to detect cross-correlated
+failure geometry that scalar thresholds miss.
+
+The straightforward implementation over-triggers: it issues an order of
+magnitude more edits than the scalar trigger, most of them before the
+shockwave, and legitimate goodput degrades relative to the scalar
+controller. The cause is instructive and is itself the finding: the
+state vector includes the OEF actuator's own output, so the
+multidimensional trigger detects the controller's own feedback as a
+spike --- a self-referential loop that scalar thresholding sidesteps by
+construction. A multidimensional baseline is only as good as the choice
+of dimensions it watches; including an actuator's output in the
+baselined vector couples the observer to its own action.
+
+Neither extension is claimed as an improvement. Both are recorded
+because the refutations bound the paradigm: extraction scaling is a real
+degree of freedom only where a node meaningfully serves traffic locally,
+and multidimensional triggering requires excluding self-inflicted state
+before it can outperform a scalar baseline.
+
+\section{19. Conclusion}\label{conclusion}
 
 Cooperative multi-medium backhaul offers a way to connect content
 placement, traffic engineering, and service continuity across

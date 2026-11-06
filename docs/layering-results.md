@@ -201,9 +201,14 @@ runs match the predictor on visibility, mutation, acceptance and delivery in
 P6 is the research core: it tests the combined condition (visibility,
 reachability, integrity scope) rather than one arithmetic consequence. It is
 confirmed for the stipulated rewriter and AEAD. Because all three fidelities
-share the codec, the cross-fidelity agreement checks the codec and the relay's
-parsing under different execution environments; it is not an independent
-protocol implementation.
+share the codec, and because the predictor and the relay encode the *same*
+visible/reachable/authenticated rule, the zero-mismatch result is a
+**consistency check**: it shows that the implementation computes the rule it was
+written to compute. It is **not** evidence that the rule matches real
+middleboxes or real AEAD. The middlebox is a user-space rewriter with a
+scripted parser depth and the AEAD is a toy with a published key, so P6 bounds
+the internal logic, not deployed behaviour. Ground truth against WireGuard or
+ESP and Linux NAT is an open next step, not a result.
 
 ## P7 — structural inertness
 
