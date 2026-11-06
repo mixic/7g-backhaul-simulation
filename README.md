@@ -559,10 +559,14 @@ Full numbers, paired t-tests, Cohen's d and the conclusion are in
 │   ├── surgical-predictions.md   # Frozen surgical hypothesis/tolerance table
 │   ├── surgical-results.md       # 840-run surgical benchmark results
 │   ├── savant-hyper-specialisation.md # H4 savant gain sweep
+│   ├── oef-mkb.md                # OEF + MKB controller notes (M4)
 │   ├── homeostasis-biological-topology.md # Fick/homeostasis theory mapping
 │   ├── marder-goaillard-cross-correlation.md # Degeneracy/homeostasis mapping
+│   ├── kinematic-fabric.md       # Role-fluid kinematic fabric in ns-3
+│   ├── ip46-services.md          # IPv4 vs IPv6 overhead and agnostic services
 │   ├── layering-predictions.md   # Frozen P1-P7 encapsulation predictions
 │   ├── layering-results.md       # Three-fidelity layering classification
+│   ├── layering-results.generated.md # Machine-generated layering report
 │   ├── layering-real-stack-predictions.md # Frozen P8-P12 real-stack predictions
 │   └── layering-real-stack-results.md # P8-P12 status (NOT RUN in this sandbox)
 ├── figures/
@@ -638,6 +642,15 @@ Full numbers, paired t-tests, Cohen's d and the conclusion are in
 │   ├── sdn_summary.csv           # SDN/local/separated arm means
 │   ├── sdn_verdict.csv           # Pre-registered SDN tests
 │   ├── sdn_control.png
+│   ├── surgical_h1_headline.png
+│   ├── surgical_h2_state_change.png
+│   ├── surgical_h3_boundary.png
+│   ├── surgical_h4_savant.png
+│   ├── surgical_h4_gain_sweep.png
+│   ├── surgical_summary.csv
+│   ├── surgical_verdict.csv
+│   ├── ip46_overhead.png         # IPv4 vs IPv6 overhead
+│   ├── ip46_agnostic.png         # IPv6-agnostic service behaviour
 │   └── vision_fair_summary.csv   # Controlled-benchmark arm means
 ├── models/
 │   ├── congestion_forecast.npz   # Synthetic model weights
@@ -693,14 +706,20 @@ Full numbers, paired t-tests, Cohen's d and the conclusion are in
 │   ├── benchmark_vision.py       # CDN, handover, and backhaul policy studies
 │   ├── benchmark_surgical.py     # 840-run surgical kinematic benchmark
 │   ├── plot_surgical.py          # Surgical H1-H4 figures
+│   ├── plot_fabric.py            # Role-fluid kinematic fabric figures
+│   ├── plot_ip46.py              # IPv4 vs IPv6 overhead figures
 │   └── validation_io.py          # Normalize and compare simulator/testbed results
 ├── validation/
 │   ├── ns3/
 │   │   ├── README.md             # ns-3 build and run instructions
 │   │   ├── rfmp-role-transition.cc # RFMP role-transition reference
+│   │   ├── s1-multipath-handover.cc # ns-3 reference implementation
+│   │   ├── role-fluid-fabric.cc  # Role-fluid kinematic fabric reference
+│   │   ├── ip46-fabric.cc        # IPv4/IPv6 agnostic-service reference
 │   │   ├── run-rfmp.sh           # Build and run the RFMP reference
 │   │   ├── run-s1.sh             # Build and run the S1 reference
-│   │   ├── s1-multipath-handover.cc # ns-3 reference implementation
+│   │   ├── run-fabric.sh         # Build and run the kinematic fabric
+│   │   ├── run-ip46.sh           # Build and run the IP4/IP6 reference
 │   │   └── s1_mapping.json       # Metric mapping for validation_io
 │   ├── rfmp/rt1_mapping.json     # RT1 metric mapping for validation_io
 │   ├── run_rfmp_experiment.py    # RFMP comparison report
@@ -736,13 +755,24 @@ Full numbers, paired t-tests, Cohen's d and the conclusion are in
 │   ├── test_m3_baselines.py
 │   ├── test_oef_mkb.py
 │   ├── test_m4_controllers.py
+│   ├── test_savant.py
+│   ├── test_layering_aes.py
 │   └── test_vision_benchmark.py
 ├── CITATION.cff                  # Citation metadata (CFF 1.2.0)
 ├── GOAL.md                       # Current testbed goal and milestone status
 ├── REPLICATION.md                # How to replicate and report results
 ├── run_m3_experiments.py         # M3 paired-seed runner -> results/m3/
 ├── run_m4_experiments.py         # M4-Execution OEF/MKB benchmark -> results/m4/
-├── results/                      # Committed M3/M4 CSVs, summaries and PNGs
+├── results/
+│   ├── m3/                       # 30-seed M3 CSVs, summary and PNG
+│   ├── m4/                       # M4 benchmark outputs
+│   │   ├── final_benchmark_raw.csv
+│   │   ├── starvation_sweep_raw.csv
+│   │   ├── m4_summary.md
+│   │   ├── oef_vs_goodput.png
+│   │   ├── peak_burst_cap.png
+│   │   └── oef_starvation.png
+│   └── m4_summary.md             # M4 summary copy at results root
 ├── Ni10.pdf
 ├── LICENSE
 ├── CONTRIBUTING.md
