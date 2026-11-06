@@ -1771,7 +1771,105 @@ The paradigm is therefore not wrong so much as locally mis-scoped: the mechanism
 does what it claims against symmetric scaling, has a real and locatable operating
 limit, and is dominated by a cheaper smooth alternative in this topology.
 
-## 18. Conclusion
+## 18. OEF compensation and multidimensional baselining
+
+Two extensions to the surgical controller are tested as pre-registered
+hypotheses in [`oef-mkb.md`](oef-mkb.md); both are framed as control theory, with
+the biological language kept strictly as analogy.
+
+### 18.1 The Fick-principle mapping (OEF)
+
+The brain holds metabolic rate `CMRO2` constant when cerebral blood flow `CBF`
+falls by raising the oxygen extraction fraction `OEF`: `CMRO2 = CBF x OEF x Ca`.
+Mapped to the fabric, CBF is delivered throughput, Ca the nominal capacity,
+CMRO2 legitimate goodput, and OEF the weighted-fair-queueing weight of the
+legitimate class. When a node's windowed CBF falls below 0.8 of its moving
+average for three consecutive ticks, an OEF actuator raises the legitimate
+class's weight `1 -> oef_max`, proportional to the measured CBF deficit and
+bounded by a double integrator with explicit speed and acceleration caps.
+
+**The hypothesis is refuted, and the zero-sum trap is confirmed.** Over 30
+paired seeds the OEF arm is statistically indistinguishable from the surgical
+arm it extends: legitimate goodput is 0.949 with or without OEF, at a 0.92 p95
+ratio. The reason is structural rather than incidental. On this fabric the
+congested node is the last router before a single-uplink origin and is a pure
+forwarder (`alpha = 0`); once the attack is name-isolated, the legitimate class
+already receives roughly 95 % of the link, so "extraction efficiency" has no
+further degree of freedom to exercise. Unlike a capillary bed, a drop-tail
+weighted-fair-queueing router cannot recruit additional service for one class
+without removing it from another, and the other class is already throttled. The
+OEF actuator is not inert — it reaches its full excursion and its speed limit is
+hit — but the excursion purchases nothing. This is the "zero-sum" boundary the
+concept was designed to find, and it is reported as a refutation, not hidden.
+
+### 18.2 Multidimensional kinematic baselining (MKB)
+
+The network state is a vector `S(t) = [utilisation, queue delay, loss, OEF]`.
+Velocity and acceleration are the curvature of a short-window manifold of `S`,
+and a surgical edit fires when the acceleration vector leaves its moving-average
+baseline or the velocity vector turns away from its own trajectory. The intent
+is to detect cross-correlated failure geometry that scalar thresholds miss.
+
+The straightforward implementation over-triggers: it issues an order of
+magnitude more edits than the scalar trigger, most of them before the shockwave,
+and legitimate goodput degrades relative to the scalar controller. The cause is
+instructive and is itself the finding: the state vector includes the OEF
+actuator's own output, so the multidimensional trigger detects the controller's
+own feedback as a spike — a self-referential loop that scalar thresholding
+sidesteps by construction. A multidimensional baseline is only as good as the
+choice of dimensions it watches; including an actuator's output in the baselined
+vector couples the observer to its own action.
+
+Neither extension is claimed as an improvement. Both are recorded because the
+refutations bound the paradigm: extraction scaling is a real degree of freedom
+only where a node meaningfully serves traffic locally, and multidimensional
+triggering requires excluding self-inflicted state before it can outperform a
+scalar baseline.
+
+## 19. Beyond classical layering: towards a multidimensional state manifold
+
+The mechanisms presented in this paper — VDR, surgical control, savant
+hyper-specialisation, OEF, and multidimensional baselining — are implemented
+within a classical networking paradigm. This section is deliberately
+speculative. It is not a result; it is a statement of the theoretical
+destination that the empirical work above is, at best, approximating. The
+empirical core of the paper (sections 1–18) makes no claim that depends on it,
+and its refutations stand or fall on the classical measurements alone.
+
+The underlying assumption of strict ISO/OSI layering and sequential
+encapsulation/decapsulation may ultimately be an engineering convenience rather
+than a fundamental physical truth. We hypothesise that the optimal state space
+of a highly dynamic multi-medium backhaul is not a linear stack of independent
+layers but a highly coupled, multidimensional state manifold, in which network
+states exhibit non-local correlations structurally analogous to quantum
+entanglement. A "surgical edit" at a local node would then not be an isolated
+event but an operation that re-weights the global network state at once.
+
+An eleven-dimensional framework, rooted in M-theory, offers a mathematical lens
+for these hidden symmetries. Our current kinematic controller — velocity and
+acceleration over a moving-average baseline, and the multidimensional
+generalisation of section 18 — approximates this behaviour classically. We
+postulate that a fully optimal controller requires a tensor-network formulation
+in which encapsulation and decapsulation are replaced by topological projections
+across an eleven-dimensional state space, and in which a congestion event is a
+projection of a correlated state change rather than a local queue crossing.
+
+The derivation of the exact mapping between discrete network telemetry and this
+manifold is an open problem, and we do not claim to have constructed a quantum
+simulator or a quantum network. What the empirical results do establish is the
+set of macroscopic boundaries — rate limits, OEF starvation thresholds, the
+self-referential failure of multidimensional triggering — that any future
+topological or quantum-inspired model must respect. Multidimensional kinematic
+baselining is the first classical step toward that goal: by tracking velocity
+and acceleration vectors across several dimensions simultaneously, it
+empirically approximates the curvature of a manifold it cannot yet observe
+directly. The thresholding mechanism is, in this reading, a classical boundary
+condition imposed on a state space whose fuller geometry remains to be derived.
+
+We leave the formalisation of this entanglement-based networking paradigm to
+future research.
+
+## 20. Conclusion
 
 Cooperative multi-medium backhaul offers a way to connect content placement,
 traffic engineering, and service continuity across terrestrial, aerial, and

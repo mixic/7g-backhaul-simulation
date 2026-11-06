@@ -45,8 +45,8 @@ import math
 
 import numpy as np
 
-from .config import (K8S, PRESSURE, SAVANT, STATIC_ISO, SURGICAL, SURGICAL_AB,
-                     SURGICAL_GLOBAL, SURGICAL_UNLIM)
+from .config import (K8S, MKB, OEF, PRESSURE, SAVANT, STATIC_ISO, SURGICAL,
+                     SURGICAL_AB, SURGICAL_GLOBAL, SURGICAL_UNLIM)
 from .link import class_id
 
 VDR = "vdr"
@@ -576,4 +576,9 @@ def make_controller(cfg, sim):
     if c == SAVANT:
         from simulation.savant.controller import SavantController
         return SavantController(cfg, sim)
+    if c in (OEF, MKB):
+        from .homeostasis import make_homeostasis_controller
+        controller = make_homeostasis_controller(cfg, sim)
+        if controller is not None:
+            return controller
     raise ValueError(f"unknown controller {c}")

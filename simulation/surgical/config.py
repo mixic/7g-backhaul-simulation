@@ -72,6 +72,8 @@ PRESSURE_TUNED   = "pressure_tuned"     # Baseline B given its best shot
 VDR              = "vdr"                # spatial target field, installed instantly
 VDR_SURGICAL     = "vdr_surgical"       # the SAME target field, rate-controlled
 SAVANT           = "savant"             # compensatory hyper-specialisation (H4)
+OEF              = "oef_surgical"       # M4: OEF-compensated surgical control
+MKB              = "mkb"                # M4: multidimensional kinematic baselining
 
 MAIN_CONTROLLERS = [K8S, PRESSURE, SURGICAL]
 ALL_CONTROLLERS = [K8S, PRESSURE, PRESSURE_TUNED, SURGICAL, SURGICAL_UNLIM,
@@ -91,6 +93,8 @@ LABELS = {
     VDR: "Spatial target (VDR-like), instant install",
     VDR_SURGICAL: "Spatial target + rate governor",
     SAVANT: "Savant (compensatory hyper-specialisation)",
+    OEF: "OEF-compensated surgical control",
+    MKB: "Multidimensional kinematic baselining",
 }
 
 
@@ -144,6 +148,22 @@ class SimConfig:
 
     # deadline for "useful" delivery (s)
     deadline: float = 2.0
+
+    # ---- M4: OEF compensation (Fick principle) ----
+    oef_gain: float = 2.0             # OEF target = clip(gain * CBF deficit, 0, 1)
+    oef_max: float = 4.0              # max WFQ weight multiplier for the legit class
+    oef_speed_max: float = 0.5        # max OEF change speed (1/s)
+    oef_accel_max: float = 0.4        # max OEF change acceleration (1/s^2)
+    oef_cbf_tau: float = 2.0          # EMA time constant for the CBF baseline
+    oef_trigger: float = 0.8          # act when CBF < trigger * EMA(CBF)
+    oef_force_max: bool = False       # starvation-boundary experiment: pin OEF=1
+
+    # ---- M4: multidimensional kinematic baselining (MKB) ----
+    mkb_k: float = 4.0                # vector residual multiplier
+    mkb_angle_deg: float = 45.0       # trajectory-deviation threshold (degrees)
+    mkb_tau_v: float = 1.0            # EMA time constant for the velocity vector
+    mkb_floor_a: float = 2.0          # absolute floor on ||a|| residual (1/s^2)
+    mkb_floor_v: float = 0.08         # absolute floor on ||v|| for the angle test
 
     # ---- surgical controller ----
     spike_k: float = 4.0             # trigger: residual > k * EMA(|residual|)

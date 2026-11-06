@@ -49,6 +49,17 @@ def _p95(x):
     return float(np.percentile(x, 95))
 
 
+def _cbf_mean(res, window):
+    """Mean total delivered throughput (CBF) over a window, from oef_series."""
+    series = res.get("oef_series")
+    if series is None or len(series) == 0:
+        return 0.0
+    mask = (series[:, 0] >= window[0]) & (series[:, 0] < window[1])
+    if not mask.any():
+        return 0.0
+    return float(np.mean(series[mask, 2]))
+
+
 def window_stats(sim, res, t0, t1, deadline):
     t = res["done_t"]
     kind = res["done_kind"]
@@ -195,6 +206,21 @@ def run_and_score(cfg):
         "goodput_base": base["goodput"],
         "edits": res["edits"],
         "ns_classes_peak": res["ns_classes_peak"],
+        # OEF / MKB (homeostasis) metrics
+        "oef_peak": res.get("oef_peak", 0.0),
+        "oef_limit_hit": res.get("oef_limit_hit", False),
+        "oef_speed_max": (float(np.max(res["oef_log"][:, 3]))
+                          if len(res["oef_log"]) else 0.0),
+        "oef_accel_max": (float(np.max(res["oef_log"][:, 4]))
+                          if len(res["oef_log"]) else 0.0),
+        "oef_series": res.get("oef_series", np.zeros((0, 3))),
+        "mkb_spike_count": int(len(res.get("mkb_spikes", []))),
+        "mkb_first_trigger": (float(np.min(res["mkb_spikes"][:, 0]))
+                              if len(res.get("mkb_spikes", [])) else float("nan")),
+        "cbf_base": _cbf_mean(res, base_w),
+        "cbf_shock": _cbf_mean(res, shock_w),
+        "edit_times": res.get("edit_times", np.zeros(0)),
+        "mkb_spikes": res.get("mkb_spikes", np.zeros((0, 2))),
         "reasm_peak": float(np.max(reasm)) if len(reasm) else 0.0,
         "reasm_deadlock_frac": deadlock_frac,
         "reasm_drops": int((res["drop_reason"] == "reorder_overflow").sum()),

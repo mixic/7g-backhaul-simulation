@@ -304,6 +304,20 @@ narrative including the refutations is
 [docs/surgical-results.md](docs/surgical-results.md). Tests:
 `py -m pytest tests/test_surgical.py -q`.
 
+## Run the M4 OEF / MKB experiments
+
+```bash
+py run_m4_experiments.py                 # 30 paired seeds, three experiments
+```
+
+Experiment 1 tests H5 (OEF compensation vs surgical); Experiment 2 sweeps the
+OEF gain to its starvation boundary; Experiment 3 compares the scalar trigger
+with the multidimensional kinematic baseline (MKB). Outputs in `results/m4/`:
+per-seed CSVs, `m4_summary.md` (means and 95 % CIs), and `oef_vs_goodput.png`.
+Pre-registration: [docs/oef-mkb.md](docs/oef-mkb.md). Both hypotheses are
+reported as refutations: OEF adds nothing over surgical isolation on a pure
+forwarder, and MKB over-triggers because it baselines its own actuator's output.
+
 ## Run the savant (compensatory hyper-specialisation) sweep
 
 The H4 experiment is part of the surgical benchmark above: arm labels

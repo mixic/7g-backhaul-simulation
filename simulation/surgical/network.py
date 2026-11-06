@@ -493,6 +493,15 @@ class SimRun:
                                       if self.savant_log is not None else 0),
             "savant_drops_per_node": (self.savant_log.per_node()
                                       if self.savant_log is not None else {}),
+            "oef_log": np.asarray(getattr(self.controller, "oef_log", []),
+                                  dtype=np.float64),
+            "oef_series": np.asarray(getattr(self.controller, "oef_series", []),
+                                     dtype=np.float64),
+            "oef_peak": float(getattr(self.controller, "oef_peak", 0.0)),
+            "oef_limit_hit": bool(getattr(self.controller, "oef_limit_hit", False)),
+            "mkb_spikes": np.asarray(getattr(self.controller, "mkb_spikes", []),
+                                     dtype=np.float64),
+            "edit_times": np.array([e.t for e in self.ledger.edits], dtype=float),
         }
 
 
