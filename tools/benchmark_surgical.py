@@ -100,6 +100,7 @@ SCALARS = (
     "loss_drops",
     "p95_base",
     "p95_shock",
+    "reasm_deadlock_k8s",
 )
 
 
@@ -243,6 +244,7 @@ def _verdicts(by_arm: dict[str, dict[str, float]], arms: dict) -> list[dict]:
         unrestr,
         np.isfinite(unrestr) and s_gp > unrestr,
     )
+    k8s_dead = g("exp3_boundary", K8S, "reasm_deadlock_frac")
     add(
         "H3",
         "reassembly buffer engaged at all (> 0 kB)",
@@ -250,7 +252,13 @@ def _verdicts(by_arm: dict[str, dict[str, float]], arms: dict) -> list[dict]:
         reasm > 0.0,
         "0 means the MTU-mismatch mechanism never fired: UNTESTED, not a pass",
     )
-    add("H3", "surgical deadlock fraction ~ 0", dead, dead < 0.01, "vacuous if above fails")
+    add(
+        "H3",
+        "surgical reduces reassembly deadlock below Baseline A",
+        dead,
+        dead < k8s_dead,
+        f"Baseline A deadlock fraction {k8s_dead:.3f}",
+    )
     add(
         "H4",
         "savant affected-name delivery beats the surgical arm",

@@ -13,7 +13,7 @@ after.
 |---|---|
 | **H1** surgical advantage | **REFUTED** — 2 of 4 clauses fail |
 | **H2** rate control vs churn | **SUPPORTED IN PART** — sustained churn bound, peak burst not |
-| **H3** MTU-mismatch deadlock | **INCONCLUSIVE** — mechanism never engaged |
+| **H3** MTU-mismatch deadlock | **REFUTED** — the mechanism engages, but the surgical arm is statistically indistinguishable from the static baseline |
 | **H4** savant hyper-specialisation | **REFUTED** |
 | composability with a spatial (VDR-like) target | **UNTESTED** — target field empty |
 
@@ -88,23 +88,41 @@ per-node token bucket bounds how *often* a node changes state; it cannot bound a
 synchronous burst across nodes without a global limiter — which would reintroduce
 the centralised controller the design is trying to avoid.
 
-## 5. H3 — the fiber→satellite boundary: untested, not passed
+## 5. H3 - the fiber->satellite boundary: refuted, and instructively so
 
 Node 5 is a remote site whose only backhaul is a 10 Mbps / MTU 576 satellite hop,
-carrying four legitimate flows at ~64 % of line rate, then a flood. A 100 kB
-object is 174 fragments at that MTU.
+carrying four legitimate flows, then a flood. A 100 kB object is 174 fragments at
+that MTU, so it occupies a reassembly slot for its whole flight.
 
-**The reassembly buffer peaked at 0 kB in every arm and every seed.** The
-deadlock mechanism never fired, so the "0.0 % deadlock fraction" column is a null
-result and H3 is **not** claimed.
+| arm | reassembly peak | deadlock fraction | legit goodput | p95 ratio |
+|---|---:|---:|---:|---:|
+| Baseline A (`k8s`) | 3.00 MB | 0.702 ± 0.021 | 21.6 % | 2.33 |
+| Baseline B (`pressure`) | 3.00 MB | 0.974 ± 0.007 | 28.1 % | 1.41 |
+| **Surgical** | 3.00 MB | **0.703 ± 0.021** | 21.4 % | 2.24 |
+| Ablation: no rate cap | 3.00 MB | 0.703 ± 0.021 | 21.5 % | 2.29 |
 
-Cause: partial fragment-train admission requires `0 < room < object size` at the
-queue. With 1 MB flood batches filling a 2.5 MB satellite buffer, 400 kB
-legitimate batches see `room ≤ 0` and are dropped whole rather than partially, so
-the modelled path from "MTU mismatch" to "holds a reassembly slot" is never
-taken. A correct test needs fragment-level interleaving — charge reassembly
-occupancy for every in-flight fragmented object, and size the reorder buffer in
-objects rather than bytes.
+The mechanism now fires: the reassembly window reaches its hard 3 MB capacity
+and holds there. But the surgical arm is **indistinguishable from the static
+baseline** (0.703 versus 0.702, a difference far inside the confidence interval),
+so the claim that localised edits prevent MTU-mismatch deadlock is **refuted**.
+
+Two findings explain it, and both are worth more than the hypothesis was:
+
+1. **The window is not a queue property.** Reorder occupancy is driven by the
+   number of in-flight fragmented objects over a 2 s satellite buffer. A
+   queue-class edit at the ingress does not shorten that buffer, and legitimate
+   400 kB objects alone are enough to fill a 3 MB window. Isolation bounds who
+   *contends* for the link; it does not bound how long an object stays in flight.
+2. **The trigger is masked in exactly the regime it was designed for.** The deep
+   satellite buffer produces a periodic pressure sawtooth (0.04 <-> 0.81 with a
+   ~2 s period). That inflates the adaptive threshold, derived from the residual's
+   own EWMA, to about 8 units/s^2 while the flood's acceleration residual is only
+   about 3.1. The detector goes blind precisely where the vision paper expects
+   acceleration-triggered overflow to be detected: an adaptive noise floor adapts
+   to the pathology it is meant to catch.
+
+This also means the H3 experiment contributes a real negative result about the
+*observation layer*, not just about the actuator.
 
 ## 6. H4 — savant hyper-specialisation: refuted
 
@@ -180,7 +198,8 @@ on one seed and then held fixed for all 30 evaluation seeds.
 3. **One topology, one load level.** A stipulated 100-node grid, no trace replay,
    no sensitivity sweep over topology or load.
 4. Hyperparameters were calibrated on a single seed before the 30-seed evaluation.
-5. H3 untested and the spatial pairing empty — stated above as limitations, not
-   counted as passes.
+5. The spatial pairing is empty (no admissible alternative to a single-uplink
+   origin), and H3's negative result is conditional on the reassembly model
+   described in §5.
 6. Confidence intervals describe run-to-run stochastic variation, not uncertainty
    about real networks.

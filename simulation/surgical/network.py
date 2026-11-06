@@ -51,7 +51,8 @@ from .state import NodeState, QueuePolicy, StateLedger
 from .topology import Fib, build_topology
 from .traffic import Demand, build_flows
 
-REORDER_BYTES = 262_144      # reassembly (reorder) buffer at the boundary
+REORDER_BYTES = 3_145_728    # reassembly (reorder) window at the boundary, bytes
+REORDER_SLOTS = 24           # concurrent objects that can be reassembled
 REORDER_TIMEOUT = 1.0        # HOL hold time before an incomplete object is dropped
 MAX_HOPS = 24
 
@@ -105,6 +106,7 @@ class SimRun:
         self.demand = Demand(self.flows, cfg.load_wave_amp, cfg.load_wave_period,
                              cfg.load_step_times)
         self.reasm = simpy.Container(self.env, capacity=REORDER_BYTES, init=0.0)
+        self.reasm_slots = simpy.Container(self.env, capacity=REORDER_SLOTS, init=0.0)
 
         # monitors
         Mon = ABMonitor if cfg.controller == SURGICAL_AB else EmaMonitor
@@ -294,23 +296,42 @@ class SimRun:
                 self._drop(batch, R_LOOP, node)
                 return
             cls = self.states[node].policy.cls_for(flow.content, flow.region)
-            ev = self.egress[(node, nh)].enqueue(batch, cls)
+            q = self.egress[(node, nh)]
+            ev = q.enqueue(batch, cls)
             if ev is None:
                 self._drop(batch, R_TOTAL, node)
                 return
+            # An object larger than this link's MTU must be reassembled at the
+            # far end, so it occupies a reassembly slot for as long as it is in
+            # flight.  The charge is taken AFTER queue admission so the class
+            # byte limit binds first: an isolated flood is already throttled and
+            # never reaches the window, whereas an unconstrained flood carries
+            # 1 MB objects that monopolise it and block reassembly for everyone.
+            # Charging only *partially admitted* objects (the earlier model) left
+            # the mechanism permanently idle, because a full queue rejects whole
+            # objects rather than truncating them.
+            # Reassembly accounting is applied at the fiber->satellite boundary
+            # only: that is the 9000 -> 576 byte MTU step the H3 claim is about.
+            # Microwave segmentation is treated as handled by the radio's
+            # segmentation offload, so it does not consume the reorder window.
+            frag = q.link.kind == "satellite" and q.link.mtu < batch.size
+            hold = 0.0
+            if frag:
+                hold = min(batch.size, REORDER_BYTES * 0.5)
+                yield self.reasm_slots.put(1.0)
+                yield self.reasm.put(hold)
             res = yield ev
+            if frag:
+                yield self.reasm.get(hold)
+                yield self.reasm_slots.get(1.0)
             if res == R_LOSS:
                 self._drop(batch, R_LOSS, node)
                 return
             node = nh
             hops += 1
             if res == "partial":
-                # an incomplete fragment train: the receiver must hold a
-                # reassembly slot until the timeout, then fail the object.
-                size = batch.size
-                yield self.reasm.put(size)
-                yield env.timeout(REORDER_TIMEOUT)
-                yield self.reasm.get(size)
+                # the fragment train was cut, so the object can never be
+                # reassembled; it dies here rather than at the origin.
                 self._drop(batch, R_REORDER, node)
                 return
             if node == dest:

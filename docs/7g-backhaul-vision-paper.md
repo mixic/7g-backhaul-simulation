@@ -31,7 +31,21 @@ backhaul in which multiple heterogeneous paths can serve an application
 concurrently and content replicas move toward predicted demand. A synthetic
 public-safety study makes real-time voice/video on-time delivery, jitter,
 freeze duration, and interruption during medium changes primary service
-outcomes rather than relying on throughput alone. Orbital compute is
+outcomes rather than relying on throughput alone.
+
+A pre-registered testbed now supplies the control law that the paper's
+observation layer leaves unspecified: kinematic spike detection on normalised
+pressure, localised edits to a node's (alpha, queue policy, FIB) state bounded
+by a per-node token bucket, and explicit speed and acceleration caps on
+continuous knobs. Over 840 runs and 30 paired seeds the measured result is a
+partial refutation of the thesis. The surgical controller holds a 1.08 p95
+latency ratio where global pressure control degrades to 1.57, but a confound
+control shows that per-flow queue isolation, not the kinematic trigger, accounts
+for nearly all of the gain; the trigger's benefit is an order of magnitude less
+control-plane churn. Hyper-specialisation is refuted on both local and global
+delivery, and the reassembly-deadlock hypothesis is refuted at the
+fiber-to-satellite boundary, where the adaptive trigger is itself masked by the
+satellite buffer's pressure sawtooth. Orbital compute is
 considered as a possible edge tier for selected workloads, not as a presumed
 replacement for terrestrial data centers. The design is a distributed
 engineering architecture, not a biological brain, sentient system, or
@@ -1537,7 +1551,137 @@ remains necessary. External review, independent replication, and controlled
 emulation/testbed evaluation remain future work, not completed project
 milestones.
 
-## 16. Conclusion
+## 16. Surgical, rate-controlled state updates
+
+The observation layer in §5 specifies normalised path pressure and its first two
+derivatives, and names acceleration-triggered cross-medium overflow as the
+regime of interest. It does not specify the **control law** that maps those
+observations to changes in network state. This section supplies that law and
+tests it; §16.4 reports where measurement contradicts the design intent.
+
+### 16.1 State plane
+
+A node's editable state is the vector `S = (alpha, queue policy, FIB overrides)`,
+where `alpha in [0,1]` splits capacity between forwarding (`(1 - alpha) C_n`) and
+serving (`alpha C_n`), the queue policy sets per-class weighted-fair-queueing
+weights and byte limits, and FIB overrides hold per-flow next hops layered over a
+loop-free name table. Every mutation passes through a single ledger, so the speed
+and acceleration of state change are measured at the point of edit rather than
+reconstructed afterwards. This matters: the dependent variable of H2 is precisely
+that trajectory.
+
+### 16.2 Kinematic monitor and the spike trigger
+
+Each node keeps exponentially weighted baselines of pressure, pressure velocity,
+and acceleration, and derives its threshold from the exponentially weighted
+magnitude of its own acceleration residual, with multiplier `k = 4` and a
+physical floor. The intent is that a steady network is silent without a
+hand-tuned constant: the threshold tracks the measured noise floor. An
+alpha-beta filter variant is evaluated alongside it, because the argument that a
+trend-following filter beats a moving average has been made for RTT prediction.
+
+### 16.3 Control law
+
+Two distinct forms of rate control are applied, because they bound different
+things. *Discrete edits* -- promoting one `(content, source-region)` class into
+its own weighted lane at the routers it crosses -- are applied in a single step
+and bounded by a **per-node token bucket** with a sustained rate and a burst
+allowance; a node that has just fired cannot fire again for `|dS| / v_max`
+seconds. *Continuous knobs* -- `alpha` and buffer scale -- move through a
+**double integrator** with explicit speed and acceleration caps.
+
+Hysteresis is a **pressure** test, not an acceleration test. A sustained flood
+has zero acceleration and high pressure, so releasing on calm acceleration
+un-isolates in the middle of the attack. Release additionally requires the
+culprit class's arrival rate to have stopped for several control ticks.
+
+### 16.4 Measurement
+
+The testbed is a 100-node three-medium fabric (SimPy, not ns-3): 1 Gbps / 2 ms
+fiber, 100 Mbps / 10 ms / 1 % microwave, and a 10 Mbps / 500 ms / MTU 576
+satellite channel. Four origins are single-uplink leaves behind 100 Mbps
+microwave last miles, so a name-targeted flood necessarily strikes a bottleneck
+that legitimate traffic also uses. Eleven arms are compared over three
+experiments and 30 paired seeds (840 runs): two baselines, four ablations, one
+confound control, two composability arms, and a hyper-specialisation arm.
+
+![Surgical-state-update headline](../figures/surgical_h1_headline.png)
+
+**H1 is refuted on two of four clauses.** The surgical arm holds a 1.08 p95
+latency ratio where the global pressure controller degrades to 1.57, and recovers
+11 percentage points of legitimate goodput (84.6 % versus 74.1 %). But legitimate
+goodput does not exceed 95 %, and the global controller does not starve the fabric
+to 2.2x.
+
+**The confound control decides the interpretation.** Per-flow fair queueing
+installed for every flow, with no sensing and no trigger at all, reaches 86.5 %
+goodput and a 1.18 ratio. Almost all of the quality-of-service recovery is
+therefore attributable to queue isolation -- a deployment practice predating this
+work -- not to the kinematic trigger. What the trigger buys is **state economy**:
+45 edits and 12 isolated classes against 215 edits and 215 permanently installed
+classes. A causal claim that acceleration sensing produces the resilience would be
+wrong on this evidence.
+
+![Surgical-state-change](../figures/surgical_h2_state_change.png)
+
+**H2 is supported in part.** The sustained state-change rate falls to 21 % of the
+global controller's with 68x fewer edits, and responsiveness improves rather than
+degrades. The seismograph prediction is confirmed for sustained activity: a flat
+line interrupted by one short spike per edit. It is refuted for peak magnitude,
+0.80x rather than below half. The reason is structural: a coordinated mitigation
+edits roughly twelve routers inside one control tick, so the fleet-wide burst is
+large even though each node's budget is small. A per-node limiter bounds how
+often a node changes state; it cannot bound a synchronous burst across nodes
+without a global limiter -- which would reintroduce the centralised controller the
+design avoids.
+
+**H3 is refuted, and the mechanism is instructive.** At a fiber-to-satellite
+boundary the reassembly window saturates in every arm: 70.3 % of the run above
+80 % occupancy for the surgical arm against 70.2 % for the static baseline, a
+difference well inside the confidence interval. Two findings follow. First, the
+reorder window is consumed by the number of in-flight fragmented objects over a
+deep satellite buffer, and a queue-class edit at the ingress does not shorten that
+buffer; legitimate objects alone can fill it. Second, the acceleration trigger is
+*masked* in this regime: the two-second satellite buffer produces a periodic
+pressure sawtooth (0.04 to 0.81), inflating the adaptive threshold to roughly 8
+units/s^2 while the flood's residual is only about 3.1, so the detector goes blind
+exactly where the vision paper expects it to act. An adaptive noise floor derived
+from residual magnitude adapts to the pathology it is meant to detect.
+
+**H4 is refuted.** Driving `alpha` to 0.95 at the congested node -- shedding
+general transit to hyper-allocate the affected circuit -- loses both locally
+(49.9 % against 74.1 % affected-name delivery) and globally (2.25x p95). The
+congested node is the last router before the origin, so the affected flow's own
+path is the first casualty. Compensatory hyper-specialisation can only pay where
+the specialised resource sits *downstream* of the constraint, not where it
+consumes the transit capacity the affected traffic needs.
+
+![Surgical-savant-tradeoff](../figures/surgical_h4_savant.png)
+
+**The spatial/temporal composability pairing is untested.** With single-uplink
+origins there is no admissible loop-free alternative to the origin uplink, so a
+pressure-weighted potential gradient never differs from the static forwarding
+table and both composability arms are numerically identical to the static
+baseline. A temporal control layer cannot rate-limit a target that does not
+exist; the pairing must be re-run on a topology with genuine path diversity.
+
+### 16.5 What this changes in the thesis
+
+The measurement sharpens the contribution. Kinematic sensing is not the novelty:
+the previous iteration's controller already consumed velocity and acceleration,
+and its failure is one of *actuation*, not observation. The defensible claim is
+that **where** state is edited and **how often** it may move are what separate a
+resilient fabric from a reactive one -- localised, rate-capped edits achieve most
+of the available quality-of-service recovery at an order of magnitude less
+control-plane churn, while global proportional scaling on the same signal
+destroys it. Presented as a claim about the trigger's causal power, the paradigm
+is refuted by its own control arm.
+
+Full detail, including five degenerate calibration configurations that were found
+and corrected, is in [`surgical-rate-controlled.md`](surgical-rate-controlled.md)
+and [`surgical-results.md`](surgical-results.md).
+
+## 17. Conclusion
 
 Cooperative multi-medium backhaul offers a way to connect content placement,
 traffic engineering, and service continuity across terrestrial, aerial, and

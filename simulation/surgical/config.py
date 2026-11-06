@@ -147,6 +147,7 @@ class SimConfig:
     edit_hold: float = 3.0           # mandatory hysteresis duration (s)
     edit_speed_max: float = 0.35     # max normalised state units / s
     edit_accel_max: float = 0.60     # max normalised state units / s^2
+    warmup: float = 8.0               # arm the trigger only after the baseline settles
     edit_burst: float = 2.2          # per-node burst allowance for one edit
     savant_alpha: float = 0.95       # H4: violence of the asymmetric alpha shift
     iso_weight: float = 0.05         # weight granted to an isolated flow class

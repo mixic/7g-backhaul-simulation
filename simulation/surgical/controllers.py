@@ -339,6 +339,12 @@ class SurgicalController(Controller):
             e["phase"] = "out"
 
     def _detect(self, t, obs):
+        # Do not fire during cold start: before the baseline has settled, the
+        # ramp from zero is a large acceleration and the trigger will isolate
+        # whatever class happens to be arriving.  Arming is standard practice
+        # for a controller whose threshold is derived from its own history.
+        if t < self.cfg.warmup:
+            return
         for node, o in obs.items():
             e = self.active.get(node)
             if e is not None and e["phase"] == "in":
