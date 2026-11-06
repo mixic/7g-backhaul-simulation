@@ -203,6 +203,12 @@ def run_and_score(cfg):
         shock_state = ss[shock_m, 1:].mean(axis=0) if shock_m.any() else np.zeros(4)
         compensatory_distance = float(np.linalg.norm(shock_state - base_state))
 
+    # Grid-bin degeneracy inputs: mean path utilization (all arms) and mean OEF
+    # (OEF/MKB arms only; 0 otherwise), plus the raw per-tick 4-D state.
+    series_arr = res.get("series", np.zeros((0, 7)))
+    mean_util = float(np.mean(series_arr[:, 1])) if len(series_arr) else 0.0
+    mean_oef = float(np.mean(ss[:, 4])) if len(ss) else 0.0
+
     mw = (res["done_t"] >= shock_w[0]) & (res["done_t"] < shock_w[1]) & (res["done_kind"] == 0)
     ow = (res["disp_t"] >= shock_w[0]) & (res["disp_t"] < shock_w[1])
     dc = res["done_content"]
@@ -283,6 +289,9 @@ def run_and_score(cfg):
         "cbf_base": _cbf_mean(res, base_w),
         "cbf_shock": _cbf_mean(res, shock_w),
         "compensatory_distance": compensatory_distance,
+        "state_series": ss,
+        "mean_util": mean_util,
+        "mean_oef": mean_oef,
         "edit_times": res.get("edit_times", np.zeros(0)),
         "mkb_spikes": res.get("mkb_spikes", np.zeros((0, 2))),
         "reasm_peak": float(np.max(reasm)) if len(reasm) else 0.0,

@@ -60,7 +60,7 @@ m4_mkb peak state-change speed = **218.3800 +/- 36.8013** vs m3_surgical_1d **22
 
 ## Marder & Goaillard metrics (degeneracy & compensatory distance)
 
-**Degeneracy Index** = 102 / 150 distinct (oef_max x seed) state configurations achieve > 90 % legitimate goodput (68.0 %).
+**Degeneracy Index** (10x10 Path_Utilization x OEF grid, per run) = **5 of 37 occupied bins** (of 100) have mean goodput > 90 % (13.5 % of occupied).
 
 **Compensatory Distance** — Euclidean distance the mean 4-D state [CBF, Queue, Drop, OEF] travels from its steady baseline during the shockwave (shorter = better homeostasis; n/a = arm does not navigate the kinematic state):
 
@@ -72,7 +72,7 @@ m4_mkb peak state-change speed = **218.3800 +/- 36.8013** vs m3_surgical_1d **22
 | m4_mkb | 0.0149 | +/- 0.0006 |
 | m4_combined | 0.0389 | +/- 0.0029 |
 
-*Interpretation.* The degeneracy index is dominated by seed-level routing variance rather than the OEF weight (the weight sweep is flat), so OEF contributes little genuine degeneracy.  The compensatory distance is *larger* with the OEF actuator (m4_oef 0.0343, m4_combined 0.0389) than without it (m4_mkb 0.0149): OEF moves the 4-D state farther from baseline without improving goodput, the opposite of the homeostasis the analogy predicts.
+*Interpretation.* The grid is only partially populated along the OEF axis (6 of 10 OEF bins occupied, 10 of 10 utilization bins) because the actuator barely moves off `OEF = 0`, so the degeneracy index mostly reflects routing/utilization variance rather than genuine navigation of the OEF dimension.  The compensatory distance is *larger* with the OEF actuator (m4_oef 0.0343, m4_combined 0.0389) than without it (m4_mkb 0.0149): OEF moves the 4-D state farther from baseline without improving goodput, the opposite of the homeostasis the analogy predicts.
 
 ## Starvation threshold (OEF forced to max, weight swept)
 
@@ -88,11 +88,11 @@ m4_mkb peak state-change speed = **218.3800 +/- 36.8013** vs m3_surgical_1d **22
 
 | arm | us/tick | vs 1D limiter |
 |---|---|---|
-| static_isolation | 0.2 | 0.04x |
-| m3_surgical_1d | 5.6 | 1.00x |
-| m4_oef | 217.4 | 39.04x |
-| m4_mkb | 747.5 | 134.25x |
-| m4_combined | 710.6 | 127.61x |
+| static_isolation | 0.3 | 0.05x |
+| m3_surgical_1d | 6.0 | 1.00x |
+| m4_oef | 214.2 | 35.89x |
+| m4_mkb | 813.4 | 136.29x |
+| m4_combined | 686.6 | 115.04x |
 
 ## Interpretation
 

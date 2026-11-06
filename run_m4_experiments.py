@@ -75,6 +75,7 @@ FIELDS = [
     "arm", "seed", "Total_Throughput_CBF", "Legitimate_Goodput_CMRO2",
     "OEF_Value", "Peak_State_Change_Speed", "Number_of_Edits",
     "False_Positive_Edits", "Transit_Drop_Rate", "Compensatory_Distance",
+    "Mean_Util", "Mean_OEF",
 ]
 
 
@@ -118,6 +119,8 @@ def run_benchmark(out_dir: Path, seeds: list[int]):
                 "False_Positive_Edits": fp,
                 "Transit_Drop_Rate": _round(1.0 - r["gp_other"]),
                 "Compensatory_Distance": _round(r["compensatory_distance"]),
+                "Mean_Util": _round(r["mean_util"]),
+                "Mean_OEF": _round(r["mean_oef"]),
             }
             rows.append(row)
             if label in ("m4_oef", "m4_combined") and len(r.get("oef_series", [])) > 4:
@@ -507,19 +510,43 @@ def _conclusion(rows: list[dict]) -> str:
     ])
 
 
-def _degeneracy_index(starvation_rows: list[dict]) -> tuple[int, int]:
-    above = [r for r in starvation_rows if r["Legitimate_Goodput"] > 0.90]
-    return len(above), len(starvation_rows)
+def _degeneracy_grid(rows: list[dict]) -> tuple[int, int, int]:
+    """10x10 (Path_Utilization x OEF) grid over the runs; count bins whose mean
+    goodput exceeds 0.90.  Each axis is min-max normalised to its observed range
+    (a fixed [0,1] grid would put every run in a single cell)."""
+    util = np.array([r["Mean_Util"] for r in rows], dtype=float)
+    oef = np.array([r["Mean_OEF"] for r in rows], dtype=float)
+    gp = np.array([r["Legitimate_Goodput_CMRO2"] for r in rows], dtype=float)
+
+    def _bin(x):
+        lo, hi = float(x.min()), float(x.max())
+        if hi <= lo:
+            return np.zeros(x.size, dtype=int)
+        return np.clip(((x - lo) / (hi - lo) * 10.0).astype(int), 0, 9)
+
+    ub, ob = _bin(util), _bin(oef)
+    sums: dict = {}
+    cnts: dict = {}
+    for u, o, g in zip(ub, ob, gp):
+        key = (int(u), int(o))
+        sums[key] = sums.get(key, 0.0) + float(g)
+        cnts[key] = cnts.get(key, 0) + 1
+    n_occ = len(sums)
+    n_ok = sum(1 for k in sums if sums[k] / cnts[k] > 0.90)
+    u_occupied = len({int(u) for u, _ in sums})
+    o_occupied = len({int(o) for _, o in sums})
+    return n_ok, n_occ, 100, u_occupied, o_occupied
 
 
-def _marder_metrics(rows: list[dict], starvation_rows: list[dict]) -> str:
-    n_above, n_total = _degeneracy_index(starvation_rows)
-    frac = 100.0 * n_above / max(n_total, 1)
+def _marder_metrics(rows: list[dict]) -> str:
+    n_ok, n_occ, n_bins, u_occupied, o_occupied = _degeneracy_grid(rows)
+    frac = 100.0 * n_ok / max(n_occ, 1)
     lines = [
         "## Marder & Goaillard metrics (degeneracy & compensatory distance)",
         "",
-        f"**Degeneracy Index** = {n_above} / {n_total} distinct (oef_max x seed) "
-        f"state configurations achieve > 90 % legitimate goodput ({frac:.1f} %).",
+        f"**Degeneracy Index** (10x10 Path_Utilization x OEF grid, per run) = "
+        f"**{n_ok} of {n_occ} occupied bins** (of {n_bins}) have mean goodput "
+        f"> 90 % ({frac:.1f} % of occupied).",
         "",
         "**Compensatory Distance** — Euclidean distance the mean 4-D state "
         "[CBF, Queue, Drop, OEF] travels from its steady baseline during the "
@@ -540,9 +567,11 @@ def _marder_metrics(rows: list[dict], starvation_rows: list[dict]) -> str:
             lines.append(f"| {label} | n/a | |")
     lines += [
         "",
-        "*Interpretation.* The degeneracy index is dominated by seed-level "
-        "routing variance rather than the OEF weight (the weight sweep is flat), "
-        "so OEF contributes little genuine degeneracy.  The compensatory "
+        "*Interpretation.* The grid is only partially populated along the OEF "
+        f"axis ({o_occupied} of 10 OEF bins occupied, {u_occupied} of 10 "
+        "utilization bins) because the actuator barely moves off `OEF = 0`, so "
+        "the degeneracy index mostly reflects routing/utilization variance "
+        "rather than genuine navigation of the OEF dimension.  The compensatory "
         f"distance is *larger* with the OEF actuator (m4_oef {cd_oef:.4f}, "
         f"m4_combined {cd_comb:.4f}) than without it (m4_mkb {cd_mkb:.4f}): OEF "
         "moves the 4-D state farther from baseline without improving goodput, "
@@ -568,7 +597,7 @@ def _summarise(rows: list[dict], starvation_rows: list[dict],
                       "Peak burst state-change speed across arms"),
         _full_table(rows),
         _significance(rows),
-        _marder_metrics(rows, starvation_rows),
+        _marder_metrics(rows),
         _starvation_table(starvation_rows),
         _overhead_table(overhead),
         _interpretation(rows),
