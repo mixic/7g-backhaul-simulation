@@ -1,4 +1,4 @@
-# The Layering Survival Rule: A Testbed for Encapsulation Ordering in Heterogeneous Backhaul
+# Empirical Commutation Rules for Protocol Layer Encapsulation in Heterogeneous Networks
 
 **Milan Nikolic** · Independent Researcher · <m_nikolic@yahoo.com>
 
