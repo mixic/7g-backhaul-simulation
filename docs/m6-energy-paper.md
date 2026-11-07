@@ -2,6 +2,8 @@
 
 ## An Energy-Aware Evaluation of Homeostatic and Cognitive Controllers in a 7G Backhaul Testbed
 
+**Milan Nikolic** · Independent Researcher · <m_nikolic@yahoo.com>
+
 **Milestone:** M6 · **Testbed:** SimPy (100-node three-medium fabric) · **Seeds:** 30 paired
 
 ---
