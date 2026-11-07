@@ -18,6 +18,8 @@ keywords:
 
 ## Abstract {.unnumbered}
 
+This paper explores the application of biologically-inspired homeostatic control and fluid-dynamic models to 7G backhaul networks. We present the Multidimensional Kinematic Baselining (MKB) and Oxygen Extraction Fraction (OEF) frameworks, alongside a formal layering testbed and an AI-driven stack compiler. However, rigorous empirical evaluation across 30 paired seeds reveals a critical boundary condition. The central insight of this work is that biologically-inspired and fluid-dynamic control laws face a hard mathematical floor in discrete packet networks. While continuous control (EWMA, Kalman, Fick's Principle) is mathematically elegant, the zero-sum and quantized nature of finite packet buffers means that a simple, static per-flow isolation mechanism consistently outperforms continuous biological compensation in both goodput and energy efficiency. We identify the discrete packet boundary as the fundamental limit of bio-inspired network control.
+
 Future communication systems may need to coordinate terrestrial, aerial, and
 space-based networks as one service fabric, even when individual links vary
 greatly in capacity, delay, cost, availability, and packet size. Building on
@@ -95,9 +97,6 @@ on an NPU in space or on Earth.
 **Keywords:** heterogeneous backhaul; multipath networking; content delivery;
 congestion forecasting; edge computing; orbital computing; delay-tolerant
 networking; network sustainability
-
-> **Key Scientific Insight:**
-> The central insight of this work is that biologically-inspired and fluid-dynamic control laws face a hard mathematical floor in discrete packet networks. While continuous control (EWMA, Kalman, Fick's Principle) is mathematically elegant, the zero-sum and quantized nature of finite packet buffers means that a simple, static per-flow isolation mechanism consistently outperforms continuous biological compensation in both goodput and energy efficiency. We identify the discrete packet boundary as the fundamental limit of bio-inspired network control.
 
 ## 1. Introduction
 
