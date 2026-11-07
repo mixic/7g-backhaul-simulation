@@ -4,6 +4,21 @@ This project explores how a mobile user's application session could remain conti
 
 The CDN direction is inspired by Milan Nikolic's University of Bern master's thesis, [*Gezora: A Self-Scalable Content Distribution Network* (2010)](Ni10.pdf). The repository includes the thesis PDF for reference. This simulator is an independent educational implementation, not a reproduction of the thesis or an operational 7G network.
 
+## Publications
+
+The research material is deliberately split into **two focused papers** rather
+than one combined document, so each can be reviewed on its own terms:
+
+- **Paper A — [`docs/paper-layering-testbed.md`](docs/paper-layering-testbed.md)**:
+  *Empirical Commutation Rules for Protocol Layer Encapsulation in Heterogeneous
+  Networks.* Pure systems engineering: the survival rule and P1–P12.
+- **Paper B — [`docs/paper-bio-control-limits.md`](docs/paper-bio-control-limits.md)**:
+  *Why Fair-Queueing Beats the Fick Principle.* The negative result on
+  bio-inspired control (M3–M6).
+
+The long-horizon vision remains in
+[`docs/7g-backhaul-vision-paper.md`](docs/7g-backhaul-vision-paper.md).
+
 ## What is modeled
 
 - **Stable application session:** one session ID and byte stream are preserved as fragments use different links.
