@@ -179,7 +179,10 @@ measured. (2) The transmission term is cross-validated against ns-3 (below); the
 CPU and inference terms have no packet-level counterpart. (3) The LLM is a mocked
 deterministic Oracle — its 20 J/call is a stipulation, and a real local model must be
 benchmarked separately. (4) The transmission term is the only energy component an ns-3
-packet-level simulation can independently confirm.
+packet-level simulation can independently confirm. (5) The static baseline in SimPy
+does **not** price the per-flow WFQ state maintenance that real hardware must pay
+(per-flow queues, hashing, timer decrements), so the real-hardware margin is smaller
+than the simulated one.
 
 **Stipulated-constant sensitivity.** Because the verdicts compare stipulated costs, we
 restate them as break-even thresholds (see [`break-even-analysis.md`](break-even-analysis.md)).
