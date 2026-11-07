@@ -14,14 +14,20 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-"""Cognitive Stack Compiler: a mocked deterministic LLM Oracle plus guardrails.
+"""Cognitive Stack Compiler: a **Mock Oracle** plus guardrails.
 
-The Oracle is a *mock*: it serialises the network state into a prompt and
-returns a strict-JSON layer ordering.  A real LLM (e.g. a local model served
-through Ollama) is deliberately not required so the experiment is reproducible
-without API keys or latency.  The mock reads the prompt — it does not hard-code
-a phase-to-stack table — and, with a seeded probability, emits a *hallucination*
-so the guardrail's corrective action is exercised and logged.
+**Not an LLM.** This is a deterministic *Mock Oracle*: it serialises the network
+state into a prompt and returns a strict-JSON layer ordering. A real LLM (e.g. a
+local model served through Ollama) is deliberately not required so the experiment
+is reproducible without API keys or latency. The mock reads the prompt — it does
+not hard-code a phase-to-stack table — and, with a seeded probability, emits a
+*hallucination* so the guardrail's corrective action is exercised and logged.
+
+**What H7 therefore tests.** Because the mock's *installed* output is the
+canonical `C→E→F` order (the guardrail forces it on every hallucination), it is
+bit-identical to the greedy heuristic. H7 tests the **symbolic guardrails against
+injected hallucinated inputs**, not the reasoning capability of an actual LLM; the
+wire-byte result is a property of the mock's policy, not of LLMs in general.
 
 ``simulation/guardrails.validate`` then enforces the P1/P5/P3 commutation rules
 from ``docs/layering-predictions.md`` and forces the canonical stack on any

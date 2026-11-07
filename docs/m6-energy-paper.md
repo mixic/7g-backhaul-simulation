@@ -19,10 +19,12 @@ inference. Three hypotheses were pre-registered and tested over 30 paired seeds.
 * **H9 (EWMA energy efficiency) is refuted.** The EWMA-smoothed controller consumes
   *more* state-change energy than the raw MKB controller (257.7 J vs 239.7 J) because it
   issues more edits, not fewer.
-* **H10 (LLM energy return) is stipulation-dependent.** The stack compiler saves
-  ≈2·10⁻⁴ J of transmission but spends 60 J on inference (EROI ≈ 3·10⁻⁶). It is
-  viable **if and only if** the inference energy falls to ≈2·10⁻⁴ J total
-  (≈7·10⁻⁵ J/call), five orders of magnitude below the stipulated 20 J/call.
+* **H10 (Mock Oracle energy return) is stipulation-dependent.** The stack
+  compiler saves ≈2·10⁻⁴ J of transmission but spends 60 J on inference
+  (EROI ≈ 3·10⁻⁶). It is viable **if and only if** the inference energy falls to
+  ≈2·10⁻⁴ J total (≈7·10⁻⁵ J/call), five orders of magnitude below the
+  stipulated 20 J/call. The compiler is a *Mock Oracle* (bit-identical to the
+  greedy heuristic); this bounds the mock's economics, not an LLM's.
 * **H11 (static-isolation baseline) is confirmed.** Static per-flow fair-queueing has
   zero runtime churn and is the cheapest arm under a DDoS shockwave (918.2 J total).
 
