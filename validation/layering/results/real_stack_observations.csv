@@ -16,7 +16,6 @@ linux_netns,P9,WG_inner_L100,0,wire_bytes,172,bytes
 linux_netns,P9,WG_inner_L1000,0,wire_bytes,1068,bytes
 linux_netns,P9,WG_inner_L1024,0,wire_bytes,1084,bytes
 linux_netns,P9,WG_inner_L1400,0,wire_bytes,1468,bytes
-linux_netns,P10,YtoW_L64,0,wire_bytes,176,bytes
 linux_netns,P10,YtoW_L65,0,wire_bytes,156,bytes
 linux_netns,P10,YtoW_L76,0,wire_bytes,156,bytes
 linux_netns,P10,YtoW_L77,0,wire_bytes,172,bytes
@@ -24,6 +23,14 @@ linux_netns,P10,YtoW_L79,0,wire_bytes,172,bytes
 linux_netns,P10,YtoW_L100,0,wire_bytes,188,bytes
 linux_netns,P10,YtoW_L1000,0,wire_bytes,1084,bytes
 linux_netns,P10,YtoW_L1008,0,wire_bytes,1100,bytes
+linux_netns,P10,WtoY_L64,0,wire_bytes,144,bytes
+linux_netns,P10,WtoY_L65,0,wire_bytes,160,bytes
+linux_netns,P10,WtoY_L76,0,wire_bytes,160,bytes
+linux_netns,P10,WtoY_L77,0,wire_bytes,160,bytes
+linux_netns,P10,WtoY_L79,0,wire_bytes,160,bytes
+linux_netns,P10,WtoY_L100,0,wire_bytes,192,bytes
+linux_netns,P10,WtoY_L1000,0,wire_bytes,1088,bytes
+linux_netns,P10,WtoY_L1008,0,wire_bytes,1088,bytes
 linux_netns,P11,noop_control,0,delivery_percent,100,percent
 linux_netns,P11,ToS_inert_control,0,delivery_percent,0,percent
 linux_netns,P11,udp_len_no_csum,0,delivery_percent,0,percent

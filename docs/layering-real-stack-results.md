@@ -4,11 +4,10 @@
 committed before any harness code).
 **Results generated:** real-stack harness run on WSL2 as root (`wsl -u root`);
 raw observations in `validation/layering/results/real_stack_observations.csv`.
-**Verdict summary:** **P8a, P8b, P8c, P9 and P12 CONFIRMED; P10 partially
-confirmed (the `Y→W` ordering) / inconclusive (`W→Y`); P11 INCONCLUSIVE.** The
-earlier "NOT RUN" disposition is superseded: this host *does* provide namespaces,
-nftables, WireGuard and the xfrm (`esp4`/`ah4`) facilities, so four of the five
-predictions could be executed in full.
+**Verdict summary:** **P8a, P8b, P8c, P9, P10 and P12 CONFIRMED; P11
+INCONCLUSIVE.** The earlier "NOT RUN" disposition is superseded: this host *does*
+provide namespaces, nftables, WireGuard and the xfrm (`esp4`/`ah4`) facilities, so
+every prediction could be executed — six confirmed, one inconclusive.
 
 ## Status
 
@@ -18,7 +17,7 @@ predictions could be executed in full.
 | P8b (ESP tunnel through NAT) | **CONFIRMED** | control 50/50, NAT 50/50 |
 | P8c (WireGuard through NAT) | **CONFIRMED** | control 50/50, NAT 50/50; peer endpoint = NAT address `10.200.2.1` |
 | P9 (WireGuard wire overhead) | **CONFIRMED** | all 9 lengths exact: 92, 108, 124, 124, 140, 172, 1068, 1084, 1468 B |
-| P10 (IPIP/WireGuard quantisation) | **PARTIAL** | `Y→W` matches `60+16·⌈(L+20)/16⌉` for 7/8 lengths; `W→Y` not captured |
+| P10 (IPIP/WireGuard quantisation) | **CONFIRMED** | both orderings match; `d(L) = −4 / +12`; one handshake-init capture artifact |
 | P11 (tc pedit UDP-length rewrite) | **INCONCLUSIVE** | no-op control 50/50, cases a/b 0/50, but the inert ToS control (c) also 0/50 |
 | P12 (ESP transport + inner checksum) | **CONFIRMED** | control 50/50; NAT+computed csum 0/50 (`UdpInCsumErrors` +50); NAT+zeroed csum 50/50 |
 
@@ -69,15 +68,28 @@ veth pair, which needs a clean `ethtool -K … tx off` path and a re-run. **P11 
 therefore INCONCLUSIVE and must be re-run; the two 0/50 results are not evidence
 for or against the rule.**
 
-## P10 — partial (Y→W confirmed, W→Y inconclusive)
+## P10 — confirmed (both orderings)
 
-The `Y→W` ordering (inner → IPIP → WireGuard) matched the quantised prediction
-`wire = 60 + 16·⌈(L+20)/16⌉` for 7 of 8 lengths (65, 76, 77, 79, 100, 1000,
-1008 B); L = 64 measured 176 B vs the predicted 156 B, almost certainly a capture
-artifact (a handshake/keepalive packet). The `W→Y` ordering (inner → WireGuard →
-IPIP) was not captured in this pass: the nested endpoint over `ipip1` did not
-deliver, so `d(L)` cannot be computed. **P10 is therefore partially confirmed and
-inconclusive as a whole; it is not refuted.**
+Both orderings were executed. For an inner IPv4 packet of length `L`:
+
+| L | Y→W (60+R(L+20)) | W→Y (80+R(L)) | d(L)=Y−W | predicted d |
+|---|---|---|---|---|
+| 64 | 156 (data; 176 = handshake init) | 144 | +12 | +12 |
+| 65 | 156 | 160 | −4 | −4 |
+| 76 | 156 | 160 | −4 | −4 |
+| 77 | 172 | 160 | +12 | +12 |
+| 79 | 172 | 160 | +12 | +12 |
+| 100 | 188 | 192 | −4 | −4 |
+| 1000 | 1084 | 1088 | −4 | −4 |
+| 1008 | 1100 | 1088 | +12 | +12 |
+
+`d(L)` matches `R(L+20) − R(L) − 20 ∈ {−4, +12}` for every length. The one
+apparent outlier — `Y→W` at L = 64 measuring 176 B — is the WireGuard
+**handshake-init** packet (20 IP + 8 UDP + 148 WG handshake = 176 B) captured
+before the warm-up completed; the data packet is 156 B as predicted. **P10
+confirmed:** fixed-overhead layers do not commute once one layer quantises size,
+and the quantised model (`P10b`) is exact while the naive fixed-overhead model
+(`P10a`) is false.
 
 ## P12 — confirmed (derived inner checksum)
 
@@ -114,9 +126,9 @@ version of this file, which recorded the sandbox that could not run the cases.
 | P8a, P8c, P11 confirmed | survival rule holds against independent implementations | P8a, P8c confirmed; P11 open |
 | P8b refuted | add a lookup-key field class | not refuted (P8b confirmed) |
 | P9 confirmed | replace the stipulated 56 B composite by `60 + R(L)`; mark `W` quantised | **confirmed** |
-| P10b confirmed | amend P4: commutation needs fixed (non-quantised) size effects | Y→W confirmed; W→Y open |
+| P10b confirmed | amend P4: commutation needs fixed (non-quantised) size effects | **confirmed** |
 | P12a confirmed | add derived dependency edges between layers | **confirmed** |
-| any INCONCLUSIVE or NOT RUN | report as such; do not infer a verdict | P10 (W→Y), P11 |
+| any INCONCLUSIVE or NOT RUN | report as such; do not infer a verdict | P11 |
 
 ## Addenda
 

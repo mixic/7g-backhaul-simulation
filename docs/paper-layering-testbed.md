@@ -57,9 +57,9 @@ in [`layering-real-stack-results.md`](layering-real-stack-results.md).
 | P8b ESP tunnel + NAT | **CONFIRMED** | 100 % delivery (outer src outside ESP scope) |
 | P8c WireGuard + NAT | **CONFIRMED** | 100 % delivery; peer learns the NAT endpoint |
 | P9 WireGuard overhead | **CONFIRMED** | `wire(L) = 60 + 16·⌈L/16⌉`, 9/9 lengths exact |
-| P10 nested IPIP/WG | NOT RUN | — |
+| P10 nested IPIP/WG | **CONFIRMED** | both orderings; `d(L) = −4/+12` exact |
 | P11 `tc pedit` UDP length | INCONCLUSIVE | inert ToS control failed (setup, not rule) |
-| P12 ESP transport + NAT checksum | NOT RUN | — |
+| P12 ESP transport + NAT checksum | **CONFIRMED** | 0 % delivery, `UdpInCsumErrors` +50 |
 
 Two consequences for the model follow directly from the confirmed cases:
 
@@ -72,10 +72,12 @@ Two consequences for the model follow directly from the confirmed cases:
 
 ## 4. What is still open
 
-P10 (nested `Y→W` vs `W→Y`) and P12 (ESP transport + inner checksum) are not run;
-P11 needs a clean checksum-offload path before its inert control passes. `derived`
-and `lookup-key` field classes remain unproven extensions of the model — the paper
-does **not** claim they are needed or unnecessary until those cases run.
+P10 and P12 are confirmed (above), so the `quantised` and `derived` field classes
+are now supported. P11 needs a clean checksum-offload path before its inert control
+passes; the two 0/50 structural results are not evidence until then. The
+`lookup-key` class (P8b's interpretation) remains untested: P8b was confirmed as
+"ESP survives", which is consistent with a lookup not keyed on the outer source,
+but the experiment does not isolate that mechanism.
 
 ## 5. Scope
 
