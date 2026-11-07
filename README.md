@@ -1,8 +1,5 @@
 # 7G Multi-Medium Backhaul and Self-Scaling CDN Simulator
 
-> **Key Scientific Insight:**
-> The central insight of this work is that biologically-inspired and fluid-dynamic control laws face a hard mathematical floor in discrete packet networks. While continuous control (EWMA, Kalman, Fick's Principle) is mathematically elegant, the zero-sum and quantized nature of finite packet buffers means that a simple, static per-flow isolation mechanism consistently outperforms continuous biological compensation in both goodput and energy efficiency. We identify the discrete packet boundary as the fundamental limit of bio-inspired network control.
-
 This project explores how a mobile user's application session could remain continuous while packets travel over a changing mixture of microwave, HF, satellite, mobile, Wi-Fi, and drone-relay links. It combines variable-MTU packetization and reassembly with adaptive transport selection and demand-driven edge-cache placement.
 
 The CDN direction is inspired by Milan Nikolic's University of Bern master's thesis, [*Gezora: A Self-Scalable Content Distribution Network* (2010)](Ni10.pdf). The repository includes the thesis PDF for reference. This simulator is an independent educational implementation, not a reproduction of the thesis or an operational 7G network.
