@@ -2,6 +2,7 @@ __pycache__/
 *.py[cod]
 .venv/
 venv/
+.vscode/
 output/
 /docs/7g-backhaul-vision-paper.aux
 /docs/7g-backhaul-vision-paper.log
