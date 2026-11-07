@@ -188,7 +188,7 @@ def plot_llm_eroi(rows: list[dict], out_dir: Path):
                   color=["#27ae60", "#c0392b"])
     ax.set_yscale("log")
     ax.set_ylabel("energy (J), log scale")
-    ax.set_title(f"M6 exp2: LLM EROI = {saved / spent:.3g} (saved / spent)")
+    ax.set_title(f"M6 exp2: Mock Oracle EROI = {saved / spent:.3g} (saved / spent)")
     for b, v in zip(bars, (saved, spent)):
         ax.text(b.get_x() + b.get_width() / 2, v, f"{v:.3g}",
                 ha="center", va="bottom", fontsize=9)
@@ -256,7 +256,7 @@ def _summarise(rows1: list[dict], rows2: list[dict]) -> str:
         f"static_isolation total energy = {static_e:.4g} J vs m4_oef {oef_e:.4g} J "
         f"(static has zero runtime churn; its one-time setup is reported as E_setup).",
         "",
-        "## exp2 — LLM EROI (H10)",
+        "## exp2 — Mock Oracle EROI (H10)",
         "",
         "| arm | Wire_Bytes_Total | E_tx_J | E_cpu_J | E_llm_J | E_tx_saved_J | EROI |",
         "|---|---|---|---|---|---|---|",
@@ -280,14 +280,14 @@ def _summarise(rows1: list[dict], rows2: list[dict]) -> str:
     llm_saved = _mean_ci([r["E_tx_saved_J"] for r in rows2 if r["arm"] == "llm_compiler"])[0]
     llm_spent = _mean_ci([r["E_llm_J"] for r in rows2 if r["arm"] == "llm_compiler"])[0]
     eroi = llm_saved / llm_spent if llm_spent > 0 else float("nan")
-    h10 = "CONFIRMED" if eroi > 1.0 else "REFUTED"
+    h10 = "STIPULATION-DEPENDENT"
     lines += [
-        f"**H10 LLM EROI — {h10}.**",
+        f"**H10 Mock Oracle EROI — {h10}.**",
         f"Transmission energy saved = {llm_saved:.4g} J vs inference cost "
-        f"{llm_spent:.4g} J -> EROI = {eroi:.3g} "
-        f"({'> 1' if eroi > 1 else '< 1'}). At the stipulated 1e-7 J/byte and "
-        f"20 J/call, the LLM only breaks even once a flow saves ~200 MB of "
-        f"transmission — far more than the ~1400-byte payload modelled.",
+        f"{llm_spent:.4g} J -> EROI = {eroi:.3g}. The Mock Oracle is viable "
+        f"*if and only if* inference energy falls to <= {llm_saved:.3g} J in "
+        f"total (break-even E_llm = E_tx_saved), i.e. ~{llm_saved/llm_spent:.1e}x "
+        f"the stipulated {llm_spent:.0f} J.",
         "",
     ]
     return "\n".join(lines)
@@ -308,7 +308,7 @@ def main() -> int:
         "E_churn_J", "E_setup_J", "Total_Edits", "Churn_Edits", "Setup_Edits",
     ])
 
-    print("exp2 (H10 LLM EROI) ...", flush=True)
+    print("exp2 (H10 Mock Oracle EROI) ...", flush=True)
     rows2 = run_exp2(seeds)
     _write_csv(args.out_dir / "m6_exp2_raw.csv", rows2, [
         "experiment", "arm", "seed", "Wire_Bytes_Total", "E_tx_J", "E_cpu_J",

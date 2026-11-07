@@ -18,7 +18,7 @@ m5_ewma_mkb churn energy = 257.7 J vs m4_raw_mkb 239.7 J (higher — the EWMA ar
 **H11 static-isolation energy baseline — CONFIRMED.**
 static_isolation total energy = 918.2 J vs m4_oef 1119 J (static has zero runtime churn; its one-time setup is reported as E_setup).
 
-## exp2 — LLM EROI (H10)
+## exp2 — Mock Oracle EROI (H10)
 
 | arm | Wire_Bytes_Total | E_tx_J | E_cpu_J | E_llm_J | E_tx_saved_J | EROI |
 |---|---|---|---|---|---|---|
@@ -26,5 +26,5 @@ static_isolation total energy = 918.2 J vs m4_oef 1119 J (static has zero runtim
 | greedy_heuristic | 2673.9 | 0.0002674 | 0.00042 | 0 | 0.0001976 | — |
 | llm_compiler | 2673.9 | 0.0002674 | 0.00042 | 60 | 0.0001976 | 3.29e-06 |
 
-**H10 LLM EROI — REFUTED.**
-Transmission energy saved = 0.0001976 J vs inference cost 60 J -> EROI = 3.29e-06 (< 1). At the stipulated 1e-7 J/byte and 20 J/call, the LLM only breaks even once a flow saves ~200 MB of transmission — far more than the ~1400-byte payload modelled.
+**H10 Mock Oracle EROI — STIPULATION-DEPENDENT.**
+Transmission energy saved = 0.0001976 J vs inference cost 60 J -> EROI = 3.29e-06. The Mock Oracle is viable *if and only if* inference energy falls to <= 0.000198 J in total (break-even E_llm = E_tx_saved), i.e. ~3.3e-06x the stipulated 60 J.

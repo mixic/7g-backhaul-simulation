@@ -22,7 +22,8 @@ authentication cost is compared over 30 paired seeds:
 
   * ``static_iso``      a fixed Fragment->Encrypt->Compress order
   * ``greedy_heuristic`` a hand-written two-line rule
-  * ``llm_compiler``    a mocked deterministic LLM Oracle, bounded by the
+  * ``llm_compiler``    the Mock Oracle (a mocked deterministic stack compiler,
+                        not an LLM), bounded by the
                         P1/P5/P3 guardrails in ``simulation/guardrails.py``
 
 The Oracle is a *mock* (no API, no latency) and its occasional hallucination is
@@ -234,7 +235,7 @@ def _write_csv(path: Path, rows: list[dict], fields: list[str]) -> None:
 def plot_overhead(rows: list[dict], out_dir: Path):
     arms = ("static_iso", "greedy_heuristic", "llm_compiler")
     phases = ("fiber", "microwave", "satellite")
-    labels = ("Static ISO", "Greedy", "LLM + guardrails")
+    labels = ("Static ISO", "Greedy", "Mock Oracle + guardrails")
     colors = ("#c0392b", "#1f6feb", "#27ae60")
 
     means = {arm: {} for arm in arms}
@@ -267,7 +268,7 @@ def _summarise(rows: list[dict]) -> str:
         "## M5.2 (H7) — Cognitive Stack Compiler",
         "",
         "30 paired seeds, one Fiber -> Microwave -> Satellite boundary sequence.",
-        "The Oracle is a mocked deterministic LLM (no API); its hallucinations are",
+        "The Oracle is a Mock Oracle (no API); its hallucinations are",
         "logged so the guardrail is measured, not asserted.",
         "",
         "## Mean metrics per arm",
@@ -316,7 +317,7 @@ def _summarise(rows: list[dict]) -> str:
     n_hall = sum(r["Hallucinations"] for r in rows if r["arm"] == "llm_compiler")
     n_int = sum(r["Guardrail_Interventions"] for r in rows if r["arm"] == "llm_compiler")
     lines += [
-        "## Guardrail behaviour (the LLM arm only)",
+        "## Guardrail behaviour (the Mock Oracle arm only)",
         "",
         f"The mocked Oracle produced **{n_hall}** hallucinated proposals and the "
         f"guardrail intervened **{n_int}** times. Auth acceptance stayed at "
