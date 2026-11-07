@@ -200,9 +200,9 @@ run against ns-3.49 over the same 30 seeds. The static stack reproduces **exactl
 and incompressible-compression (+11) overheads. The optimal stack reproduces the same
 *structure*; its mean is ~2 % lower in SimPy (2673.9 B) than in ns-3 (2730.4 B) purely
 because Python on Windows bundles zlib-ng 1.3.1 (a better compressor) while the ns-3
-build links stock zlib 1.3.1. The EROI verdict is unchanged: 3.29·10⁻⁶ (SimPy) vs
+build links stock zlib 1.3.1. The EROI is unchanged: 3.29·10⁻⁶ (SimPy) vs
 3.20·10⁻⁶ (ns-3), both five orders of magnitude below break-even, so **H10 remains
-refuted**. See `results/m6/ns3_cross_validation.md`.
+stipulation-dependent** at the stipulated rates. See `results/m6/ns3_cross_validation.md`.
 
 ## 6. Conclusion
 
