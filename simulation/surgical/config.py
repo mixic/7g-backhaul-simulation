@@ -76,6 +76,8 @@ OEF              = "oef_surgical"       # M4: OEF-compensated surgical control
 MKB              = "mkb"                # M4: multidimensional kinematic baselining
 MKB_NO_OEF       = "mkb_no_oef"         # M4: MKB vector trigger, OEF actuator disabled
 MKB_EWMA         = "m5_ewma_mkb"        # M5.1: EWMA-smoothed vector trigger + RER
+DUAL_BAND        = "dual_band_lpf_hpf"  # M7: dual-band (LPF + HPF) trigger + RER
+LPF_ONLY         = "lpf_only"           # M7: single LPF baseline (no HPF), H13 baseline
 
 MAIN_CONTROLLERS = [K8S, PRESSURE, SURGICAL]
 ALL_CONTROLLERS = [K8S, PRESSURE, PRESSURE_TUNED, SURGICAL, SURGICAL_UNLIM,
@@ -98,6 +100,8 @@ LABELS = {
     OEF: "OEF-compensated surgical control",
     MKB: "Multidimensional kinematic baselining",
     MKB_NO_OEF: "MKB vector trigger (OEF actuator disabled)",
+    DUAL_BAND: "Dual-band filter (LPF + HPF) + RER",
+    LPF_ONLY: "Single LPF baseline (no HPF)",
 }
 
 
@@ -173,6 +177,13 @@ class SimConfig:
     mkb_beta_tau: float = 1.0         # EWMA time constant for the acceleration vector (s)
     mkb_rer_frac: float = 0.8         # RER band: pre-trigger at this fraction of the floor threshold
     mkb_rer_prob: float = 0.05        # RER redirect probability per affected flow
+
+    # ---- M7: dual-band (LPF + HPF) filter ----
+    db_tau_lpf: float = 2.0           # LPF EWMA time constant (s)
+    db_k: float = 3.0                 # HPF threshold: k * noise_std of the residual
+    db_window: float = 6.0            # rolling-std window (s)
+    db_floor_abs: float = 0.02        # absolute floor on the threshold (utilization)
+    db_fixed_threshold: float = 0.10  # lpf_only fixed residual threshold (utilization)
 
     # ---- surgical controller ----
     spike_k: float = 4.0             # trigger: residual > k * EMA(|residual|)

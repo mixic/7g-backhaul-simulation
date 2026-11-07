@@ -571,6 +571,30 @@ The honest verdicts:
   (918.2 J total) and is the cheapest arm under the shockwave, with its one-time
   per-flow setup reported separately.
 
+## M7: Dual-band (LPF + HPF) filtering for DDoS protection
+
+[`simulation/filters.py`](simulation/filters.py) adds the dual-band filter
+(LPF = EWMA baseline, HPF = raw − LPF residual, dynamic k-sigma threshold) and
+[`simulation/dual_band_controller.py`](simulation/dual_band_controller.py) wires
+it to the surgical/RER actuators. [`run_m7_experiments.py`](run_m7_experiments.py)
+compares it against raw MKB and a single-LPF baseline on 30 paired seeds.
+
+```powershell
+py run_m7_experiments.py    # 30 seeds -> results/m7/*.csv + 3 PNGs + summary
+```
+
+The honest verdicts:
+
+- **H13 (dual-band detection) — REFUTED.** The dual-band filter detects fastest
+  (0.20 s vs 0.22 s LPF-only, 1.51 s raw MKB) but with **115 false positives**
+  over 30 seeds (vs 6 for LPF-only, 0 for raw MKB). Its dynamic k-sigma threshold
+  adapts down during quiet periods and is crossed by isolated Poisson batch
+  arrivals — the jitter cost is reported, not tuned away.
+- **H14 (protection efficacy) — REFUTED.** The false positives drive churn to
+  988 J (vs 238 J for raw MKB) and cut legitimate goodput to 0.66, below the
+  >0.90 target. The single-LPF baseline (fixed threshold) is the best arm:
+  0.915 goodput with only 6 false positives.
+
 ## Repository structure
 
 ```text
@@ -745,6 +769,8 @@ The honest verdicts:
 │   ├── guardrails.py             # P1-P5 commutation guardrails (M5)
 │   ├── llm_compiler.py           # Mocked LLM Oracle + stack compiler (M5)
 │   ├── energy.py                 # Stipulated energy accounting (M6)
+│   ├── filters.py                # Dual-band LPF + HPF filters (M7)
+│   ├── dual_band_controller.py   # Dual-band surgical/RER controller (M7)
 │   ├── surgical/                 # SimPy 100-node fabric, baselines, surgical controller
 │   ├── savant/                   # Compensatory hyper-specialisation (H4)
 │   ├── layering/                 # Typed C/E/T/F/S codec, stacks and survival model
@@ -822,6 +848,7 @@ The honest verdicts:
 │   ├── test_layering_aes.py
 │   ├── test_m5.py
 │   ├── test_energy.py
+│   ├── test_m7_filters.py
 │   └── test_vision_benchmark.py
 ├── CITATION.cff                  # Citation metadata (CFF 1.2.0)
 ├── GOAL.md                       # Current testbed goal and milestone status
@@ -830,6 +857,7 @@ The honest verdicts:
 ├── run_m4_experiments.py         # M4-Execution OEF/MKB benchmark -> results/m4/
 ├── run_m5_experiments.py         # M5 Cognitive Stack Compiler benchmark -> results/m5/
 ├── run_m6_experiments.py         # M6 energy-aware evaluation -> results/m6/
+├── run_m7_experiments.py         # M7 dual-band filtering -> results/m7/
 ├── results/
 │   ├── m3/                       # 30-seed M3 CSVs, summary and PNG
 │   ├── m4/                       # M4 benchmark outputs
@@ -841,6 +869,7 @@ The honest verdicts:
 │   │   └── oef_starvation.png
 │   ├── m5/                       # M5 CSVs, summary and PNGs
 │   ├── m6/                       # M6 CSVs, summary and PNGs
+│   ├── m7/                       # M7 CSVs, summary and PNGs
 │   └── m4_summary.md             # M4 summary copy at results root
 ├── Ni10.pdf
 ├── LICENSE

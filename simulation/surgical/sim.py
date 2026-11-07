@@ -296,6 +296,12 @@ def run_and_score(cfg):
         "edit_times": res.get("edit_times", np.zeros(0)),
         "total_served_bytes": res.get("total_served_bytes", 0.0),
         "mkb_spikes": res.get("mkb_spikes", np.zeros((0, 2))),
+        "dual_band_first_trigger": (float(np.min(res["detections"][:, 0]))
+                                    if len(res.get("detections", [])) else float("nan")),
+        "dual_band_spike_count": int(len(res.get("dual_band_spikes", []))),
+        "detection_count": int(len(res.get("detections", []))),
+        "detections": res.get("detections", np.zeros((0, 2))),
+        "filter_series": res.get("filter_series", np.zeros((0, 4))),
         "reasm_peak": float(np.max(reasm)) if len(reasm) else 0.0,
         "reasm_deadlock_frac": deadlock_frac,
         "reasm_drops": int((res["drop_reason"] == "reorder_overflow").sum()),

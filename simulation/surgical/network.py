@@ -505,6 +505,12 @@ class SimRun:
                                      dtype=np.float64),
             "rer_events": np.asarray(getattr(self.controller, "rer_events", []),
                                      dtype=np.float64),
+            "dual_band_spikes": np.asarray(
+                getattr(self.controller, "dual_band_spikes", []), dtype=np.float64),
+            "detections": np.asarray(
+                getattr(self.controller, "detections", []), dtype=np.float64),
+            "filter_series": np.asarray(
+                getattr(self.controller, "filter_series", []), dtype=np.float64),
             "edit_times": np.array([e.t for e in self.ledger.edits], dtype=float),
             "total_served_bytes": float(sum(tel.served_bytes
                                             for tel in self.tele.values())),

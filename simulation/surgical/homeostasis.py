@@ -31,7 +31,7 @@ __all__ = ["OefController", "OefSurgicalController", "MkbController",
 
 
 def make_homeostasis_controller(cfg, sim):
-    from .config import MKB, MKB_EWMA, MKB_NO_OEF, OEF
+    from .config import DUAL_BAND, LPF_ONLY, MKB, MKB_EWMA, MKB_NO_OEF, OEF
 
     if cfg.controller == OEF:
         return OefController(cfg, sim)
@@ -41,4 +41,10 @@ def make_homeostasis_controller(cfg, sim):
         return MkbController(cfg, sim, oef_on=False)
     if cfg.controller == MKB_EWMA:
         return EwmaMkbController(cfg, sim)
+    if cfg.controller == DUAL_BAND:
+        from ..dual_band_controller import DualBandController
+        return DualBandController(cfg, sim)
+    if cfg.controller == LPF_ONLY:
+        from ..dual_band_controller import LpfOnlyController
+        return LpfOnlyController(cfg, sim)
     return None
