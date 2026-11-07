@@ -647,7 +647,8 @@ The honest verdicts:
 │   ├── marder-goaillard-cross-correlation.md # Degeneracy/homeostasis mapping
 │   ├── kinematics-filtering.md   # Raw-derivative noise + alpha-beta-gamma/RER (H8)
 │   ├── kalman-filtering-foundation.md # Kalman correlation (EWMA/ABG/MKB as steady-state)
-│   ├── kalman-filtering-peer-review.md # Peer review of the Kalman foundation doc
+│   ├── kalman-filtering-internal-review.md # Internal review of the Kalman foundation doc
+│   ├── break-even-analysis.md    # Stipulated-constant break-even thresholds (M5/M6)
 │   ├── kinematic-fabric.md       # Role-fluid kinematic fabric in ns-3
 │   ├── ip46-services.md          # IPv4 vs IPv6 overhead and agnostic services
 │   ├── layering-predictions.md   # Frozen P1-P7 encapsulation predictions

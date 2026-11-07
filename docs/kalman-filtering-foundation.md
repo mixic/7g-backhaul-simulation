@@ -8,8 +8,8 @@ Filtering: Theory and Practice Using MATLAB* (2nd ed.). John Wiley & Sons.
 **Project Context:** 7G-Backhaul-Simulation (Surgical, Rate-Controlled
 Multicooperative Backhauls).
 
-> **Peer-reviewed.** This document was revised after a peer review (see
-> [`kalman-filtering-peer-review.md`](kalman-filtering-peer-review.md)). Two
+> **Internal review.** This document was revised after an internal review (see
+> [`kalman-filtering-internal-review.md`](kalman-filtering-internal-review.md)). Two
 > corrections matter most: (1) the full α-β-γ filter was *attempted and reverted*
 > in M5.1, so the shipped controller is the two-EWMA form, not α-β-γ; and (2) the
 > original "Riccati cost" argument for avoiding the full Kalman filter was
@@ -254,14 +254,12 @@ untunable matrices `(Q, R)` that have no stationary ground truth.
 
 The correlation between our 2010 EWMA, the M5 ABG filter, and the Kalman Filter
 framework is mathematically precise. However, the empirical M4 and M6 results
-dictate a strict boundary on this theory. The central insight of this work is
-that biologically-inspired and fluid-dynamic control laws face a hard
-mathematical floor in discrete packet networks. While continuous control (EWMA,
-Kalman, Fick's Principle) is mathematically elegant, the zero-sum and quantized
-nature of finite packet buffers means that a simple, static per-flow isolation
-mechanism consistently outperforms continuous biological compensation in both
-goodput and energy efficiency. We identify the discrete packet boundary as the
-fundamental limit of bio-inspired network control.
+dictate a strict boundary *on this model*: in this testbed, with these controllers
+and workloads, a simple static per-flow isolation mechanism outperforms the
+continuous biological compensation on both goodput and energy efficiency, because
+the zero-sum and quantised nature of finite packet buffers means its churn and
+inference costs are not recovered. This bounds these controllers and loads; it is
+**not** a claim of a fundamental limit on bio-inspired network control.
 
 ## 7. Cross-references
 

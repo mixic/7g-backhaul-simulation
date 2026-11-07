@@ -180,6 +180,13 @@ deterministic Oracle — its 20 J/call is a stipulation, and a real local model 
 benchmarked separately. (4) The transmission term is the only energy component an ns-3
 packet-level simulation can independently confirm.
 
+**Stipulated-constant sensitivity.** Because the verdicts compare stipulated costs, we
+restate them as break-even thresholds (see [`break-even-analysis.md`](break-even-analysis.md)).
+H11 holds for any churn cost above ≈0.19 J/edit (27× below the 5 J stipulation); H9 is
+independent of the constant (the EWMA arm issues 7.5 % more edits); H10 breaks even only
+if a flow saves ≈600 MB of wire per three-call transition. The verdicts therefore hold
+across a wide range of stipulations, not only the stated ones.
+
 **ns-3 cross-validation (done).** The transmission-byte arithmetic (the ns-3-measurable
 part of H10) was re-derived independently in `validation/ns3/m6-energy-transition.cc` and
 run against ns-3.49 over the same 30 seeds. The static stack reproduces **exactly**
@@ -208,13 +215,13 @@ EWMA (86.7 %) and raw MKB (85.2 %) controllers. The LLM stack compiler showed an
 Return on Investment (EROI) of 3·10⁻⁶, confirming it is practically unviable in its
 current form.
 
-The central insight of this work is that biologically-inspired and fluid-dynamic control
-laws face a hard mathematical floor in discrete packet networks. While continuous control
-(EWMA, Kalman, Fick's Principle) is mathematically elegant, the zero-sum and quantized
-nature of finite packet buffers means that a simple, static per-flow isolation mechanism
-consistently outperforms continuous biological compensation in both goodput and energy
-efficiency. We identify the discrete packet boundary as the fundamental limit of
-bio-inspired network control.
+The central finding of this work is that, **in this model and with these controllers
+and workloads**, a simple static per-flow isolation mechanism outperforms the
+continuous biological and fluid-dynamic compensation on both goodput and energy
+efficiency. While continuous control (EWMA, Kalman, Fick's Principle) is mathematically
+elegant, the zero-sum and quantised nature of finite packet buffers means its churn and
+inference costs are not recovered. This result bounds these controllers and loads; it is
+**not** a claim of a fundamental limit on bio-inspired network control.
 
 ---
 

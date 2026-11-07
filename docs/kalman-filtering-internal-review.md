@@ -1,7 +1,8 @@
-# Peer Review: Kalman Filtering and Its Correlation to Rate-Controlled Network State Estimation
+# Internal Review: Kalman Filtering and Its Correlation to Rate-Controlled Network State Estimation
 
-**Reviewer:** internal peer review (self-assessment against the project's
-Scientific Oath).
+**Reviewer:** internal review (self-assessment against the project's
+Scientific Oath). This is **not** external peer review; the real peer review is
+still ahead.
 **Document reviewed:** `kalman-filtering-foundation.md` (the submitted draft).
 **Disposition:** **Major revision required** — accepted after correction. The
 central thesis (EWMA/α-β-γ as steady-state Kalman filters) is *correct and worth
