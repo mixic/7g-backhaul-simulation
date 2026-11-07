@@ -16,7 +16,7 @@ and multidimensional kinematic baselining (MKB) — is often proposed as a way t
 stabilise congestion in heterogeneous backhaul. This paper tests it. Over M3–M6,
 on a 100-node three-medium SimPy fabric and 30 paired seeds, we compare static
 per-flow fair-queueing with the Fick-principle OEF actuator, the 4-D MKB trigger,
-an EWMA-smoothed trigger with Random Early Redirection, and an LLM stack compiler.
+an EWMA-smoothed trigger with Random Early Redirection, and a Mock Oracle stack compiler.
 The negative result is consistent: **in this simulated testbed, under the
 stipulated discrete packet model, static isolation outperformed continuous
 bio-inspired control** on legitimate goodput and on energy. We state the result as
@@ -60,7 +60,7 @@ differ only in their trigger.
   claim (the synchronous surgical edit, not the trigger, sets the peak) and is
   **refuted** on energy: it issues 7.5 % *more* edits than raw MKB.
 - **M6:** the energy audit makes the boundary explicit. `static_isolation` has
-  **zero runtime churn energy** and is the cheapest arm (918.2 J); the LLM
+  **zero runtime churn energy** and is the cheapest arm (918.2 J); the Mock Oracle
   compiler's EROI is ≈ 3·10⁻⁶ (see §4). The verdicts are restated as break-even
   thresholds in [`break-even-analysis.md`](break-even-analysis.md): H11 holds for
   any churn cost above ≈ 0.19 J/edit, and H9 is independent of the constant.

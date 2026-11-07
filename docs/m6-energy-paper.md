@@ -12,8 +12,8 @@
 
 We re-evaluate the M4/M5 controllers — static per-flow fair-queueing, the Fick-principle
 OEF actuator, the raw multidimensional kinematic baselining (MKB) trigger, its
-EWMA-smoothed successor, and an LLM-based stack compiler — under a *stipulated* energy
-model that assigns a Joule cost to transmission, CPU processing, state changes and LLM
+EWMA-smoothed successor, and a Mock Oracle stack compiler — under a *stipulated* energy
+model that assigns a Joule cost to transmission, CPU processing, state changes and Mock Oracle
 inference. Three hypotheses were pre-registered and tested over 30 paired seeds.
 
 * **H9 (EWMA energy efficiency) is refuted.** The EWMA-smoothed controller consumes
@@ -42,7 +42,7 @@ inspired *data-plane* controllers — OEF (the Fick principle) and MKB (multidim
 kinematic baselining) — do **not** beat static per-flow fair-queueing on legitimate
 goodput under a DDoS shockwave, and that the MKB vector trigger does not statistically
 cap the peak burst speed. M5 then moved the AI to the *control plane*: an EWMA-smoothed
-kinematic trigger plus Random Early Redirection (H8), and an LLM stack compiler bounded
+kinematic trigger plus Random Early Redirection (H8), and a Mock Oracle stack compiler bounded
 by the P1–P5 commutation guardrails (H7). H8 was refuted for the peak-burst clause; H7
 beat the static order but not a trivial greedy heuristic.
 
@@ -58,9 +58,9 @@ The three pre-registered hypotheses are:
 * **H9 — EWMA energy efficiency.** The EWMA-smoothed kinematic controller consumes
   significantly less total energy than the raw MKB controller under a DDoS shockwave,
   because of a large reduction in state-change energy `E_churn`.
-* **H10 — LLM EROI.** The Cognitive Stack Compiler achieves a positive energy return on
+* **H10 — Mock Oracle EROI.** The Cognitive Stack Compiler achieves a positive energy return on
   investment (EROI > 1.0) during a Fiber→Satellite transition: the transmission energy
-  saved by dynamic compression outweighs the LLM inference cost.
+  saved by dynamic compression outweighs the Mock Oracle inference cost.
 * **H11 — the fluidity energy penalty.** `static_isolation` remains the most
   energy-efficient baseline under DDoS, because the energy cost of maintaining
   continuous multi-role readiness outweighs its throughput benefit.
@@ -78,7 +78,7 @@ fabric introduced in M3 and reused unchanged through M5. Five arms are relevant 
 | `m4_oef` | Fick-principle OEF actuator on the 1-D trigger | M4 |
 | `m4_raw_mkb` | raw 4-D vector trigger (OEF off) | M4 |
 | `m5_ewma_mkb` | EWMA-smoothed vector trigger + RER | M5.1 |
-| `llm_compiler` | mocked LLM stack compiler + P1–P5 guardrails | M5.2 |
+| `llm_compiler` | Mock Oracle stack compiler + P1–P5 guardrails | M5.2 |
 
 ### 3.2 Stipulated energy model (`simulation/energy.py`)
 
@@ -92,7 +92,7 @@ hardware — so that transmission, CPU, churn and inference can be compared on o
 | Encrypt / compress | 100 cycles / byte |
 | EWMA / RER | 50 cycles / tick |
 | State change `E_churn` | 5.0 J / surgical edit |
-| LLM inference `E_llm` | 20.0 J / Oracle call |
+| Mock Oracle inference `E_llm` | 20.0 J / Oracle call |
 
 State-change energy is the dominant term: a surgical edit (queue flush, FIB update,
 context switch) is charged 5 J, which is five orders of magnitude above the CPU cost of
@@ -106,9 +106,9 @@ the model shows it is negligible next to churn.
   10 s DDoS shockwave at t = 30 s. Arms: `static_isolation`, `m4_oef`, `m4_raw_mkb`,
   `m5_ewma_mkb`. We separate *setup* edits (t < 8 s, a one-time cost) from *churn* edits
   (t ≥ 8 s), and charge only churn to `E_churn`; the setup is reported separately.
-* **Experiment 2 (H10) — LLM EROI.** A flow crosses Fiber (MTU 1500, 0 % loss,
+* **Experiment 2 (H10) — Mock Oracle EROI.** A flow crosses Fiber (MTU 1500, 0 % loss,
   compressible), Microwave (MTU 900, 1 % loss, random) and Satellite (MTU 500, 5 % loss,
-  compressible, NAT). Arms: `static_iso`, `greedy_heuristic`, `llm_compiler`. The LLM is
+  compressible, NAT). Arms: `static_iso`, `greedy_heuristic`, `llm_compiler`. The Mock Oracle is
   called once per phase (3 calls) and charged 20 J each.
 
 ## 4. Results
@@ -143,7 +143,7 @@ overhead without reducing churn.
 reported separately and is amortised across the flow's lifetime; the dynamic controllers
 pay their churn *per attack*.
 
-### 4.2 H10 — the LLM EROI
+### 4.2 H10 — the Mock Oracle EROI
 
 | arm | Wire_Bytes | E_tx (J) | E_cpu (J) | E_llm (J) | E_tx_saved (J) | EROI |
 |---|---:|---:|---:|---:|---:|---:|
@@ -151,15 +151,15 @@ pay their churn *per attack*.
 | greedy_heuristic | 2673.9 | 2.67·10⁻⁴ | 4.2·10⁻⁴ | 0 | 1.98·10⁻⁴ | — |
 | llm_compiler | 2673.9 | 2.67·10⁻⁴ | 4.2·10⁻⁴ | **60** | 1.98·10⁻⁴ | **3.29·10⁻⁶** |
 
-![LLM EROI](../results/m6/llm_eroi.png)
+![Mock Oracle EROI](../results/m6/llm_eroi.png)
 
-**H10 — refuted.** The compiler reduces wire bytes from 4650 to 2673.9 (−42 %), saving
-≈2·10⁻⁴ J of transmission. But it spends 60 J on three LLM calls, giving
-EROI = 1.98·10⁻⁴ / 60 ≈ **3.3·10⁻⁶** — five orders of magnitude below break-even. At the
-stipulated 10⁻⁷ J/byte, the LLM only recovers its 20 J/call once a flow saves ≈200 MB of
-wire; the modelled ~1.4 kB payload is far too small. The guardrail behaviour was clean
-(10 hallucinated proposals, all corrected, auth acceptance 100 %), but the *energy*
-economics do not close.
+**H10 — stipulation-dependent.** The compiler reduces wire bytes from 4650 to 2673.9
+(−42 %), saving ≈2·10⁻⁴ J of transmission. But it spends 60 J on three Mock Oracle
+calls, giving EROI = 1.98·10⁻⁴ / 60 ≈ **3.3·10⁻⁶**. It is viable **if and only if**
+inference energy falls to ≈2·10⁻⁴ J total (≈7·10⁻⁵ J/call), five orders of magnitude
+below the stipulated 20 J/call. The guardrail behaviour was clean (10 hallucinated
+proposals, all corrected, auth acceptance 100 %), but the *energy* economics do not
+close at the stipulated rates.
 
 ## 5. Discussion
 
@@ -167,18 +167,18 @@ economics do not close.
 stipulated, but the *relative* ordering is robust: state-change energy (5 J/edit)
 dominates CPU (≈10⁻⁵ J) and transmission (≈10⁻⁴ J per phase), so a controller's energy
 footprint is essentially its edit count. On that metric `static_isolation` — which makes
-no runtime edits at all — wins, and the EWMA/RER and LLM mechanisms add energy without a
+no runtime edits at all — wins, and the EWMA/RER and Mock Oracle mechanisms add energy without a
 matching saving.
 
 **Relationship to M4/M5.** This closes the narrative. The biological data-plane
 controllers fail on zero-sum grounds (M4); raw kinematics is unstable (M4); EWMA+RER is
-mathematically stable but does *not* reduce churn (M5.1, and now H9); and the LLM
+mathematically stable but does *not* reduce churn (M5.1, and now H9); and the Mock Oracle
 compiler works against static layering but is energy-uneconomic per call (M5.2, and now
 H10). The one robust, energy-competitive answer remains static fair-queueing.
 
 **Scope and limitations.** (1) The energy model is *stipulated*; no hardware was
 measured. (2) The transmission term is cross-validated against ns-3 (below); the churn,
-CPU and inference terms have no packet-level counterpart. (3) The LLM is a mocked
+CPU and inference terms have no packet-level counterpart. (3) The Mock Oracle is a mocked
 deterministic Oracle — its 20 J/call is a stipulation, and a real local model must be
 benchmarked separately. (4) The transmission term is the only energy component an ns-3
 packet-level simulation can independently confirm. (5) The static baseline in SimPy
@@ -207,7 +207,7 @@ refuted**. See `results/m6/ns3_cross_validation.md`.
 ## 6. Conclusion
 
 Under a stipulated but consistently applied energy model, neither the biological
-controllers (OEF/MKB) nor the AI controllers (EWMA/RER, LLM compiler) justify their
+controllers (OEF/MKB) nor the AI controllers (EWMA/RER, Mock Oracle) justify their
 computational overhead in Joules. Static per-flow fair-queueing is simultaneously the
 most robust and the most energy-efficient option for the DDoS scenario tested. The
 honest conclusion of M6 is that, on current evidence, **the biological/AI complexity is
@@ -217,7 +217,7 @@ sophistication *could* pay for itself.
 
 Our energy-aware evaluation demonstrates that static per-flow isolation requires zero
 runtime churn energy and achieves a final delivered goodput of 88.1 %, compared to the
-EWMA (86.7 %) and raw MKB (85.2 %) controllers. The LLM stack compiler showed an Energy
+EWMA (86.7 %) and raw MKB (85.2 %) controllers. The Mock Oracle stack compiler showed an Energy
 Return on Investment (EROI) of 3·10⁻⁶, confirming it is practically unviable in its
 current form.
 
