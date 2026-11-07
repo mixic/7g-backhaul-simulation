@@ -254,12 +254,10 @@ untunable matrices `(Q, R)` that have no stationary ground truth.
 
 The correlation between our 2010 EWMA, the M5 ABG filter, and the Kalman Filter
 framework is mathematically precise. However, the empirical M4 and M6 results
-dictate a strict boundary *on this model*: in this testbed, with these controllers
-and workloads, a simple static per-flow isolation mechanism outperforms the
-continuous biological compensation on both goodput and energy efficiency, because
-the zero-sum and quantised nature of finite packet buffers means its churn and
-inference costs are not recovered. This bounds these controllers and loads; it is
-**not** a claim of a fundamental limit on bio-inspired network control.
+dictate a strict boundary *on this model*: **in this simulated testbed, under the
+stipulated discrete packet model, static per-flow isolation outperformed continuous
+bio-inspired control.** This bounds these controllers and workloads; it is not a
+general claim about bio-inspired control.
 
 ## 7. Cross-references
 

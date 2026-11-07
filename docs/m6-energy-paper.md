@@ -155,11 +155,13 @@ pay their churn *per attack*.
 
 **H10 — stipulation-dependent.** The compiler reduces wire bytes from 4650 to 2673.9
 (−42 %), saving ≈2·10⁻⁴ J of transmission. But it spends 60 J on three Mock Oracle
-calls, giving EROI = 1.98·10⁻⁴ / 60 ≈ **3.3·10⁻⁶**. It is viable **if and only if**
-inference energy falls to ≈2·10⁻⁴ J total (≈7·10⁻⁵ J/call), five orders of magnitude
-below the stipulated 20 J/call. The guardrail behaviour was clean (10 hallucinated
-proposals, all corrected, auth acceptance 100 %), but the *energy* economics do not
-close at the stipulated rates.
+calls, giving EROI = 1.98·10⁻⁴ / 60 ≈ **3.3·10⁻⁶**. The break-even is exact:
+E_llm_breakeven = E_tx_saved = 1.976·10⁻⁴ J in total (≈6.6·10⁻⁵ J/call). **The Mock
+Oracle stack compiler is viable if and only if inference energy can be reduced to
+≤ 1.976·10⁻⁴ J. Under our stipulated 60 J (3 × 20 J) inference cost, it is
+unviable.** The guardrail behaviour was clean (10 hallucinated proposals, all
+corrected, auth acceptance 100 %), but the *energy* economics do not close at the
+stipulated rates.
 
 ## 5. Discussion
 
@@ -204,6 +206,11 @@ build links stock zlib 1.3.1. The EROI is unchanged: 3.29·10⁻⁶ (SimPy) vs
 3.20·10⁻⁶ (ns-3), both five orders of magnitude below break-even, so **H10 remains
 stipulation-dependent** at the stipulated rates. See `results/m6/ns3_cross_validation.md`.
 
+**Scope of the ns-3 check.** This cross-validation verifies the **C++ port fidelity** —
+that an independent implementation reproduces the SimPy arithmetic — **not** the
+underlying mathematical model. A faithful port of a wrong model is still wrong; the
+model is stipulated (§3.2), so this bounds the port, not the physics.
+
 ## 6. Conclusion
 
 Under a stipulated but consistently applied energy model, neither the biological
@@ -221,13 +228,12 @@ EWMA (86.7 %) and raw MKB (85.2 %) controllers. The Mock Oracle stack compiler s
 Return on Investment (EROI) of 3·10⁻⁶, confirming it is practically unviable in its
 current form.
 
-The central finding of this work is that, **in this model and with these controllers
-and workloads**, a simple static per-flow isolation mechanism outperforms the
-continuous biological and fluid-dynamic compensation on both goodput and energy
-efficiency. While continuous control (EWMA, Kalman, Fick's Principle) is mathematically
-elegant, the zero-sum and quantised nature of finite packet buffers means its churn and
-inference costs are not recovered. This result bounds these controllers and loads; it is
-**not** a claim of a fundamental limit on bio-inspired network control.
+The central finding is precise: **in this simulated testbed, under the stipulated
+discrete packet model, static per-flow isolation outperformed continuous bio-inspired
+control.** Continuous control (EWMA, Kalman, Fick's Principle) is mathematically
+elegant, but the zero-sum and quantised nature of finite packet buffers means its churn
+and inference costs are not recovered. This bounds these controllers and workloads; it
+is not a general claim about bio-inspired control.
 
 ---
 

@@ -18,11 +18,11 @@ on a 100-node three-medium SimPy fabric and 30 paired seeds, we compare static
 per-flow fair-queueing with the Fick-principle OEF actuator, the 4-D MKB trigger,
 an EWMA-smoothed trigger with Random Early Redirection, and a Mock Oracle stack compiler.
 The negative result is consistent: **in this simulated testbed, under the
-stipulated discrete packet model, static isolation outperformed continuous
-bio-inspired control** on legitimate goodput and on energy. We state the result as
-a **boundary on these controllers and workloads**, not as a fundamental limit on
-bio-inspired control, and we restate each verdict as a break-even threshold so it
-holds under any stipulation (see [`break-even-analysis.md`](break-even-analysis.md)).
+stipulated discrete packet model, static per-flow isolation outperformed
+continuous bio-inspired control.** We state the result as a **boundary on these
+controllers and workloads, not a general claim about bio-inspired control**, and we
+restate each verdict as a break-even threshold so it holds under any stipulation
+(see [`break-even-analysis.md`](break-even-analysis.md)).
 
 ## 1. Introduction
 
