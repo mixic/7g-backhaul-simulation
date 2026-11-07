@@ -646,6 +646,8 @@ The honest verdicts:
 │   ├── homeostasis-biological-topology.md # Fick/homeostasis theory mapping
 │   ├── marder-goaillard-cross-correlation.md # Degeneracy/homeostasis mapping
 │   ├── kinematics-filtering.md   # Raw-derivative noise + alpha-beta-gamma/RER (H8)
+│   ├── kalman-filtering-foundation.md # Kalman correlation (EWMA/ABG/MKB as steady-state)
+│   ├── kalman-filtering-peer-review.md # Peer review of the Kalman foundation doc
 │   ├── kinematic-fabric.md       # Role-fluid kinematic fabric in ns-3
 │   ├── ip46-services.md          # IPv4 vs IPv6 overhead and agnostic services
 │   ├── layering-predictions.md   # Frozen P1-P7 encapsulation predictions
