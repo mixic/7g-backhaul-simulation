@@ -549,6 +549,28 @@ guardrail caught every hallucinated proposal and kept auth acceptance at 100 %.
 The Oracle decision time is measured but is sub-millisecond because the Oracle
 is a mock; a real LLM must be benchmarked separately before any latency claim.
 
+## M6: Energy-aware evaluation
+
+[`simulation/energy.py`](simulation/energy.py) adds a stipulated energy model
+(1e-7 J/byte transmission, 1e-9 J/cycle CPU, 5 J per surgical edit, 20 J per
+LLM call — nothing is a hardware measurement). [`run_m6_experiments.py`](run_m6_experiments.py)
+re-audits every controller on total energy and energy-return-on-investment.
+
+```powershell
+py run_m6_experiments.py    # 30 seeds -> results/m6/*.csv + 3 PNGs + summary
+```
+
+The honest verdicts:
+
+- **H9 (EWMA energy) — REFUTED.** m5_ewma_mkb consumes *more* churn energy than
+  the raw 4D (257.7 vs 239.7 J) because the EWMA arm edits more, not less.
+- **H10 (LLM EROI) — REFUTED.** The compiler saves ~2e-4 J of transmission but
+  spends 60 J on inference: EROI ≈ 3e-6. At the stipulated rates the LLM only
+  breaks even once a flow saves ~200 MB of wire.
+- **H11 (static baseline) — CONFIRMED.** static_isolation has zero runtime churn
+  (918.2 J total) and is the cheapest arm under the shockwave, with its one-time
+  per-flow setup reported separately.
+
 ## Repository structure
 
 ```text
@@ -722,6 +744,7 @@ is a mock; a real LLM must be benchmarked separately before any latency claim.
 │   ├── mkb_controller.py         # 4D kinematic baselining controller (H6)
 │   ├── guardrails.py             # P1-P5 commutation guardrails (M5)
 │   ├── llm_compiler.py           # Mocked LLM Oracle + stack compiler (M5)
+│   ├── energy.py                 # Stipulated energy accounting (M6)
 │   ├── surgical/                 # SimPy 100-node fabric, baselines, surgical controller
 │   ├── savant/                   # Compensatory hyper-specialisation (H4)
 │   ├── layering/                 # Typed C/E/T/F/S codec, stacks and survival model
@@ -798,6 +821,7 @@ is a mock; a real LLM must be benchmarked separately before any latency claim.
 │   ├── test_savant.py
 │   ├── test_layering_aes.py
 │   ├── test_m5.py
+│   ├── test_energy.py
 │   └── test_vision_benchmark.py
 ├── CITATION.cff                  # Citation metadata (CFF 1.2.0)
 ├── GOAL.md                       # Current testbed goal and milestone status
@@ -805,6 +829,7 @@ is a mock; a real LLM must be benchmarked separately before any latency claim.
 ├── run_m3_experiments.py         # M3 paired-seed runner -> results/m3/
 ├── run_m4_experiments.py         # M4-Execution OEF/MKB benchmark -> results/m4/
 ├── run_m5_experiments.py         # M5 Cognitive Stack Compiler benchmark -> results/m5/
+├── run_m6_experiments.py         # M6 energy-aware evaluation -> results/m6/
 ├── results/
 │   ├── m3/                       # 30-seed M3 CSVs, summary and PNG
 │   ├── m4/                       # M4 benchmark outputs
@@ -814,7 +839,8 @@ is a mock; a real LLM must be benchmarked separately before any latency claim.
 │   │   ├── oef_vs_goodput.png
 │   │   ├── peak_burst_cap.png
 │   │   └── oef_starvation.png
-│   ├── m5/                       # M5 CSVs, summary and PNG
+│   ├── m5/                       # M5 CSVs, summary and PNGs
+│   ├── m6/                       # M6 CSVs, summary and PNGs
 │   └── m4_summary.md             # M4 summary copy at results root
 ├── Ni10.pdf
 ├── LICENSE

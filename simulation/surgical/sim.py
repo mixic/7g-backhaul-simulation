@@ -294,6 +294,7 @@ def run_and_score(cfg):
         "mean_util": mean_util,
         "mean_oef": mean_oef,
         "edit_times": res.get("edit_times", np.zeros(0)),
+        "total_served_bytes": res.get("total_served_bytes", 0.0),
         "mkb_spikes": res.get("mkb_spikes", np.zeros((0, 2))),
         "reasm_peak": float(np.max(reasm)) if len(reasm) else 0.0,
         "reasm_deadlock_frac": deadlock_frac,

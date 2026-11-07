@@ -506,6 +506,8 @@ class SimRun:
             "rer_events": np.asarray(getattr(self.controller, "rer_events", []),
                                      dtype=np.float64),
             "edit_times": np.array([e.t for e in self.ledger.edits], dtype=float),
+            "total_served_bytes": float(sum(tel.served_bytes
+                                            for tel in self.tele.values())),
         }
 
 
