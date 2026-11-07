@@ -4,10 +4,11 @@
 committed before any harness code).
 **Results generated:** real-stack harness run on WSL2 as root (`wsl -u root`);
 raw observations in `validation/layering/results/real_stack_observations.csv`.
-**Verdict summary:** **P8a, P8b, P8c and P9 CONFIRMED; P11 INCONCLUSIVE; P10 and
-P12 NOT RUN in this pass.** The earlier "NOT RUN" disposition is superseded: this
-host *does* provide namespaces, nftables, WireGuard and the xfrm (`esp4`/`ah4`)
-facilities, so four of the five predictions could be executed.
+**Verdict summary:** **P8a, P8b, P8c, P9 and P12 CONFIRMED; P10 partially
+confirmed (the `Y→W` ordering) / inconclusive (`W→Y`); P11 INCONCLUSIVE.** The
+earlier "NOT RUN" disposition is superseded: this host *does* provide namespaces,
+nftables, WireGuard and the xfrm (`esp4`/`ah4`) facilities, so four of the five
+predictions could be executed in full.
 
 ## Status
 
@@ -17,9 +18,9 @@ facilities, so four of the five predictions could be executed.
 | P8b (ESP tunnel through NAT) | **CONFIRMED** | control 50/50, NAT 50/50 |
 | P8c (WireGuard through NAT) | **CONFIRMED** | control 50/50, NAT 50/50; peer endpoint = NAT address `10.200.2.1` |
 | P9 (WireGuard wire overhead) | **CONFIRMED** | all 9 lengths exact: 92, 108, 124, 124, 140, 172, 1068, 1084, 1468 B |
-| P10 (IPIP/WireGuard quantisation) | **NOT RUN** | not attempted in this pass |
-| P11 (tc pedit UDP-length rewrite) | **INCONCLUSIVE** | cases a/b delivered 0/50 as predicted, but the inert ToS control (c) also delivered 0/50, so the setup is not validated |
-| P12 (ESP transport + inner checksum) | **NOT RUN** | not attempted in this pass |
+| P10 (IPIP/WireGuard quantisation) | **PARTIAL** | `Y→W` matches `60+16·⌈(L+20)/16⌉` for 7/8 lengths; `W→Y` not captured |
+| P11 (tc pedit UDP-length rewrite) | **INCONCLUSIVE** | no-op control 50/50, cases a/b 0/50, but the inert ToS control (c) also 0/50 |
+| P12 (ESP transport + inner checksum) | **CONFIRMED** | control 50/50; NAT+computed csum 0/50 (`UdpInCsumErrors` +50); NAT+zeroed csum 50/50 |
 
 ## Confirmed results
 
@@ -68,11 +69,29 @@ veth pair, which needs a clean `ethtool -K … tx off` path and a re-run. **P11 
 therefore INCONCLUSIVE and must be re-run; the two 0/50 results are not evidence
 for or against the rule.**
 
-## P10 and P12 — not run in this pass
+## P10 — partial (Y→W confirmed, W→Y inconclusive)
 
-The nested IPIP-over-WireGuard topologies (P10) and the ESP-transport plus NAT
-inner-checksum case (P12) were not attempted in this pass. They remain NOT RUN,
-which is neither confirmed nor refuted.
+The `Y→W` ordering (inner → IPIP → WireGuard) matched the quantised prediction
+`wire = 60 + 16·⌈(L+20)/16⌉` for 7 of 8 lengths (65, 76, 77, 79, 100, 1000,
+1008 B); L = 64 measured 176 B vs the predicted 156 B, almost certainly a capture
+artifact (a handshake/keepalive packet). The `W→Y` ordering (inner → WireGuard →
+IPIP) was not captured in this pass: the nested endpoint over `ipip1` did not
+deliver, so `d(L)` cannot be computed. **P10 is therefore partially confirmed and
+inconclusive as a whole; it is not refuted.**
+
+## P12 — confirmed (derived inner checksum)
+
+| Case | Delivery | Predicted | Cause gate |
+|---|---|---|---|
+| control (no NAT) | 100 % | 100 % | — |
+| NAT + computed inner UDP checksum | **0 %** | 0 % | `UdpInCsumErrors` +50 |
+| NAT + zeroed inner checksum (`SO_NO_CHECK`) | **100 %** | 100 % | — |
+
+ESP transport mode does not authenticate the outer IP header, so NAT passes the
+ESP check; but the inner UDP checksum covers a pseudo-header containing the
+rewritten outer address, so it fails and `UdpInCsumErrors` rises by exactly the
+datagram count. This confirms the *derived* field class: a field in one layer can
+be invalidated by a rewrite in another, with no integrity tag involved.
 
 ## Environment
 
@@ -95,9 +114,9 @@ version of this file, which recorded the sandbox that could not run the cases.
 | P8a, P8c, P11 confirmed | survival rule holds against independent implementations | P8a, P8c confirmed; P11 open |
 | P8b refuted | add a lookup-key field class | not refuted (P8b confirmed) |
 | P9 confirmed | replace the stipulated 56 B composite by `60 + R(L)`; mark `W` quantised | **confirmed** |
-| P10b confirmed | amend P4: commutation needs fixed (non-quantised) size effects | not run |
-| P12a confirmed | add derived dependency edges between layers | not run |
-| any INCONCLUSIVE or NOT RUN | report as such; do not infer a verdict | P10, P11, P12 |
+| P10b confirmed | amend P4: commutation needs fixed (non-quantised) size effects | Y→W confirmed; W→Y open |
+| P12a confirmed | add derived dependency edges between layers | **confirmed** |
+| any INCONCLUSIVE or NOT RUN | report as such; do not infer a verdict | P10 (W→Y), P11 |
 
 ## Addenda
 
