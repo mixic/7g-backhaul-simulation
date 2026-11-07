@@ -1,15 +1,18 @@
 # ns-3 reference implementations
 
-This directory holds two independent packet-level references:
+This directory holds three independent references:
 
 | Program | Scenario | Specification | Validation report |
 | --- | --- | --- | --- |
 | `s1-multipath-handover.cc` | S1: two-path handover, fixed roles | [external-validation.md](../../docs/external-validation.md) | [external-validation.md](../../docs/external-validation.md) |
 | `rfmp-role-transition.cc` | RT1: RFMP v0.1 role transition | [rfmp-protocol.md](../../docs/rfmp-protocol.md) | [rfmp-validation.md](../../docs/rfmp-validation.md) |
+| `m6-energy-transition.cc` | M6/H10: transmission-energy arithmetic | [m6-energy-paper.md](../../docs/m6-energy-paper.md) | [ns3_cross_validation.md](../../results/m6/ns3_cross_validation.md) |
 
-Run them with `./run-s1.sh` and `./run-rfmp.sh` respectively. The Python halves
-are `../../validation/scenario_s1.py` + `run_s1_experiment.py` and
-`../../simulation/rfmp.py` + `run_rfmp_experiment.py`.
+Run them with `./run-s1.sh`, `./run-rfmp.sh` and `./run-m6.sh` respectively. The
+Python halves are `../../validation/scenario_s1.py` + `run_s1_experiment.py`,
+`../../simulation/rfmp.py` + `run_rfmp_experiment.py`, and the M6 energy audit in
+`../../run_m6_experiments.py` (whose `exp2` column `Wire_Bytes_Total` the M6
+program reproduces).
 
 ## S1: multipath handover with fixed roles
 
@@ -191,3 +194,35 @@ Print the headline numbers of one run with:
 ```bash
 $NS3_DIR/build/scratch/ns3.49-rfmp-role-transition-default --seed=1 --out=/tmp/rt1.csv --append=0
 ```
+
+## M6: transmission-energy (wire-byte) cross-validation
+
+`m6-energy-transition.cc` re-derives the deterministic wire-byte arithmetic of
+the SimPy layering codec (`simulation/layering/`) in C++ with real zlib, so its
+`Wire_Bytes_Total` column can be compared seed-by-seed against
+`results/m6/m6_exp2_raw.csv` (M6 experiment 2 / H10). It is the ns-3 half of
+the cross-validation reported in
+[`results/m6/ns3_cross_validation.md`](../../results/m6/ns3_cross_validation.md).
+
+```bash
+NS3_DIR=~/ns-3-dev SEEDS=30 ./run-m6.sh
+```
+
+The program links zlib, so it is built from a scratch subdirectory
+(`scratch/m6-energy/CMakeLists.txt`) rather than the top-level `create_scratch`.
+Two things to know before comparing numbers:
+
+1. **Python 3.14 seeds `random.Random(int)` with `init_by_array([seed], 1)`**,
+   not the classic `init_genrand(seed)` that `std::mt19937` uses. The program
+   re-implements that seeding so the payload bytes match Python exactly.
+2. **The compressible phases depend on the zlib implementation.** Python on
+   Windows bundles zlib-ng 1.3.1 (a better compressor); this build links stock
+   zlib 1.3.1. The static stack (which never compresses compressible data)
+   matches exactly (4650 B for every seed), while the optimal stack's mean
+   differs by ~2 % purely because of the zlib-implementation difference. The
+   EROI verdict (H10 refuted, ~3·10⁻⁶) is unchanged.
+
+The four M6 energy terms are only partly ns-3-measurable: `E_tx` is reproduced
+here; `E_cpu`, `E_churn` and `E_llm` are stipulated constants (see
+`simulation/energy.py`) with no packet-level counterpart, and are applied, not
+measured.
