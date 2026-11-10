@@ -1,0 +1,2 @@
+prediction,case,verdict,detail
+P9,P9,CONFIRMED,"wire = 60 + 16*ceil(L/16) for every L; stipulated 56 B composite is off by L=29: 7, L=44: 8, L=60: 8, L=61: 7, L=76: 8, L=100: 16, L=1000: 12, L=1024: 4, L=1400: 12"
