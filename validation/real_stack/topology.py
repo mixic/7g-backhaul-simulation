@@ -124,6 +124,14 @@ class Topology:
 
 
 def cleanup_leftovers(shell: Shell) -> None:
-    """Remove namespaces from an interrupted earlier run."""
+    """Remove namespaces and leaked veths from an interrupted earlier run.
+
+    ``ip netns del`` reclaims the interfaces inside a namespace, but a run that was
+    killed *between* ``ip link add`` and ``ip link set ... netns`` can leave a veth
+    pair in the root namespace, which makes the next ``ip link add`` fail with
+    "File exists". Delete those explicitly.
+    """
     for name in (NS_A, NS_N, NS_B):
         shell.run(["ip", "netns", "del", name], check=False)
+    for veth in ("vA1", "vN1", "vN2", "vB2"):
+        shell.run(["ip", "link", "del", veth], check=False)
