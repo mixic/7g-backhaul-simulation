@@ -8,7 +8,7 @@ Protocol: 2 runs per case, 50 datagrams per delivery run, 5 packets per length i
 ## Environment
 
 ```text
-date_utc: 2026-11-10T11:44:37+00:00
+date_utc: 2026-11-10T11:47:18+00:00
 python: 3.14.4
 kernel: 6.18.58.1-microsoft-standard-WSL2
 proc_version: Linux version 6.18.58.1-microsoft-standard-WSL2 (root@6869314ecc53) (gcc (GCC) 13.2.0, GNU ld (GNU Binutils) 2.41) #1 SMP PREEMPT_DYNAMIC Tue Oct 27 00:24:11 UTC 2026
@@ -24,7 +24,21 @@ ethtool: ethtool version 6.19
 
 | Prediction | Case | Verdict | Detail |
 |---|---|---|---|
+| P8 | P8a | **CONFIRMED** | 0 % delivery in 2 runs, cause confirmed |
+| P8 | P8a_control | **CONFIRMED** | 100 % delivery in 2 runs |
+| P8 | P8b | **CONFIRMED** | 100 % delivery in 2 runs |
+| P8 | P8b_control | **CONFIRMED** | 100 % delivery in 2 runs |
+| P8 | P8c | **CONFIRMED** | 100 % delivery in 2 runs |
+| P8 | P8c_control | **CONFIRMED** | 100 % delivery in 2 runs |
+| P12 | P12a | **CONFIRMED** | 0 % delivery in 2 runs, cause confirmed |
+| P12 | P12b | **CONFIRMED** | 100 % delivery in 2 runs |
+| P12 | P12c | **CONFIRMED** | 100 % delivery in 2 runs |
 | P9 | P9 | **CONFIRMED** | wire = 60 + 16*ceil(L/16) for every L; stipulated 56 B composite is off by L=29: 7, L=44: 8, L=60: 8, L=61: 7, L=76: 8, L=100: 16, L=1000: 12, L=1024: 4, L=1400: 12 |
+| P10 | P10a | **CONFIRMED** | d(L) is non-zero for every L: naive P4 commutation fails on a real stack |
+| P10 | P10b | **CONFIRMED** | d(L) = R(L+20) - R(L) - 20 exact for every L |
+| P11 | P11a | **NOT RUN** | tc_pedit_csum: bad pedit parsing |
+| P11 | P11b | **NOT RUN** | tc_pedit_csum: bad pedit parsing |
+| P11 | P11c | **NOT RUN** | tc_pedit_csum: bad pedit parsing |
 
 Dispositions: CONFIRMED, REFUTED, INCONCLUSIVE (cause gate failed), INVALID (mutation gate or
 control failed, or setup error), NOT RUN (facility missing). Neither INVALID nor NOT RUN
