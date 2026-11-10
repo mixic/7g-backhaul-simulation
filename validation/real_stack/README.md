@@ -6,12 +6,13 @@ exercises **kernel WireGuard, kernel IPsec (`xfrm`: AH and ESP), kernel IPIP and
 NAT (`nftables`)** in three network namespaces, so agreement or disagreement is evidence
 about the survival rule rather than about the repository's own codec.
 
-> **Status: written, not yet run against a kernel.** Everything that does not need a
-> kernel is tested (`tests/test_real_stack.py`: the closed-form tables against the frozen
-> numbers, the packet and counter parsers, both gates, and every verdict rule on
-> synthetic observations). The kernel-facing command lines have **never been executed**:
-> expect some to need syntax fixes on first contact. Record any fix as a dated addendum
-> in `docs/layering-real-stack-results.md`; never edit the frozen predictions.
+> **Status: run against a kernel.** The frozen 20-runs-per-case protocol completed on
+> WSL2 kernel `6.18.58.1-microsoft-standard-WSL2`: 15 case records (12 counted cases and
+> their controls, 300 runs), all CONFIRMED. Interpretation is in
+> [`docs/layering-real-stack-results.md`](../../docs/layering-real-stack-results.md), the
+> raw rows are in `results/`. Kernel-free tests (`tests/test_real_stack.py`) pin the
+> closed-form tables, parsers, gates and verdict rules. Record any future syntax fix as a
+> dated addendum in the results document; never edit the frozen predictions.
 
 ## Requirements
 
@@ -102,9 +103,13 @@ These are implementation choices; changing one is an addendum, not a new predict
 - A case is judged only after all runs complete; a single deviating run refutes a prediction
   that states zero tolerance.
 
-## Known risks to check on first contact
+## Known risks to check on first contact (all resolved here)
 
-1. `tc` syntax for `pedit ex munge udp len set 9`, `csum udp`, and the `u32 match ip dport` filter.
+1. `tc` syntax. Resolved on iproute2 6.19: the layered
+   `pedit ex munge udp len set 9` form is rejected ("bad pedit parsing"); the harness
+   uses the raw 2-byte form `pedit ex munge offset 24 u16 set 0x0009` (the outer UDP
+   length sits at IPv4-header offset 24 = 20 IP + 4 UDP bytes). `csum udp`, `csum ip4h`
+   and the `u32 match ip dport` filter work as written.
 2. ESP transport-mode policy with a wildcard inbound source (`tmpl` without addresses).
 3. Whether conntrack and masquerade pass protocols 50 and 51 address-only (the mutation gate
    will show it if not).

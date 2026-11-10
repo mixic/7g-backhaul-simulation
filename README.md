@@ -672,7 +672,7 @@ The honest verdicts:
 │   ├── layering-results.md       # Three-fidelity layering classification
 │   ├── layering-results.generated.md # Machine-generated layering report
 │   ├── layering-real-stack-predictions.md # Frozen P8-P12 real-stack predictions
-│   └── layering-real-stack-results.md # P8-P12 status (NOT RUN in this sandbox)
+│   └── layering-real-stack-results.md # P8-P12 status (20 runs/case, all confirmed)
 ├── figures/
 │   ├── 7g_fabric_tick_0.png
 │   ├── 7g_fabric_tick_1.0.png
