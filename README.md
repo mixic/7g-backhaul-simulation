@@ -835,6 +835,7 @@ The honest verdicts:
 │   ├── run_s1_experiment.py      # Python side + paired comparison report
 │   ├── layering/                 # Layering runners, classifier and committed CSVs
 │   ├── linux_layering/           # Two-netns TUN relay and tc-netem harness
+│   ├── real_stack/               # P8-P12 harness (namespaces, capture, gates, verdict CSV)
 │   └── scenario_s1.py            # Shared scenario spec and Python models
 ├── tests/
 │   ├── test_backhaul_sim.py
@@ -869,6 +870,7 @@ The honest verdicts:
 │   ├── test_m5.py
 │   ├── test_energy.py
 │   ├── test_m7_filters.py
+│   ├── test_real_stack.py
 │   └── test_vision_benchmark.py
 ├── CITATION.cff                  # Citation metadata (CFF 1.2.0)
 ├── GOAL.md                       # Current testbed goal and milestone status
