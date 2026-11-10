@@ -1,32 +1,50 @@
-# Real-stack layering harness (P8, P9)
+# Real-stack layering harness (bash, exploratory)
 
-Shell harnesses that reproduce the P8/P9 predictions in
+Shell harnesses that reproduced the P8/P9/P10/P12 predictions in
 [`../../docs/layering-real-stack-predictions.md`](../../docs/layering-real-stack-predictions.md)
 on a Linux host with root, network namespaces, nftables and WireGuard/xfrm. They
-were run on WSL2 as root (`wsl -u root`); the results are recorded in
-[`../../docs/layering-real-stack-results.md`](../../docs/layering-real-stack-results.md).
+were run on WSL2 as root (`wsl -u root`). These scripts were the first-contact
+exploration; the **committed, canonical harness is the Python package in
+[`../../validation/real_stack/`](../../real_stack/README.md)**, and the results
+recorded in
+[`../../docs/layering-real-stack-results.md`](../../layering-real-stack-results.md)
+come from that package (frozen 20-run protocol). These scripts are kept for
+reproduction and for the record of how the ToS-control defect was found.
 
 | Script | Prediction | What it does |
 |---|---|---|
 | `p9.sh` | P9 | WireGuard `cA`–`cN`–`cB`; sends inner IPv4 packets of length `L` and captures the outer IP total length |
 | `p8c.sh` | P8c | WireGuard through an nftables `masquerade`; counts delivery and checks the peer endpoint |
 | `p8ab.sh` | P8a, P8b | IPsec tunnel mode (AH, ESP) through the same NAT; counts delivery and reads `XfrmInStateProtoError` |
+| `p10.sh` | P10 | both nested IPIP/WireGuard orderings |
+| `p10wy.sh` | P10 `W→Y` | the WireGuard-then-IPIP ordering with the nested endpoint over `ipip1` |
+| `p11v2.sh` | P11 | exploratory `tc pedit` on the outer UDP length; the inert ToS control failed here (see below) |
+| `p12.sh` | P12 | ESP transport + NAT, inner checksum computed vs zeroed |
 
 ## Running
 
 ```bash
-sudo apt-get install -y nftables wireguard-tools tcpdump
-tr -d '\r' < p9.sh  | sudo bash   # or p8c.sh / p8ab.sh
+sudo apt-get install -y nftables wireguard-tools tcpdump ethtool
+tr -d '\r' < p9.sh  | sudo bash   # or any other script
 ```
 
 Each script builds fresh namespaces, fresh keys, and tears everything down at the
-end. The capture and counter setup follows §7 of the predictions file. Raw
-observations for the run in the results file are in
-[`../results/real_stack_observations.csv`](../results/real_stack_observations.csv).
+end. Raw observations for the canonical run are in
+[`../../../validation/real_stack/results/observations.csv`](../../real_stack/results/observations.csv).
 
-## Known limitation (P11)
+## P11: the ToS-control defect in this bash set
 
-P11 (`tc pedit` rewrite of the outer UDP length) is **not** in this directory in a
-working form: the inert ToS control failed to deliver under checksum offload on
-the veth pair, so the case is recorded INCONCLUSIVE, not refuted. Re-running with
-`ethtool -K <dev> tx off` on the mangling path is the next step.
+`p11v2.sh` is the script whose inert ToS control delivered 0/50 and made P11 look
+INCONCLUSIVE. The defect was in the **mangler setup**, not in the kernel: it used
+a `root prio` qdisc and a `csum ip` action. The Python harness installs a
+`clsact` qdisc with `pedit … csum ip4h`, and its inert control delivers 100 %;
+P11 is therefore **CONFIRMED** in
+[`docs/layering-real-stack-results.md`](../../layering-real-stack-results.md).
+
+When a `pedit` case misbehaves, bisect it with:
+
+1. `tc -s filter show dev <dev> egress` — the filter's packet counter must rise.
+2. `tcpdump -i <peer> -n` — the mangled packets must leave the router.
+3. A **no-op** pedit (`ip tos set 0`) — if delivery stays 100 %, the filter is
+   sound and a failing rewrite is the rewrite's effect.
+4. `ethtool -k` on all veth ends — TX **and** RX checksumming must be off.

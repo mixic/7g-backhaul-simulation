@@ -294,6 +294,12 @@ zlib-ng 1.3.1 for the model and SimPy; WSL2 Ubuntu, kernel
 Linux data plane; 40 netem seeds (1–40) × 100 datagrams for the stochastic
 Linux cases.
 
+The P8–P12 real-stack extension
+([`layering-real-stack-results.md`](layering-real-stack-results.md)) was run
+later, on kernel `6.18.58.1-microsoft-standard-WSL2`. The kernel version differs
+because the host was updated between the two experiments; it is not a
+contradiction, and each file records the kernel its own run used.
+
 ## Addendum
 
 See the 2026-11-03 addendum in

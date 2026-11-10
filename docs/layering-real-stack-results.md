@@ -1,47 +1,48 @@
 # Layering real-stack results (P8-P12)
 
 **Predictions frozen at commit:** `46c7b40` (`docs/layering-real-stack-predictions.md`,
-committed before any harness code).
-**Results generated:** real-stack harness run on WSL2 as root (`wsl -u root`);
-raw observations in `validation/layering/results/real_stack_observations.csv`.
-**Verdict summary:** **P8a, P8b, P8c, P9, P10 and P12 CONFIRMED; P11
-INCONCLUSIVE.** The earlier "NOT RUN" disposition is superseded: this host *does*
-provide namespaces, nftables, WireGuard and the xfrm (`esp4`/`ah4`) facilities, so
-every prediction could be executed — six confirmed, one inconclusive.
+committed before any harness code; never edited).
+**Harness:** `validation/real_stack/` (Python; three netns, AF_PACKET capture,
+mutation/cause gates, verdict CSV). **Protocol: the frozen 20 runs per case.**
+**Raw output:** `validation/real_stack/results/observations.csv` and `verdicts.csv`.
+**Verdict summary:** **all five predictions (twelve cases) CONFIRMED**
+(P8a, P8b, P8c and their controls; P9; P10a and P10b; P11a, P11b, P11c; P12a,
+P12b, P12c). No case is INCONCLUSIVE or NOT RUN on this host.
 
-## Status
+> **History.** An earlier version of this file reported "P11 INCONCLUSIVE, six
+> confirmed" from ad-hoc bash scripts. That was wrong for two reasons, both now
+> corrected: the scripts used an `ip tos` mangler on a `root prio` qdisc whose
+> inert control failed, and the scripts were never committed. The committed
+> Python harness uses a `clsact` qdisc with `pedit … csum ip4h`, and its inert
+> ToS control delivers 100 %. See §P11.
+
+## Status (20 runs per case)
 
 | Prediction | Status | Evidence |
 |---|---|---|
-| P8a (AH tunnel through NAT) | **CONFIRMED** | control 50/50, NAT 0/50; `XfrmInStateProtoError` = 50 |
-| P8b (ESP tunnel through NAT) | **CONFIRMED** | control 50/50, NAT 50/50 |
-| P8c (WireGuard through NAT) | **CONFIRMED** | control 50/50, NAT 50/50; peer endpoint = NAT address `10.200.2.1` |
-| P9 (WireGuard wire overhead) | **CONFIRMED** | all 9 lengths exact: 92, 108, 124, 124, 140, 172, 1068, 1084, 1468 B |
-| P10 (IPIP/WireGuard quantisation) | **CONFIRMED** | both orderings match; `d(L) = −4 / +12`; one handshake-init capture artifact |
-| P11 (tc pedit UDP-length rewrite) | **INCONCLUSIVE** | no-op control 50/50, cases a/b 0/50, but the inert ToS control (c) also 0/50 |
-| P12 (ESP transport + inner checksum) | **CONFIRMED** | control 50/50; NAT+computed csum 0/50 (`UdpInCsumErrors` +50); NAT+zeroed csum 50/50 |
+| P8a (AH tunnel through NAT) | **CONFIRMED** | control 100 %, NAT 0 %; `XfrmInStateProtoError` rises by the datagram count |
+| P8b (ESP tunnel through NAT) | **CONFIRMED** | control 100 %, NAT 100 % |
+| P8c (WireGuard through NAT) | **CONFIRMED** | control 100 %, NAT 100 %; peer endpoint learns the NAT address |
+| P9 (WireGuard wire overhead) | **CONFIRMED** | 9/9 lengths exact: 92, 108, 124, 124, 140, 172, 1068, 1084, 1468 B |
+| P10a (naive commutation) | **CONFIRMED** | `d(L) ≠ 0` for every length |
+| P10b (quantised model) | **CONFIRMED** | `d(L) = R(L+20) − R(L) − 20 ∈ {−4, +12}` for every length |
+| P11a (UDP length 9, checksum untouched) | **CONFIRMED** | 0 % delivery, cause confirmed |
+| P11b (UDP length 9, checksum recomputed) | **CONFIRMED** | 0 % delivery, cause confirmed |
+| P11c (inert ToS rewrite) | **CONFIRMED** | 100 % delivery — the control that validates the mangler |
+| P12a (ESP transport + NAT, inner checksum) | **CONFIRMED** | 0 % delivery; `UdpInCsumErrors` rises by the datagram count |
+| P12b (same, checksum zeroed) | **CONFIRMED** | 100 % delivery |
+| P12c (control, no NAT) | **CONFIRMED** | 100 % delivery |
 
-## Confirmed results
+## P8 — NAT against real integrity scopes
 
-### P8 — NAT against real integrity scopes
+Three-namespace topology, `nftables masquerade` on the router egress, controls
+without NAT. AH's integrity scope covers the outer source address, so the
+masquerade rewrite invalidates the ICV (P8a). ESP does not cover the outer IP
+header (P8b), and WireGuard authenticates only its own payload (P8c), so both
+survive. AH dying under NAT is textbook (RFC 3715); the experiment confirms the
+harness, not a new fact.
 
-Three-namespace topology (`cA`–`cN`–`cB`), `nftables masquerade` on `cN` egress,
-50 datagrams per case, controls without NAT.
-
-| Case | Stack | Control delivery | NAT delivery | Predicted | Cause gate |
-|---|---|---|---|---|---|
-| a | AH tunnel | 100 % | **0 %** | 0 % | `XfrmInStateProtoError` +50 |
-| b | ESP tunnel | 100 % | **100 %** | 100 % | none |
-| c | WireGuard | 100 % | **100 %** | 100 % | peer endpoint shows NAT `10.200.2.1` |
-
-P8a confirms that the outer source address is inside the AH integrity scope: the
-masquerade rewrite invalidates the AH ICV, and the kernel reports exactly 50
-`XfrmInStateProtoError` for the 50 datagrams. P8b confirms the recorded
-asymmetry: the outer source is outside the ESP integrity scope, so the same
-rewrite delivers 100 %. P8c confirms WireGuard survives NAT and learns the
-translated endpoint.
-
-### P9 — WireGuard wire overhead
+## P9 — WireGuard wire overhead
 
 For an inner IPv4 packet of length `L`, the outer IP total length is exactly
 `wire(L) = 60 + 16·⌈L/16⌉`:
@@ -51,88 +52,113 @@ For an inner IPv4 packet of length `L`, the outer IP total length is exactly
 | predicted | 92 | 108 | 124 | 124 | 140 | 172 | 1068 | 1084 | 1468 |
 | measured | 92 | 108 | 124 | 124 | 140 | 172 | 1068 | 1084 | 1468 |
 
-This converts the stipulated 56 B composite (`E = 28`, `T = 28`, no padding) into
-a measured overhead; the stipulation is low by `4 + (16·⌈L/16⌉ − L)` bytes, i.e.
-4–16 B depending on `L mod 16`. This is a calibration finding, not a failure of
-P9.
+The stipulated 56 B composite (`E = 28`, `T = 28`, no padding) is low by
+`4 + (16·⌈L/16⌉ − L)` bytes (4–16 B depending on `L mod 16`). This is a
+calibration: WireGuard is **quantised**.
 
-## P11 — why INCONCLUSIVE, not refuted
+## P10 — quantisation breaks commutation
 
-The structural rewrites of the outer UDP length (cases a and b) delivered 0/50 as
-predicted. But the inert control (case c: rewrite only the outer ToS, which is
-outside WireGuard's integrity scope) also delivered 0/50, where 100 % was
-predicted. Per §3 of the predictions file, a control failure means the setup, not
-the rule, decided the outcome; recording a refutation would be fabricating it.
-The likely cause is an interaction between `tc pedit` and checksum offload on the
-veth pair, which needs a clean `ethtool -K … tx off` path and a re-run. **P11 is
-therefore INCONCLUSIVE and must be re-run; the two 0/50 results are not evidence
-for or against the rule.**
+`Y→W` (IPIP then WireGuard) versus `W→Y` (WireGuard then IPIP):
 
-## P10 — confirmed (both orderings)
+| L | 64 | 65 | 76 | 77 | 79 | 100 | 1000 | 1008 |
+|---|---|---|---|---|---|---|---|---|
+| wire(Y→W) | 156 | 156 | 156 | 172 | 172 | 188 | 1084 | 1100 |
+| wire(W→Y) | 144 | 160 | 160 | 160 | 160 | 192 | 1088 | 1088 |
+| d(L) | +12 | −4 | −4 | +12 | +12 | −4 | −4 | +12 |
 
-Both orderings were executed. For an inner IPv4 packet of length `L`:
+\* In an earlier exploratory capture the first `Y→W` L = 64 sample landed on the
+WireGuard handshake-init packet (20 IP + 8 UDP + 148 WG = 176 B). The harness now
+attributes sweep packets by capture timestamp, and all 20 committed runs record
+the 156 B data packet, so the committed table has no artifact.
 
-| L | Y→W (60+R(L+20)) | W→Y (80+R(L)) | d(L)=Y−W | predicted d |
-|---|---|---|---|---|
-| 64 | 156 (data; 176 = handshake init) | 144 | +12 | +12 |
-| 65 | 156 | 160 | −4 | −4 |
-| 76 | 156 | 160 | −4 | −4 |
-| 77 | 172 | 160 | +12 | +12 |
-| 79 | 172 | 160 | +12 | +12 |
-| 100 | 188 | 192 | −4 | −4 |
-| 1000 | 1084 | 1088 | −4 | −4 |
-| 1008 | 1100 | 1088 | +12 | +12 |
+`d(L) = R(L+20) − R(L) − 20` exactly. **P10a is false** (fixed-overhead layers
+do *not* commute when one layer quantises) and **P10b is exact**.
 
-`d(L)` matches `R(L+20) − R(L) − 20 ∈ {−4, +12}` for every length. The one
-apparent outlier — `Y→W` at L = 64 measuring 176 B — is the WireGuard
-**handshake-init** packet (20 IP + 8 UDP + 148 WG handshake = 176 B) captured
-before the warm-up completed; the data packet is 156 B as predicted. **P10
-confirmed:** fixed-overhead layers do not commute once one layer quantises size,
-and the quantised model (`P10b`) is exact while the naive fixed-overhead model
-(`P10a`) is false.
+## P11 — confirmed, and the bisect that explains the old failure
 
-## P12 — confirmed (derived inner checksum)
+| Case | Mangler | Delivery | Predicted |
+|---|---|---|---|
+| P11a | outer UDP length → 9, checksum untouched | **0 %** | 0 % |
+| P11b | outer UDP length → 9, checksum recomputed | **0 %** | 0 % |
+| P11c | outer IPv4 ToS byte rewritten (inert) + IP checksum | **100 %** | 100 % |
+
+The mangler uses the **raw-offset** form because iproute2 6.19 rejects the
+layered `udp len` field ("bad pedit parsing"):
+
+```text
+tc filter add dev vN2 egress protocol ip prio 1 u32 \
+  match ip protocol 17 0xff match ip dport 51820 0xffff \
+  action pedit ex munge offset 24 u16 set 0x0009 pipe action csum udp
+```
+
+The outer UDP length is at IPv4-header offset 24 (20 IP + 4 UDP). The inert
+control rewrites the IPv4 ToS byte (offset 1) and recomputes the header
+checksum (`csum ip4h`); because it delivers 100 %, the mangler path itself is
+sound and the P11a/P11b 0 % results are attributable to the length rewrite.
+
+**Why the old bash result was "INCONCLUSIVE".** The old scripts used a
+`root prio` qdisc and a `csum ip` action, and their ToS control delivered 0/50.
+That was a mangler-setup defect, not a kernel effect. The bisect that resolved
+it (also recorded as a checklist below): (1) `tc -s filter show dev vN2 egress`
+shows whether the filter matched; (2) a capture on `vB2` shows whether the
+packets left the router; (3) a **no-op** pedit (`ip tos set 0`) separates "the
+filter is wrong" from "the rewrite is destructive". With a `clsact` qdisc and
+`csum ip4h`, all three checks pass.
+
+## P12 — derived inner checksum
 
 | Case | Delivery | Predicted | Cause gate |
 |---|---|---|---|
 | control (no NAT) | 100 % | 100 % | — |
-| NAT + computed inner UDP checksum | **0 %** | 0 % | `UdpInCsumErrors` +50 |
+| NAT + computed inner UDP checksum | **0 %** | 0 % | `UdpInCsumErrors` + datagrams |
 | NAT + zeroed inner checksum (`SO_NO_CHECK`) | **100 %** | 100 % | — |
 
 ESP transport mode does not authenticate the outer IP header, so NAT passes the
-ESP check; but the inner UDP checksum covers a pseudo-header containing the
-rewritten outer address, so it fails and `UdpInCsumErrors` rises by exactly the
-datagram count. This confirms the *derived* field class: a field in one layer can
-be invalidated by a rewrite in another, with no integrity tag involved.
+ESP check; the inner UDP checksum covers a pseudo-header containing the rewritten
+outer address, so it fails. This is the **derived** field class: a field in one
+layer is invalidated by a rewrite in another, with no integrity tag involved.
 
 ## Environment
 
 | Item | Value |
 |---|---|
 | Host | WSL2, Ubuntu 26.04.1 LTS |
-| Kernel | `6.18.54.1-microsoft-standard-WSL2` |
-| Root | `wsl -u root` available (`id -u` = 0) |
-| `unshare -n true` | OK |
-| `nft` / `wg` | installed via `apt` |
-| `esp4`/`ah4`/`ipip`/`act_pedit`/`act_csum`/`wireguard` | present |
+| Kernel | `6.18.58.1-microsoft-standard-WSL2` |
+| Root | `wsl -u root` (`id -u` = 0) |
+| `ip` | iproute2 6.19.0 |
+| `wg` | wireguard-tools 1.0.20250521 |
+| `nft` | nftables 1.1.6 |
+| `ethtool` | 6.19 |
+| Kernel modules | `wireguard`, `ipip`, `esp4`, `ah4`, `act_pedit`, `act_csum`, `nft_masq` all present |
 
-This supersedes the "Environment observed at freeze time" table in the earlier
-version of this file, which recorded the sandbox that could not run the cases.
+`tc_pedit_csum` is available in the **raw-offset** form, not the layered
+`udp len` form; the probe tests the raw form (see §P11).
 
 ## Model consequences (from `layering-real-stack-predictions.md` §9)
 
 | Outcome | Model consequence | Status here |
 |---|---|---|
-| P8a, P8c, P11 confirmed | survival rule holds against independent implementations | P8a, P8c confirmed; P11 open |
+| P8a, P8c, P11 confirmed | survival rule holds against independent implementations | **confirmed** |
 | P8b refuted | add a lookup-key field class | not refuted (P8b confirmed) |
-| P9 confirmed | replace the stipulated 56 B composite by `60 + R(L)`; mark `W` quantised | **confirmed** |
+| P9 confirmed | replace the 56 B composite by `60 + R(L)`; mark `W` quantised | **confirmed** |
 | P10b confirmed | amend P4: commutation needs fixed (non-quantised) size effects | **confirmed** |
 | P12a confirmed | add derived dependency edges between layers | **confirmed** |
-| any INCONCLUSIVE or NOT RUN | report as such; do not infer a verdict | P11 |
+| any INCONCLUSIVE or NOT RUN | report as such; do not infer a verdict | none on this host |
+
+## P11 bisect checklist (for a future kernel)
+
+1. `tc -s filter show dev vN2 egress` — the filter's `packets` counter must rise.
+2. `tcpdump -i vB2 -n 'udp dst port 51820'` — the mangled packets must leave the
+   router; compare the captured ToS/length with the filter intent.
+3. No-op pedit (`ip tos set 0`) — if delivery stays 100 %, the filter is sound
+   and a failing rewrite is the rewrite's effect, not a setup defect.
+4. Offload: verify with `ethtool -k` that TX **and** RX checksumming are off on
+   all four veth ends (veth marks RX as verified when RX checksumming is on).
+5. Do not trust the exit code of `ethtool -K`; trust `ethtool -k`.
 
 ## Addenda
 
-- **2026 (harness run).** P8a/P8b/P8c/P9 confirmed on WSL2 as root. P11
-  inconclusive (inert control failed; re-run with checksum offload disabled).
-  P10/P12 not attempted. Harness scripts are in `output/` (session scratch); a
-  committed `validation/layering/run_real_stack.py` is the next step.
+- **2026-11-10 — the frozen 20-run protocol (Python harness).** All twelve cases
+  confirmed; P11 recovered by the raw-offset mangler and a `clsact` qdisc. The
+  earlier "six confirmed / P11 INCONCLUSIVE / P10-P12 not attempted" text was
+  from uncommitted bash scripts and is withdrawn. Predictions unchanged.

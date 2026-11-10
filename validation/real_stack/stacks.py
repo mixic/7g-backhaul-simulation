@@ -175,8 +175,15 @@ def setup_wg_over_ipip(sh: Shell) -> Flow:
 # --- Byte mangler (P11) ----------------------------------------------------------------
 
 MANGLERS = {
-    "len9": ["action", "pedit", "ex", "munge", "udp", "len", "set", "9"],
-    "len9_csum": ["action", "pedit", "ex", "munge", "udp", "len", "set", "9", "pipe", "action", "csum", "udp"],
+    # iproute2 6.19 rejects the layered ``udp len`` pedit field ("bad pedit
+    # parsing"); the outer UDP length lives at IPv4-header offset 24
+    # (20 IP + 4 UDP = src/dst ports), so rewrite it with the raw 2-byte form.
+    "len9": ["action", "pedit", "ex", "munge", "offset", "24", "u16", "set", "0x0009"],
+    "len9_csum": ["action", "pedit", "ex", "munge", "offset", "24", "u16", "set", "0x0009",
+                  "pipe", "action", "csum", "udp"],
+    # The inert control: rewrite the IPv4 ToS byte (offset 1 of the IP header)
+    # and recompute the IP header checksum. If this does not deliver, the mangler
+    # path itself is suspect; see docs/layering-real-stack-results.md §P11 bisect.
     "tos": ["action", "pedit", "ex", "munge", "ip", "tos", "set", "0x10", "pipe", "action", "csum", "ip4h"],
 }
 

@@ -109,8 +109,10 @@ def probe(shell: Shell) -> dict[str, str | None]:
         if result["tool:tc"] is None and result["veth"] is None:
             steps = [
                 ["tc", "qdisc", "add", "dev", "pv0", "clsact"],
+                # Raw 2-byte form: iproute2 6.19 rejects the layered ``udp len``
+                # field, but accepts the IPv4-header offset 24 (20 IP + 4 UDP).
                 ["tc", "filter", "add", "dev", "pv0", "egress", "protocol", "ip", "prio", "1", "u32", "match", "ip", "protocol", "17", "0xff",
-                 "action", "pedit", "ex", "munge", "udp", "len", "set", "9", "pipe", "action", "csum", "udp"],
+                 "action", "pedit", "ex", "munge", "offset", "24", "u16", "set", "0x0009", "pipe", "action", "csum", "udp"],
             ]
             result["tc_pedit_csum"] = next((r for r in (_try(shell, ["ip", "netns", "exec", PROBE_NS, *s]) for s in steps) if r), None)
         else:

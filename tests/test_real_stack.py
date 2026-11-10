@@ -350,10 +350,14 @@ class CaseAndProbeTests(unittest.TestCase):
         self.assertIn("proto esp", script("P8b"))
         self.assertIn("type wireguard", script("P8c"))
         self.assertIn("type ipip", script("P10_y_to_w"))
-        self.assertIn("munge udp len set 9", script("P11a"))
+        # P11 uses the raw-offset syntax: iproute2 6.19 rejects `munge udp len`,
+        # which has no parser support.  Offset 24 is the UDP length field of an
+        # IPv4 header with no options (20-byte IP + 4-byte src/dst-port header).
+        self.assertIn("munge offset 24 u16 set 0x0009", script("P11a"))
         self.assertNotIn("csum udp", script("P11a"))
         self.assertIn("csum udp", script("P11b"))
         self.assertIn("munge ip tos set 0x10", script("P11c"))
+        self.assertIn("csum ip4h", script("P11c"))
         self.assertIn("src 0.0.0.0/0", script("P12a"))
         self.assertIn("--no-check", script("P12b"))
         self.assertNotIn("--no-check", script("P12a"))
