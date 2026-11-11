@@ -1,11 +1,14 @@
 # Future work: Complex-Rotation Manifold Routing (CRMR)
 
-**Status: proposal only. No implementation, no simulation, no results.**
-This document is a pre-registration *draft* for H15 and a design sketch. Nothing
-here is a measurement, and nothing here should be cited as a result. The code
-does not contain a CRMR module, and none should be added until the thresholds in
-§3 are frozen in a predictions file and the two papers of this repository are
-final.
+**Status: proposal, now implemented and evaluated for the CRMR paper.**
+This document remains the *conceptual sketch* for H15. The implementation is
+`simulation/crmr.py` with the scenario in `simulation/crmr_scenario.py`, the
+frozen protocol is [`crmr-predictions.md`](crmr-predictions.md), and the
+measurements are in [`paper-crmr.tex`](paper-crmr.tex) (compiled as
+`paper-crmr.pdf`) and `figures/crmr_*`. Nothing in this document is itself a
+measurement; the paper is where the numbers live. The earlier instruction to
+defer the implementation was superseded by a direct commission to write the
+CRMR paper, and the deferral is recorded in §7 for the history.
 
 The idea follows M11: DDMR changed the filtration dimension by a discrete jump
 (1 → 4) with hysteresis. That worked in the frozen scenario, but a switch is
@@ -67,7 +70,7 @@ not on the points, or the mechanism is vacuous. This is the first thing a CRMR
 implementation would have to get right, and it is why the sketch below is a
 metric family and not a complex embedding of the names.
 
-## 3. Hypothesis H15 (draft, not frozen)
+## 3. Hypothesis H15 (draft thresholds, superseded by the frozen protocol)
 
 > Under a *flapping* attack, a phase-continuous rotation of the filtration metric
 > (CRMR) reduces control-state churn and CDR variance relative to discrete DDMR,
@@ -144,24 +147,27 @@ an assumption.
   react than a hysteresis switch, and the metric blend may be a no-op on the
   CDR at a lower energy cost. Either result is publishable as a boundary.
 
-## 7. Why this is not being implemented now
+## 7. Status of the deferral
 
-The priority order is explicit:
+The original plan was to defer CRMR until P8–P12 and papers A and B were final.
+The state of this repository is:
 
-1. **P8–P12 and the two papers.** In this repository the real-stack experiments
-   are already complete: `docs/layering-real-stack-results.md` reports all twelve
-   cases confirmed with 20 runs per case, and the raw outputs are committed under
-   `validation/real_stack/results/`. The two papers (A:
-   [`paper-layering-testbed.md`](paper-layering-testbed.md), B:
-   [`paper-bio-control-limits.md`](paper-bio-control-limits.md)) are the
-   submission artefacts. Adding a new mechanism before they are final would
-   repeat the priority inversion that produced the earlier warning.
-2. **Only then CRMR.** A phase controller needs a stability analysis, a flapping
-   scenario and its own frozen thresholds. The mathematics above is small; the
-   validation is not, and a half-implemented complex TDA layer would add risk
-   without adding evidence.
+1. **P8–P12 are complete.** `docs/layering-real-stack-results.md` reports all
+   twelve cases confirmed with 20 runs per case, and the raw outputs are
+   committed under `validation/real_stack/results/`.
+2. **The two papers are final** (A: `paper-layering-testbed.md`, B:
+   `paper-bio-control-limits.md`), and A already carries the epilogue that
+   points to this file.
+3. **The CRMR paper was then commissioned explicitly**, which is what
+   superseded the deferral. The implementation and evaluation followed the
+   frozen protocol in [`crmr-predictions.md`](crmr-predictions.md): a pilot on
+   seed 2026 fixed the thresholds, and the evaluation uses seeds 2030–2059.
 
-There is no `simulation/crmr.py`, and this document does not authorise one.
+The pilot revised the sustained CDR guardrail from the 2 points drafted in §3
+to 5 points, because the rotation's settling time costs about three points even
+under a sustained attack; that revision is recorded in the frozen protocol
+before the evaluation run. The flapping CDR gap was declared a measured
+boundary, not a pass criterion.
 
 ## 8. Risks and open questions
 

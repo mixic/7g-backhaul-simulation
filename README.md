@@ -490,6 +490,32 @@ split, and the results say so.
 Results: [docs/ddmr.md](docs/ddmr.md). Frozen design:
 [docs/ddmr-predictions.md](docs/ddmr-predictions.md).
 
+## CRMR: complex-rotation manifold routing (paper)
+
+The CRMR paper ([docs/paper-crmr.pdf](docs/paper-crmr.pdf), source
+[docs/paper-crmr.tex](docs/paper-crmr.tex)) replaces DDMR's discrete 1D-to-4D jump
+with a continuous rotation ψ(t) = R(t)·e^{iθ(t)} of the metric family, driven only
+by the local anomaly. Legitimate traffic migrates to a replica with probability
+sin²θ, so reconfiguration is spread over the rotation instead of one tick.
+
+Over 30 paired seeds (2030–2059), under a sustained DDoS CRMR keeps the
+legitimate CDR at **97.24 %** against 99.68 % for discrete DDMR and 73.82 % for
+static T-NDN, while cutting the peak per-tick reconfiguration share from 1.00 to
+**0.157** (84 %). Under a 3 s flapping attack the rotation cannot complete inside
+a burst and the CDR cost is **11.2 points**; a burst-duration sweep locates the
+boundary (worst at ~2 s, the controller's settling time; 5.6 points at 15 s).
+Persistent homology separates the attack as an **H0 component**; β1 is zero
+throughout, so the isolation is zero-dimensional, not a hole. Four-dimensional
+homology costs 3.31 J against 14.08 J of prevented-loss energy (break-even
+4.7 mJ per prevented request).
+
+The paper reports the trade rather than a free win: continuity buys reconfiguration
+smoothness and pays for it under bursts shorter than the rotation. Figures and
+per-seed CSVs are in `figures/crmr_*`; the frozen protocol is
+[docs/crmr-predictions.md](docs/crmr-predictions.md); the simulator is
+[`simulation/crmr.py`](simulation/crmr.py) and
+[`simulation/crmr_scenario.py`](simulation/crmr_scenario.py).
+
 ## M3: runnable models and paired-seed CSVs
 
 The executable models live in `simulation/surgical/` (topology, baselines,
