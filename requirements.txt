@@ -2,6 +2,8 @@ numpy>=1.24.0
 simpy>=4.0.0
 networkx>=3.0
 matplotlib>=3.7.0
+# Persistent homology for DDMR (M11): a real Vietoris-Rips implementation.
+ripser>=0.6.0
 # Test-only: property-based tests for the layering model.
 hypothesis>=6.0.0
 

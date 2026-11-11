@@ -1,0 +1,2 @@
+landmarks,clusters,holes,hole_clusters,tda_total_ms,tda_core_ms,landmark_ms,assign_ms,seeds,nlsr_aggregated_fib_mean
+64,20,1,20,21.73,8.254,5.451,8.025,30,19.8

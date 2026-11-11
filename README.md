@@ -11,7 +11,9 @@ than one combined document, so each can be reviewed on its own terms:
 
 - **Paper A — [`docs/paper-layering-testbed.md`](docs/paper-layering-testbed.md)**:
   *Empirical Commutation Rules for Protocol Layer Encapsulation in Heterogeneous
-  Networks.* Pure systems engineering: the survival rule and P1–P12.
+  Networks.* Pure systems engineering: the survival rule, P1–P12, and the
+  DNS-free name fabric the rule implies (§3), including the DNS-TTL
+  migration-convergence comparison.
 - **Paper B — [`docs/paper-bio-control-limits.md`](docs/paper-bio-control-limits.md)**:
   *Why Fair-Queueing Beats the Fick Principle.* The negative result on
   bio-inspired control (M3–M6).
@@ -382,6 +384,15 @@ potential field that allocates flow and selects roles decides where it goes.
 Nothing completes before the first packet moves, so no TTL sits between a role
 change and the requests that follow it.
 
+**This is not a new architecture.** Resolution collapsed into forwarding is the
+ICN/NDN model (Zhang et al., 2014; RFC 8677); the fabric here implements it
+rather than inventing it. The contribution is the measurement: a like-for-like
+comparison of service-migration convergence — 28.7 s at a 30 s DNS TTL against
+35.7 ms with name-based forwarding, under one topology and one load point.
+[Paper A §3](docs/paper-layering-testbed.md#3-name-fabric-architecture) specifies
+the architecture; [docs/name-fabric.md](docs/name-fabric.md) reports the full
+result set and its limits.
+
 `simulation/name_fabric.py` implements that fabric with two name classes:
 self-certifying digests for immutable content (poisoning structurally
 impossible) and signed service descriptors for role-fluid services (forgery
@@ -411,9 +422,12 @@ Five pre-registered experiments, and what they measured:
 - **The gateway seam:** external requests cost ~2× an internal one even at an
   idle gateway, and its p95 reaches 71 ms at a 50 % external share.
 
-What this does **not** establish: no packet-level cross-validation yet (the
-RFMP harness is the vehicle), no bootstrap model, no name-table memory bound,
-and no sensitivity analysis. See [docs/name-fabric.md](docs/name-fabric.md).
+What this does **not** establish: the 28.7 s and 35.7 ms figures are outputs of
+the resolution model, not a packet-level run; no cross-validation of the
+name-carrying path yet (the RFMP harness is the vehicle), no bootstrap model, no
+name-table memory bound, and no sensitivity analysis. The gateway is measured,
+not solved: one undefended hop, no failover. See
+[docs/name-fabric.md](docs/name-fabric.md).
 
 ### Community status
 
@@ -427,6 +441,54 @@ directions now include wireless and trace-based validation, MPTCP LIA/OLIA
 comparisons, independent review and replication. See the
 [vision paper](docs/7g-backhaul-vision-paper.md) for the staged evaluation
 plan.
+
+## Topological NDN (T-NDN) versus NLSR, FSR and a fisheye overlay
+
+M10 tests whether a forwarding plan built on name-space topological invariants
+can shrink the FIB and shorten reconvergence after a link failure. The plan
+([`simulation/topology.py`](simulation/topology.py),
+[`simulation/tndn_router.py`](simulation/tndn_router.py)) computes persistent
+homology — persistent `H0` name clusters and one `H1` loop — from name
+distances alone, installs one FIB entry per persistent cluster plus a loop-free
+alternate for each cluster on the loop, and repairs locally when a neighbour
+stops advertising.
+
+Over 30 paired seeds (100 nodes, failure at t = 30 s), T-NDN needs **38.2 FIB
+entries** versus 140 for the fisheye overlay, 779.8 for FSR-NDN and 9 900 for
+NLSR, and reconverges in **0.31 s** versus 2.97 s, 15.48 s and 1.24 s, at
+100 % CDR (NLSR 99.92 %). Persistent homology costs 21.7 ms per FIB build —
+2.4 % of the 924 ms it saves. **H13 is supported under the frozen scenario**,
+with two caveats reported in the results: a prefix-aggregating NLSR would need
+only 19.8 entries (beating T-NDN), and with equal 200 ms detection the 20 %
+convergence margin holds on 15/30 seeds. The RTT-only baseline follows Milić
+and Braun (LCN 2009).
+
+Results, sensitivities and the Bern lineage: [docs/tndn.md](docs/tndn.md).
+Frozen design: [docs/tndn-predictions.md](docs/tndn-predictions.md).
+
+## DDMR: dynamic dimensionality manifold routing under a DDoS shockwave
+
+M11 extends T-NDN with a four-axis state vector — name prefix, latency, jitter
+and a local rate anomaly — and lets the filtration dimension expand from 1 to 4
+when the anomaly crosses a threshold, and contract again when it falls. The
+anomaly is computed from local telemetry only, with no attack schedule or attack
+flag in the detector. Homology comes from the real `ripser` library
+(Vietoris–Rips, `maxdim=1`).
+
+Under a 500 requests/s botnet aimed at the same prefix block as 40 % of the
+legitimate traffic (t = 30–45 s, 100 nodes, 30 paired seeds), DDMR keeps the
+legitimate CDR in the attack window at **99.51 %** against **73.74 %** for static
+T-NDN — a **+25.77 point** gain, with p95 latency slightly lower (124.1 ms
+versus 132.5 ms). The 4-D homology costs **2.59 J**, against **15.57 J** of
+prevented-loss energy; the break-even is 3.32 mJ per prevented request, so the
+energy clause would refute H14 below that value. The dimension expands at
+30.2 s and collapses at 50.3 s on average — after the attack, never during it
+(0 early collapses in 30 seeds). The 4-D complex produces intermittent `H1`
+loops (8.2 % of shock epochs); the isolation itself uses the `H0` component
+split, and the results say so.
+
+Results: [docs/ddmr.md](docs/ddmr.md). Frozen design:
+[docs/ddmr-predictions.md](docs/ddmr-predictions.md).
 
 ## M3: runnable models and paired-seed CSVs
 

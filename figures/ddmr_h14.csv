@@ -1,0 +1,5 @@
+criterion,ddmr,baseline,delta,limit,verdict
+CDR gain vs static T-NDN,99.506,73.735,25.771,>= 15 points,PASS
+DDMR CDR during shock,99.506,—,—,>= 95 %,PASS
+Energy: 4D TDA vs saved,2.586,15.569,0.1661,< 1.0 (J CPU / J saved),PASS
+Early collapse before t=45 s,0,—,—,0 seeds,PASS

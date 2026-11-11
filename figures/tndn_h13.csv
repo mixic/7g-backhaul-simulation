@@ -1,0 +1,9 @@
+criterion,tndn,baseline,ratio,limit,verdict
+FIB vs NLSR,38.2,9900.0,0.0039,0.8,PASS
+FIB vs FSR-NDN,38.2,779.8,0.049,0.8,PASS
+FIB vs Fisheye-Overlay,38.2,140.0,0.273,0.8,PASS
+convergence vs NLSR,0.3133,1.2373,0.2532,0.8,PASS
+convergence vs FSR-NDN,0.3133,15.4833,0.0202,0.8,PASS
+convergence vs Fisheye-Overlay,0.3133,2.9663,0.1056,0.8,PASS
+CDR vs NLSR,100.0,99.9196,1.0008,0.95,PASS
+TDA cost vs saved convergence,21.73,924.0,0.02352,1.0,PASS
