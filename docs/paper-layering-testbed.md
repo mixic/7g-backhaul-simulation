@@ -378,35 +378,6 @@ The name-fabric comparison in §3 is a resolution-latency measurement of named
 forwarding against a DNS baseline; it does not measure a deployed fabric, the
 name-table memory cost, or the security of a real signature scheme.
 
-## Epilogue: complex-rotation manifolds (not tested)
-
-The name fabric in §3 routes on a static metric space. Its follow-up work
-extends that space dynamically: the Topological NDN plan of
-[`tndn.md`](tndn.md) keeps the metric fixed, and the Dynamic Dimensionality
-Manifold Routing of [`ddmr.md`](ddmr.md) expands it from one to four dimensions
-in a discrete step with hysteresis. A discrete step is still a switch, and the
-M11 results show its cost — a detection window that keeps the fabric in the
-defensive state for seconds after the attack ends, and a threshold controller
-that needs hysteresis precisely to avoid chatter.
-
-We therefore record, as future work only, a continuous alternative:
-**Complex-Rotation Manifold Routing (CRMR)**, in which the network state is a
-phasor
-
-```
-ψ(t) = R(t) · e^{i θ(t)}
-```
-
-whose phase `θ ∈ [0, π/2]` rotates the metric continuously from the prefix-only
-axis (calm) to the full defensive axes (attack), and whose amplitude `R(t)`
-scales the forwarding phase penalty. The hypothesis H15 is that a phase-
-continuous rotation reduces control-state churn and CDR variance under a
-*flapping* attack relative to the discrete jump, at no more than 2 points of CDR
-and within the same energy budget. No implementation, simulation or measurement
-accompanies this proposal; it is deliberately deferred until this paper and
-paper B are final. The full sketch and the falsification criteria are in
-[`future-work-complex-rotation.md`](future-work-complex-rotation.md).
-
 ## Cross-references
 
 - [`layering-predictions.md`](layering-predictions.md) — P1–P7 predictions.
@@ -419,3 +390,9 @@ paper B are final. The full sketch and the falsification criteria are in
 - [`future-work-complex-rotation.md`](future-work-complex-rotation.md) — CRMR proposal (H15, not tested).
 - [`validation/real_stack/`](../validation/real_stack/) — the executable harness.
 - [`validation/ns3/role-fluid-fabric.cc`](../validation/ns3/role-fluid-fabric.cc) — the name-carrying ns-3 prototype.
+
+## Epilogue
+
+While our current T-NDN uses static metric spaces, we propose Complex-Rotation Manifold Routing (CRMR) as a future extension. Instead of discrete state jumps, CRMR defines the node state as a complex number $\psi_n(t)=R_n(t)+iA_n(t)$, where $R$ is the baseline state and $A$ is the anomaly state. The network state evolves via unitary rotation $\psi_n(t+\Delta t)=\psi_n(t)e^{i\omega_n(t)\Delta t}$, where the angular velocity $\omega_n$ is driven by the kinematic anomaly score and damped to prevent oscillation. Routing decisions are made by projecting the complex FIB impedance $\Phi_p=|\Phi_p|e^{i\phi_p}$ onto the real axis: $\operatorname{Cost}_p=|\Phi_p|\cos(\phi_p-\theta_{\mathrm{network}}(t))$. This allows the network to smoothly rotate attack traffic into the imaginary dimension, maintaining real-axis stability without the convergence penalties of discrete state transitions.
+
+CRMR is a proposed future extension; it has not been implemented or evaluated in this paper.

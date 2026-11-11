@@ -1,204 +1,271 @@
-# Future work: Complex-Rotation Manifold Routing (CRMR)
+# Complex-Rotation Manifold Routing (CRMR): a mathematical specification
 
-**Status: proposal, now implemented and evaluated for the CRMR paper.**
-This document remains the *conceptual sketch* for H15. The implementation is
-`simulation/crmr.py` with the scenario in `simulation/crmr_scenario.py`, the
-frozen protocol is [`crmr-predictions.md`](crmr-predictions.md), and the
-measurements are in [`paper-crmr.tex`](paper-crmr.tex) (compiled as
-`paper-crmr.pdf`) and `figures/crmr_*`. Nothing in this document is itself a
-measurement; the paper is where the numbers live. The earlier instruction to
-defer the implementation was superseded by a direct commission to write the
-CRMR paper, and the deferral is recorded in §7 for the history.
+**Status: theoretical specification only.** This document defines CRMR and its
+falsifiable hypothesis H15. It contains no implementation, no simulation and no
+experimental result. Nothing here has been evaluated; it is a proposal for future
+research and must not be cited as evidence. There is no `complex_router.py`, and
+this specification does not authorise one.
 
-The idea follows M11: DDMR changed the filtration dimension by a discrete jump
-(1 → 4) with hysteresis. That worked in the frozen scenario, but a switch is
-still a switch. A continuous phase rotation is the natural next question. This
-document exists so the idea is written down and not lost, and so it does not
-displace the work that has to come first.
+CRMR is the continuous counterpart of the discrete dimension jump studied in the
+T-NDN and DDMR work: instead of switching the forwarding metric between a calm
+and a defensive state, the node state is a point in the complex plane that
+rotates continuously under a damped control law.
 
-## 1. Motivation
+## Notation
 
-M11's own results show the shape of the problem:
+| Symbol | Meaning |
+|---|---|
+| $n$ | network node |
+| $t$ | time |
+| $\psi_n(t)$ | complex state of node $n$ |
+| $R_n(t)\in\mathbb{R}_{\ge 0}$ | real component (baseline state) |
+| $A_n(t)\in\mathbb{R}_{\ge 0}$ | imaginary component (anomaly state) |
+| $\lvert\psi_n\rvert$ | magnitude (systemic pressure) |
+| $\theta_n(t)$ | phase angle, the threat rotation |
+| $\mu$ | rotation gain |
+| $\gamma$ | damping factor |
+| $\Phi_p$ | complex impedance of path $p$ |
+| $\phi_p$ | phase of the path impedance |
+| $\theta_{\mathrm{net}}(t)$ | network phase used for the FIB projection |
 
-- the dimension expanded at 30.22 s and collapsed at 50.3 s on average, 5–7 s
-  after the attack ended, because the anomaly uses a 5 s window;
-- one seed in 30 expanded 1.5 s early on a Poisson fluctuation;
-- the discrete controller needed `UP_TICKS`/`DOWN_TICKS` hysteresis precisely
-  because an instantaneous threshold would chatter.
+## 1. The complex state space
 
-A continuous controller replaces the hysteresis with dynamics: the metric space
-can rotate toward the defence axes while the attack develops and rotate back
-while it decays. Whether that is actually better is an open empirical question,
-not an assumption. The M11 negative lesson also applies: a smoother mechanism is
-not automatically a better one.
+The state of node $n$ at time $t$ is a point in the complex plane,
+\begin{equation}
+\psi_n(t) = R_n(t) + i\,A_n(t), \qquad R_n(t)\ge 0,\; A_n(t)\ge 0 .
+\label{eq:state}
+\end{equation}
 
-## 2. The state and the rotation
+The real component $R_n$ is a function of stable telemetry: prefix stability,
+nominal queue depth and baseline latency. The imaginary component $A_n$ is a
+function of the kinematic anomaly score of the node: jitter, packet-drop
+acceleration and the local DDoS signature. Both are normalised to a common,
+dimensionless scale before they enter \eqref{eq:state}; the specification does
+not fix that scale, and the calibration is part of any future implementation.
 
-The M11 state vector is `S(t) = [D_prefix, L_latency, J_jitter, A_anomaly]`.
-Define a complex phasor
+Two derived quantities carry the interpretation:
 
-```
-ψ(t) = R(t) · e^{i θ(t)},      θ ∈ [0, π/2],   R ≥ 1
-```
+\begin{align}
+\lvert\psi_n(t)\rvert &= \sqrt{R_n(t)^2 + A_n(t)^2}
+   && \text{(total systemic pressure)}, \label{eq:magnitude}\\
+\theta_n(t) &= \arctan\!\left(\frac{A_n(t)}{R_n(t)}\right)\in\left[0,\frac{\pi}{2}\right]
+   && \text{(threat rotation)}. \label{eq:phase}
+\end{align}
 
-where
+For $R_n=0$ and $A_n>0$ the phase is defined as $\pi/2$; for $A_n=0$ it is zero.
+The unit phasor is $\hat\psi_n=\psi_n/\lvert\psi_n\rvert=\cos\theta_n+i\sin\theta_n$,
+so the components are the projections
+\begin{equation}
+R_n=\lvert\psi_n\rvert\cos\theta_n,\qquad
+A_n=\lvert\psi_n\rvert\sin\theta_n .
+\label{eq:projections}
+\end{equation}
 
-- `θ(t)` is the **phase** between calm and defence: `θ = 0` means the real axis,
-  a prefix-only metric; `θ = π/2` means the imaginary axis, the full defensive
-  metric. Intermediate angles are mixtures, which is the point of the design.
-- `R(t)` is the **amplitude**: the confidence/severity of the defensive posture.
-  It scales the phase penalty in the FIB (see §5), not the point cloud.
+The plane has a precise reading: the real axis is the calm, prefix-compatible
+state, the imaginary axis is the anomaly-dominated state, and the angle $\theta_n$
+is how far the node has rotated from calm toward anomaly.
 
-A second-order rotation with damping is the minimum model that can be stable:
+## 2. The rotation dynamics
 
-```
-θ̈(t) + 2 ζ ω θ̇(t) + ω² (θ(t) − θ*(t)) = 0
-θ*(t) = (π/2) · σ((A(t) − A₀) / s)
-|θ̇(t)| ≤ ω_max
-```
+The state does not jump between states; it rotates. The phase evolves under the
+first-order law
+\begin{equation}
+\frac{d\theta_n(t)}{dt} = \omega_n(t)
+= \mu\bigl(A_n(t)-R_n(t)\bigr) - \gamma\,\theta_n(t),
+\label{eq:rotation}
+\end{equation}
+with rotation gain $\mu>0$ and damping factor $\gamma>0$. The phase is clipped to
+$[0,\pi/2]$; the clip is part of the model, not a numerical convenience.
 
-with `ζ ≥ 1` (no overshoot), `σ` a logistic or clipped-linear map, and
-`A(t)` the same local anomaly the M11 detector already produces. There is no
-`if t == 30` and no threshold on the clock: the target phase is a function of
-the anomaly only. `R(t)` follows a first-order law, `Ṙ = (R* − R)/τ_R`, with
-`R* = 1 + ρ·clip(A, 0, 1)`.
+\paragraph{Equilibrium and stability.}
+For frozen telemetry the equilibrium of \eqref{eq:rotation} is
+\begin{equation}
+\theta_n^{*} = \operatorname{clip}\!\left(
+\frac{\mu\bigl(A_n-R_n\bigr)}{\gamma},\,0,\,\frac{\pi}{2}\right).
+\label{eq:equilibrium}
+\end{equation}
+Linearising \eqref{eq:rotation} around $\theta_n^{*}$ gives
+$\dot{\delta\theta}_n=-\gamma\,\delta\theta_n$, so the equilibrium is
+exponentially stable for every $\gamma>0$, with time constant $1/\gamma$. The
+damping factor is therefore the term that prevents oscillation: the homogeneous
+response is a decaying exponential, not a damped oscillation, and there is no
+overshoot to chatter around. A larger $\mu$ reacts faster to the anomaly and
+settles at a larger phase; a larger $\gamma$ slows the rotation and pulls the
+equilibrium toward calm. The two parameters are not independent knobs: the
+steady-state threat rotation is $\mu(A-R)/\gamma$, so the ratio $\mu/\gamma$ sets
+the defensive posture and $\gamma$ sets the settling time.
 
-**A rigid rotation of the point cloud does nothing.** If every point were
-mapped to `e^{iθ}·z`, all pairwise distances would be preserved and every
-persistence diagram would be identical. The rotation must act on the *metric*,
-not on the points, or the mechanism is vacuous. This is the first thing a CRMR
-implementation would have to get right, and it is why the sketch below is a
-metric family and not a complex embedding of the names.
+\paragraph{Unitary evolution.}
+Between control ticks the state is propagated by the unitary rotation
+\begin{equation}
+\psi_n(t+\Delta t)=\psi_n(t)\,e^{\,i\,\omega_n(t)\,\Delta t},
+\label{eq:unitary}
+\end{equation}
+which preserves the magnitude, $\lvert\psi_n(t+\Delta t)\rvert=\lvert\psi_n(t)\rvert$,
+and advances the phase by $\omega_n(t)\Delta t$. Equation \eqref{eq:unitary} is
+the discrete form of $\dot\psi_n=i\omega_n\psi_n$.
 
-## 3. Hypothesis H15 (draft thresholds, superseded by the frozen protocol)
+\paragraph{Filtered phase versus measured phase.}
+The definition \eqref{eq:phase} and the dynamics \eqref{eq:rotation} would
+over-determine $\theta_n$ if both were applied to the same measured $R_n,A_n$.
+The specification resolves this explicitly: the measured components
+$R_n^{\mathrm m},A_n^{\mathrm m}$ supply the magnitude
+$\lvert\psi_n\rvert=\sqrt{(R_n^{\mathrm m})^2+(A_n^{\mathrm m})^2}$ and the input
+$A_n^{\mathrm m}-R_n^{\mathrm m}$ of \eqref{eq:rotation}; the phase $\theta_n$ is
+the *filtered* control state produced by \eqref{eq:rotation}. The components used
+downstream are the projections \eqref{eq:projections} of the filtered phase. This
+is the only internally consistent reading, and it is the one stated here.
 
-> Under a *flapping* attack, a phase-continuous rotation of the filtration metric
-> (CRMR) reduces control-state churn and CDR variance relative to discrete DDMR,
-> while keeping the legitimate CDR within 2 percentage points of DDMR and
-> satisfying the same energy clause as M11.
+## 3. The complex FIB
 
-Proposed falsification criteria (to be frozen before any implementation):
+A path $p$ is described by a complex impedance
+\begin{equation}
+\Phi_p = \lvert\Phi_p\rvert\,e^{\,i\phi_p},
+\qquad
+\lvert\Phi_p\rvert=\sqrt{R_p^2+A_p^2},
+\qquad
+\phi_p=\arctan\!\left(\frac{A_p}{R_p}\right),
+\label{eq:impedance}
+\end{equation}
+where $R_p$ is the baseline cost of the path (prefix distance, nominal latency)
+and $A_p$ is its anomaly penalty (measured jitter, drop acceleration, attack
+signature). The router projects the impedance onto the real axis of the current
+network frame:
+\begin{equation}
+\operatorname{Cost}_p(t)
+= \operatorname{Re}\!\left(\Phi_p\,e^{-i\theta_{\mathrm{net}}(t)}\right)
+= \lvert\Phi_p\rvert\cos\!\left(\phi_p-\theta_{\mathrm{net}}(t)\right).
+\label{eq:cost}
+\end{equation}
 
-1. **Churn.** Total variation of the phase, `TV(θ) = Σ|θ(t+Δt) − θ(t)|`, and the
-   number of dimension/phase switches per minute, must both fall by **≥ 30 %**
-   against DDMR under the same flapping attack.
-2. **CDR.** Mean legitimate CDR in the attack windows must be **no more than 2
-   points below** DDMR (not merely "better than static T-NDN").
-3. **Variance.** The per-cycle CDR variance must fall by **≥ 30 %**; a smoother
-   controller that does not reduce the cycle-to-cycle spread has not achieved
-   the stated goal.
-4. **Energy.** The 4-D homology cost must stay below the energy saved by the
-   prevented losses, using the same break-even reporting as M11. A phase
-   controller that recomputes on every θ change can lose this clause by
-   construction.
+The selection rule is
+\begin{equation}
+p^{*}(t)=\arg\min_{p\,:\,\operatorname{Cost}_p(t)\;>\;0}\operatorname{Cost}_p(t),
+\label{eq:select}
+\end{equation}
+with a small positive floor replacing the strict inequality in an implementation
+and paths with non-positive projection excluded from the candidate set.
 
-H15 is refuted by failing any one criterion. It is not enough to be smoother.
+\paragraph{The two limits.}
+At $\theta_{\mathrm{net}}=0$ the projection is
+$\operatorname{Cost}_p=\lvert\Phi_p\rvert\cos\phi_p=R_p$: the router minimises the
+baseline cost and recovers ordinary shortest-path routing. At
+$\theta_{\mathrm{net}}=\pi/2$ the projection is
+$\operatorname{Cost}_p=\lvert\Phi_p\rvert\sin\phi_p=A_p$: the router minimises the
+anomaly penalty, so paths with a large imaginary component are dominated and
+dropped from the candidate set. Between the limits the cost is a continuous
+blend of the two, which is the formal content of the phrase "rotating the metric
+rather than switching it".
 
-## 4. The metric family
+A path is projected out when $\phi_p-\theta_{\mathrm{net}}$ leaves
+$(-\pi/2,\pi/2)$: the cosine becomes non-positive and \eqref{eq:select} excludes
+it. This is the precise mechanism behind the requirement that an attacked path
+must not remain the least-cost egress.
 
-For a phase `θ`, weight the axes by
+## 4. Topological filtration
 
-```
-d_θ(a, b)² = cos²θ · d_prefix(a, b)²
-           + sin²θ · (w_L·d_L² + w_J·d_J² + w_A·d_A²)
-```
+The persistent homology of the T-NDN plan is computed on the set of complex node
+states $\{\psi_1(t),\dots,\psi_N(t)\}$ with the complex modulus as distance,
+\begin{equation}
+d(\psi_i,\psi_j)=\lvert\psi_i-\psi_j\rvert
+=\sqrt{(R_i-R_j)^2+(A_i-A_j)^2}.
+\label{eq:distance}
+\end{equation}
+For a scale $\varepsilon\ge 0$, the Vietoris--Rips complex
+$\mathrm{VR}_\varepsilon$ contains the simplex on a subset $S$ of nodes whenever
+every pair in $S$ is at distance at most $\varepsilon$. Its persistent homology
+in dimensions zero and one, $\mathrm{PH}(\mathrm{VR}_\bullet)$, is the topological
+signature of the fabric: $H_0$ counts connected components of the node cloud and
+$H_1$ counts loops.
 
-At `θ = 0` the metric is the M10 prefix metric; at `θ = π/2` it is the full
-defence metric of M11; between them the axes are blended continuously. For a
-fixed `θ` this is an ordinary real weighted Euclidean metric, so the Vietoris–
-Rips filtration is standard and `ripser` computes it. **No complex persistence
-theory is needed.** The complex number is a compact control representation of the
-pair `(R, θ)`, not a new homology. This is the feasibility argument: CRMR would
-reuse the M11 pipeline with a different, smoothly varying `θ` schedule.
+\paragraph{An invariance that must be stated.}
+A *global* rotation of every node by the same angle, $\psi_n\mapsto e^{i\alpha}\psi_n$,
+is an isometry of \eqref{eq:distance}: every pairwise distance is preserved and
+every persistence diagram is unchanged. A uniformly rotating fabric therefore has
+a constant topology even though its phase is changing. The mechanism can only
+produce a topological change when the nodes rotate by *different* phases
+$\theta_n$, i.e. when \eqref{eq:rotation} is driven by local telemetry and the
+cloud deforms. This distinction is essential and is easy to lose.
 
-The persistence diagrams are not invariant to `θ` (unlike a rigid rotation): the
-weights change, the edges change, and the diagrams change. The phase is therefore
-a genuine parameter of the topology.
+\paragraph{The hole hypothesis.}
+The proposal is that a cluster of nodes rotating toward the imaginary axis
+($\theta_n\to\pi/2$) opens a void in the real-axis routing topology, which
+appears as a persistent $H_1$ feature of the deformed cloud and can be routed
+around. That statement is a *hypothesis*, not a theorem: it requires a
+configuration in which the attacked nodes become a loop enclosing the calm
+component, and it may fail for symmetric or low-dimensional configurations. It is
+included because it is the topological reading of the mechanism, not because it
+has been shown.
 
-## 5. Routing sketch (not implemented)
+## 5. Falsifiable hypothesis H15
 
-- Each FIB entry carries a complex weight `w_e = R_e·e^{iφ_e}`: the cluster
-  centroid's phase and amplitude.
-- A request has a phasor `ψ` from its flow's phase. The cost of an egress is
-  `|arg(w_e) − arg(ψ)|` weighted by `1/R_e`, i.e. a phase-misaligned egress is
-  penalised smoothly instead of being switched off.
-- The attack component is the component whose mean phase is furthest from the
-  calm axis; legitimate traffic is routed to the nearest phase-aligned egress.
-- A backup next hop is selected for the phase-opposite neighbour, the continuous
-  analogue of the M11 loop-free alternate.
+> **H15.** A continuous complex rotation controller will maintain a Content
+> Delivery Rate (CDR) at least 10 % higher than a discrete state-jump controller
+> under DDoS, due to the damping factor $\gamma$ preventing oscillation.
 
-This is a design sketch. Complex FIB weights may turn out to be a reparameter-
-isation of real costs; showing a behavioural difference is part of the work, not
-an assumption.
+The hypothesis is testable, and the protocol is fixed here rather than after the
+measurement:
 
-## 6. Planned experiment (not run)
+1. **Arms.** A discrete state-jump controller and the CRMR controller, with the
+   same anomaly detector, the same instances, the same request stream and the
+   same attack. The discrete arm is the control: if the gain survives against it,
+   the rotation is doing the work; if not, it is not.
+2. **Primary endpoint.** Legitimate CDR in the attack windows: the delivered
+   fraction of legitimate requests. "10 % higher" is read as a relative gain,
+   $\mathrm{CDR}_{\mathrm{CRMR}}\ge 1.10\cdot\mathrm{CDR}_{\mathrm{discrete}}$,
+   on the paired-seed mean.
+3. **Mechanism endpoint.** The oscillation that $\gamma$ is supposed to suppress
+   must be measured, not assumed: the number of phase reversals or direction
+   changes of the routing state per unit time, and the variance of the phase
+   trajectory. A CDR gain without a reduction in oscillation does not support the
+   stated causal claim.
+4. **Refutation.** H15 is refuted if the CDR gain is below 10 %, if the damping
+   does not reduce the measured oscillation relative to the discrete controller,
+   or if the gain is attributable to a difference in detection latency or traffic
+   rather than to the rotation. A positive CDR result with an unchanged
+   oscillation metric is a refutation of the *explanation* even if the number
+   looks good.
 
-- **Attack.** The M11 DDoS (block 0, 500 requests/s, 40 % of legitimate traffic)
-  but **flapping**: 4 s on / 4 s off, five cycles inside the 60 s run, so the
-  controller sees the edges that the discrete version chatters on.
-- **Arms.** Static T-NDN, discrete DDMR (M11), CRMR. Same anomaly detector,
-  instances, requests and energy model for all three.
-- **Metrics.** `TV(θ)` and switches/minute; legitimate CDR per attack window and
-  its variance across cycles; recovery time after each on/off edge; p95; 4-D
-  CPU and the M11 break-even energy per prevented loss.
-- **Pre-registration.** Thresholds in §3 frozen in `docs/crmr-predictions.md`
-  before the first implementation line, exactly as M10/M11 did it.
-- **Expected outcome is genuinely open.** A damped rotation may be slower to
-  react than a hysteresis switch, and the metric blend may be a no-op on the
-  CDR at a lower energy cost. Either result is publishable as a boundary.
+No part of H15 has been tested. The hypothesis is stated with the 10 % threshold
+specified here; it is not a result.
 
-## 7. Status of the deferral
+## 6. Relation to the existing work and open questions
 
-The original plan was to defer CRMR until P8–P12 and papers A and B were final.
-The state of this repository is:
+\paragraph{Relation.}
+T-NDN fixes a static name metric; DDMR changes the dimension of that metric in a
+discrete jump with hysteresis; CRMR makes the state a point of $\mathbb{C}$ and
+rotates it continuously under \eqref{eq:rotation}. The complex FIB \eqref{eq:cost}
+is a strict generalisation of a real cost: at $\theta_{\mathrm{net}}=0$ it is the
+baseline cost, and the real routing plan is recovered as a special case.
 
-1. **P8–P12 are complete.** `docs/layering-real-stack-results.md` reports all
-   twelve cases confirmed with 20 runs per case, and the raw outputs are
-   committed under `validation/real_stack/results/`.
-2. **The two papers are final** (A: `paper-layering-testbed.md`, B:
-   `paper-bio-control-limits.md`), and A already carries the epilogue that
-   points to this file.
-3. **The CRMR paper was then commissioned explicitly**, which is what
-   superseded the deferral. The implementation and evaluation followed the
-   frozen protocol in [`crmr-predictions.md`](crmr-predictions.md): a pilot on
-   seed 2026 fixed the thresholds, and the evaluation uses seeds 2030–2059.
+\paragraph{Open questions.}
+The following are unresolved by construction:
 
-The pilot revised the sustained CDR guardrail from the 2 points drafted in §3
-to 5 points, because the rotation's settling time costs about three points even
-under a sustained attack; that revision is recorded in the frozen protocol
-before the evaluation run. The flapping CDR gap was declared a measured
-boundary, not a pass criterion.
-
-## 8. Risks and open questions
-
-1. **Continuity is not automatically stability.** A damped second-order phase
-   can still oscillate if `ζ` or `ω` is chosen badly, and the anomaly signal
-   itself is noisy.
-2. **The axis blend may be observationally equivalent to DDMR** for some θ
-   trajectories; an ablation is needed to show that the continuous family does
-   something the discrete jump cannot.
-3. **Complex FIB weights may collapse to real costs.** If the argmin of the
-   phase penalty always equals the argmin of the real cost, the FIB part is
-   decoration.
-4. **Energy.** Recomputing ripser at every θ epoch is more expensive than two
-   discrete states; the break-even may fail even if churn falls.
-5. **The H1 question is unchanged.** M11 found H1 loops in 8.2 % of shock
-   epochs; CRMR does not promise persistent holes either.
-6. **No proof.** Nothing here is proved; the continuity argument is a hypothesis.
-
-## 9. Relationship to the milestones
-
-- M10 (`docs/tndn.md`): static name-space topology, fixed 1-D filtration.
-- M11 (`docs/ddmr.md`): discrete 1 → 4 dimension shift with hysteresis.
-- CRMR (this document): continuous rotation of the same metric family; H15; not
-  tested.
+1. **Parameter identification.** $\mu$ and $\gamma$ are not measurable from the
+   model; their ratio fixes the posture and $1/\gamma$ the settling time. A
+   deployment must estimate both.
+2. **Over-determination.** The filtered-phase reading in §2 is a modelling choice;
+   alternatives (drive the components directly, or evolve the phasor without
+   telemetry re-anchoring) give different dynamics and must be compared before
+   any claim is made.
+3. **Topology.** The hole hypothesis of §4 is unproven, and the global-rotation
+   invariance means a uniform controller has no topological effect. Node-local
+   phases are a requirement, not a detail.
+4. **Projection loss.** The four-dimensional state of DDMR is compressed to the
+   two coordinates $(R,A)$; the compression discards latency and jitter
+   separately. Whether the loss matters is untested.
+5. **Distributed consistency.** $\theta_{\mathrm{net}}$ is a network-level phase
+   used in \eqref{eq:cost}; how nodes agree on it without a central controller is
+   unspecified.
+6. **Energy and cost.** The complex FIB and the topological filtration have a
+   computational cost that no part of this document bounds.
+7. **Evidence.** There is none. This is a specification.
 
 ## References
 
-- Edelsbrunner, Letscher and Zomorodian, "Topological Persistence and
+- H. Edelsbrunner, D. Letscher and A. Zomorodian, "Topological Persistence and
   Simplification", *Discrete & Computational Geometry* 28(4), 2002, DOI
   [10.1007/s00454-002-2885-2](https://doi.org/10.1007/s00454-002-2885-2).
-- Zhang et al., "Named Data Networking", *ACM SIGCOMM Computer Communication
+- L. Zhang et al., "Named Data Networking", *ACM SIGCOMM Computer Communication
   Review* 44(3), 2014, DOI
   [10.1145/2656877.2656887](https://doi.org/10.1145/2656877.2656887).
-- M11: [`ddmr.md`](ddmr.md) and [`ddmr-predictions.md`](ddmr-predictions.md).
