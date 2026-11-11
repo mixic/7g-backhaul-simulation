@@ -672,7 +672,9 @@ The honest verdicts:
 │   ├── layering-results.md       # Three-fidelity layering classification
 │   ├── layering-results.generated.md # Machine-generated layering report
 │   ├── layering-real-stack-predictions.md # Frozen P8-P12 real-stack predictions
-│   └── layering-real-stack-results.md # P8-P12 status (20 runs/case, all confirmed)
+│   ├── layering-real-stack-results.md # P8-P12 status (20 runs/case, all confirmed)
+│   ├── layering-real-stack-predictions-round2.md # Frozen P13-P16 predictions (fail-able)
+│   └── layering-real-stack-results-round2.md # P13-P16 status, dispositions and Brier score
 ├── figures/
 │   ├── 7g_fabric_tick_0.png
 │   ├── 7g_fabric_tick_1.0.png
@@ -836,6 +838,7 @@ The honest verdicts:
 │   ├── layering/                 # Layering runners, classifier and committed CSVs
 │   ├── linux_layering/           # Two-netns TUN relay and tc-netem harness
 │   ├── real_stack/               # P8-P12 harness (namespaces, capture, gates, verdict CSV)
+│   ├── round2/                   # P13-P16 harness (ECN mangler, ESP-in-UDP, depth gates)
 │   └── scenario_s1.py            # Shared scenario spec and Python models
 ├── tests/
 │   ├── test_backhaul_sim.py
@@ -871,6 +874,7 @@ The honest verdicts:
 │   ├── test_energy.py
 │   ├── test_m7_filters.py
 │   ├── test_real_stack.py
+│   ├── test_round2.py
 │   └── test_vision_benchmark.py
 ├── CITATION.cff                  # Citation metadata (CFF 1.2.0)
 ├── GOAL.md                       # Current testbed goal and milestone status

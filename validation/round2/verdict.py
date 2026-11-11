@@ -292,14 +292,23 @@ def all_verdicts(rows: list[Row]) -> list[dict[str, str]]:
     return verdicts
 
 
+def _credence_key(case: str) -> str:
+    """Map a verdict row's case id to its credence-table key."""
+    if case.startswith("P13h"):
+        return "P13h"
+    if case == "P15a":
+        return "P15_bytes"
+    if case == "P15b":
+        return "P15_delivery"
+    return case
+
+
 def brier_score(verdicts: Iterable[dict[str, str]]) -> tuple[float, int, list[str], list[str]]:
     """Brier score over scored predictions; INCONCLUSIVE / INVALID / NOT RUN are unscored."""
     outcomes: dict[str, list[int]] = defaultdict(list)
     unscored: list[str] = []
     for item in verdicts:
-        key = item["case"]
-        if key.startswith("P13h"):
-            key = "P13h"
+        key = _credence_key(item["case"])
         if item["verdict"] == CONFIRMED:
             outcomes[key].append(1)
         elif item["verdict"] == REFUTED:
@@ -321,15 +330,17 @@ def brier_score(verdicts: Iterable[dict[str, str]]) -> tuple[float, int, list[st
 
 def calibration_table(verdicts: Iterable[dict[str, str]]) -> list[dict[str, object]]:
     """One line per scored prediction, for the results document."""
-    rows: list[dict[str, object]] = []
+    grouped: dict[str, list[dict[str, str]]] = defaultdict(list)
     for item in verdicts:
-        key = item["case"]
-        if key.startswith("P13h"):
-            key = "P13h"
+        key = _credence_key(item["case"])
         if key in CREDENCE and item["verdict"] in (CONFIRMED, REFUTED):
-            outcome = 1 if item["verdict"] == CONFIRMED else 0
-            rows.append({"key": key, "credence": CREDENCE[key], "outcome": outcome,
-                         "brier": (CREDENCE[key] - outcome) ** 2, "case": item["case"]})
+            grouped[key].append(item)
+    rows: list[dict[str, object]] = []
+    for key, items in grouped.items():
+        outcome = 1 if all(item["verdict"] == CONFIRMED for item in items) else 0
+        rows.append({"key": key, "credence": CREDENCE[key], "outcome": outcome,
+                     "brier": (CREDENCE[key] - outcome) ** 2,
+                     "case": items[0]["case"] if len(items) == 1 else f"{key} (control set)"})
     return rows
 
 

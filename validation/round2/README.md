@@ -8,9 +8,11 @@ observation schema and its offload helper, and adds what round 2 needs: an ECN m
 ESP-in-UDP, a second client namespace, fragment / SPI / sequence capture and the depth
 gates.
 
-> **Status: run against one kernel.** WSL2 `6.18.58.1-microsoft-standard-WSL2`. The
-> frozen replication clause asks for at least two kernels; only one is available on this
-> host, and the results document records that as a limitation rather than averaging it.
+> **Status: run against one kernel.** WSL2 `6.18.58.1-microsoft-standard-WSL2`:
+> 20 cases, 400 runs, **17 of 18 scored predictions CONFIRMED and `P16d`
+> REFUTED; Brier 0.0833**. The frozen replication clause asks for at least two
+> kernels; only one is available on this host, and the results document records
+> that as a limitation rather than averaging it.
 
 ## Requirements
 

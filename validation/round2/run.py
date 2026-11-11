@@ -143,6 +143,30 @@ def _dry_run(cases: list[Case], config: RunConfig) -> int:
     return 0
 
 
+def _recompute(out: Path) -> int:
+    """Re-derive verdicts, calibration and summary from ``observations.csv`` (no kernel)."""
+    path = out / "observations.csv"
+    if not path.exists():
+        raise SystemExit(f"no observations at {path}")
+    rows: list[dict[str, object]] = []
+    with path.open(newline="", encoding="utf-8") as handle:
+        for record in csv.DictReader(handle):
+            rows.append({"source": record["source"], "scenario": record["scenario"], "policy": record["policy"],
+                         "seed": int(record["seed"]), "metric": record["metric"],
+                         "value": float(record["value"]), "unit": record["unit"]})
+    environment = (out / "environment.txt").read_text(encoding="utf-8") if (out / "environment.txt").exists() else ""
+    config = RunConfig()
+    verdicts = all_verdicts(rows)
+    brier, scored, missing, unscored = brier_score(verdicts)
+    write_verdicts(out / "verdicts.csv", verdicts)
+    write_calibration(out / "calibration.md", calibration_table(verdicts))
+    write_summary(out / "summary.md", environment, verdicts, config, brier, scored, missing, unscored)
+    for item in verdicts:
+        print(f"{item['case']:14s} {item['verdict']:13s} {item['detail']}")
+    print(f"Brier: {brier:.4f} over {scored} scored predictions")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--only", default="", help="comma list of case ids or prediction ids, e.g. P13,P15a")
@@ -153,7 +177,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument("--probe", action="store_true", help="report available kernel facilities and exit")
     parser.add_argument("--dry-run", action="store_true", help="print the commands of one run per case and exit")
+    parser.add_argument("--recompute", action="store_true",
+                        help="rebuild verdicts, calibration and summary from an existing observations.csv")
     args = parser.parse_args(argv)
+
+    if args.recompute:
+        return _recompute(args.output_dir or DEFAULT_OUTPUT)
 
     config = RunConfig(runs=args.runs, datagrams=args.datagrams,
                        p15_datagrams=args.p15_datagrams, p16_datagrams=args.p16_datagrams)

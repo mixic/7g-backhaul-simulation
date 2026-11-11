@@ -1,2 +1,21 @@
 prediction,case,verdict,detail
+P13,P13h_ipip,CONFIRMED,100 % delivery and unchanged inner ECN for both codepoints
+P13,P13h_wg,CONFIRMED,100 % delivery and unchanged inner ECN for both codepoints
+P13,P13h_esp,CONFIRMED,100 % delivery and unchanged inner ECN for both codepoints
 P13,P13a,CONFIRMED,"0 % delivery in every run, ipip0 rx_frame_errors delta equals datagrams sent"
+P13,P13b,CONFIRMED,100 % delivery with the predicted inner ECN in every run
+P13,P13c,CONFIRMED,100 % delivery with the predicted inner ECN in every run
+P13,P13d,CONFIRMED,100 % delivery with the predicted inner ECN in every run
+P13,P13e,CONFIRMED,100 % delivery with the predicted inner ECN in every run
+P13,P13f,CONFIRMED,100 % delivery with the predicted inner ECN in every run
+P13,P13g,CONFIRMED,100 % delivery with the predicted inner ECN in every run
+P14,P14a,CONFIRMED,"client 1 100 %, client 2 0 % with its SPI absent at vN2 egress"
+P14,P14b,CONFIRMED,"client 2 100 %, client 1 0 % with its SPI absent at vN2 egress"
+P14,P14c,CONFIRMED,both clients delivered 100 %
+P14,P14d,CONFIRMED,both clients delivered 100 %
+P15,P15a,CONFIRMED,"2112 B (E->F) and 2180 B (F->E) per datagram, difference 68 B, in every run"
+P15,P15b,CONFIRMED,"both orderings pooled at E->F 0.9003, F->E 0.9041"
+P16,P16a,CONFIRMED,delivered equals the reference replay count in every run; cause confirmed
+P16,P16b,CONFIRMED,100 % delivery in 20 runs with a valid depth gate
+P16,P16c,CONFIRMED,100 % delivery in 20 runs with a valid depth gate
+P16,P16d,REFUTED,"lost datagrams with a valid depth gate: delivered [673.0, 675.0, 676.0, 677.0, 678.0, 681.0, 687.0, 690.0, 696.0, 697.0, 700.0, 701.0, 707.0, 712.0, 714.0, 717.0] of [2000.0]"
