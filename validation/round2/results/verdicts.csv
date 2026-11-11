@@ -1,0 +1,2 @@
+prediction,case,verdict,detail
+P13,P13a,CONFIRMED,"0 % delivery in every run, ipip0 rx_frame_errors delta equals datagrams sent"

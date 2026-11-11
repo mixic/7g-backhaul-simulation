@@ -1,0 +1,17 @@
+source,scenario,policy,seed,metric,value,unit
+linux_real_stack_round2,P13,P13a,0,warmup_ok,1,boolean
+linux_real_stack_round2,P13,P13a,0,offload_disabled,0,boolean
+linux_real_stack_round2,P13,P13a,0,sent_datagrams,50,count
+linux_real_stack_round2,P13,P13a,0,delivered_datagrams,0,count
+linux_real_stack_round2,P13,P13a,0,delivery_percent,0.0,percent
+linux_real_stack_round2,P13,P13a,0,ecn_gate,1,boolean
+linux_real_stack_round2,P13,P13a,0,inner_ecn_ok,1,boolean
+linux_real_stack_round2,P13,P13a,0,inner_tos_notect,0,count
+linux_real_stack_round2,P13,P13a,0,inner_tos_ect0,0,count
+linux_real_stack_round2,P13,P13a,0,inner_tos_ce,0,count
+linux_real_stack_round2,P13,P13a,0,cause_gate,1,boolean
+linux_real_stack_round2,P13,P13a,0,ipip_rx_frame_errors_delta,50,count
+linux_real_stack_round2,P13,P13a,0,ipip_rx_errors_delta,50,count
+linux_real_stack_round2,P13,P13a,0,ipip_rx_dropped_delta,0,count
+linux_real_stack_round2,P13,P13a,0,xfrm_in_error_delta,0,count
+linux_real_stack_round2,P13,P13a,0,wg_rx_bytes_total,0,bytes
