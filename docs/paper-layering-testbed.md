@@ -1,398 +1,487 @@
-# Empirical Commutation Rules for Protocol Layer Encapsulation in Heterogeneous Networks
+# Which Rewrites Survive? Pre-registered Tests of a Field-Class Model of Encapsulation, Middleboxes and Decapsulation on Linux
 
 **Milan Nikolic** · Independent Researcher · <m_nikolic@yahoo.com>
 
-**Status:** focused paper. The real-stack extension (P8–P12) is complete: all
-twelve cases are confirmed on one Linux kernel — see
-[`layering-real-stack-results.md`](layering-real-stack-results.md). This paper is
-Paper A of a two-paper split; Paper B is
-[`paper-bio-control-limits.md`](paper-bio-control-limits.md). Section 3 adds the
-DNS-free name fabric the rule implies and the migration-convergence comparison
-that motivates it; those figures are model outputs, not packet traces. The
-epilogue is a future-work proposal and is explicitly untested.
+**Status.** Focused measurement paper. Predictions were frozen in version control at
+three commits, each before the corresponding harness code: `96d59f3` (P1–P7),
+`46c7b40` (P8–P12), `1b7e6ac` (P13–P16). Results are reported in the linked
+results files and summarised here. The dispositions in the tables and in Figure 2
+are regenerated from the committed verdict CSVs by
+`tools/make_layering_figures.py`; the numeric results are those recorded in the
+linked results files, with the reproduction commands in §9.
 
 ## Abstract
 
-Encapsulation layers — compression `C`, encryption/authentication `E`, tunnelling
-`T`, fragmentation `F`, sequencing `S` — are usually studied one at a time. This
-paper asks a narrower, testable question: **when the order changes, which rewrites
-corrupt a datagram and which leave it intact?** It formalises a *survival rule*: a
-middlebox can rewrite a field only if that field is **visible** at the wire and
-**reachable** within its parse depth; delivery breaks exactly when the rewritten
-field is **authenticated** (inside an integrity scope) or **structural** (length-
-or offset-bearing). The rule is tested in three independent
-implementations: a Python codec, a SimPy model, and a real Linux stack (kernel
-WireGuard, IPsec AH/ESP, nftables NAT). The codec and model agree exactly on
-P1–P7. Against the real stack, all twelve frozen cases are confirmed:
-AH-in-tunnel dies through NAT while ESP and WireGuard survive (P8); WireGuard's
-wire overhead is `60 + 16·⌈L/16⌉`, not the stipulated 56 B (P9); nested
-IPIP/WireGuard orderings differ by `−4` or `+12` bytes because WireGuard
-quantises size (P10); a rewritten outer UDP length is fatal while an inert ToS
-rewrite is not (P11); and an inner UDP checksum derived from the outer address
-breaks under NAT even without an integrity tag (P12). The contribution is the
-**quantised** and **derived** field classes, which a fixed-overhead model lacks.
-Everything here is about framing and survival, not cryptographic security; the
-evidence is one kernel, veth links and one NAT implementation.
-
-The same rule decides whether a DNS-free name fabric can work at all, because a
-name carried in the packet header is a field any middlebox may rewrite (§3).
-
-While the architectural principle of merging name resolution with forwarding is the foundation of Information-Centric Networking (ICN) and Named Data Networking (NDN), our contribution is empirical and quantitative. We do not claim to invent a new naming architecture. Instead, we provide the first direct, apples-to-apples measurement of service migration convergence latency between an NDN-style name fabric and a conventional DNS-based system with a standard TTL. Our results demonstrate that the TTL-bounded convergence of DNS (28.7 seconds) imposes a fundamental limit on dynamic service migration, whereas the name-based fabric achieves convergence in 35.7 milliseconds—a reduction of nearly three orders of magnitude. This quantifies a critical architectural advantage for future 7G networks where service instances must migrate rapidly.
+Packets in practice carry stacked encapsulations (compression, encryption,
+tunnelling, fragmentation, sequencing) and cross middleboxes that rewrite headers
+and decapsulators that act on outer fields. We ask a narrow question: when layer
+order or middlebox behaviour changes, which rewrites corrupt a datagram? We state
+a field-class rule: a rewrite is applied iff the field is visible at the wire and
+reachable by the middlebox, and breaks delivery iff the field is authenticated or
+structural. We test it with predictions committed to version control before any
+experiment code, at three fidelities: an executable model, a discrete-event
+simulation, and a Linux namespace testbed that runs kernel WireGuard, IPsec
+AH/ESP, IPIP and nftables NAT in two real-stack rounds. Of seven initial
+predictions, six are confirmed; one is
+refuted at the Linux fidelity because a compressor saw real headers and crossed a
+fragment boundary. Real-stack runs (20 per case) confirm five further predictions
+and show that the rule needs two more classes: quantised fields (WireGuard pads to
+16 bytes, so IPIP and WireGuard orderings differ by −4 or +12 bytes) and derived
+fields (an inner UDP checksum depends on the outer address). A final, deliberately
+failure-prone round, with credences recorded in advance (Brier 0.083), confirms 17
+of 18 predictions and finds that the same outer ECN mark is fatal under IPIP but
+harmless under WireGuard and ESP (decapsulation-coupled), that two ESP clients
+cannot share a NAT (a middlebox lookup-key failure), and that delivery under
+reordering is bounded by the integrity layer's replay window. One prediction is
+refuted by our own mis-specified reordering depth. Evidence is one kernel series
+(two WSL2 builds), veth links and one NAT; security is not evaluated. Predictions,
+harness and raw data are open.
 
 ## 1. Introduction
 
-A middlebox rewrites a header field. Two separate events follow, and the paper
-keeps them apart:
+A packet in the wild is rarely sent as built. It is compressed, encrypted,
+tunnelled, fragmented and sequenced, in an order set by whoever configured the
+stack, and then crosses devices that rewrite its headers (NAT), mark its
+congestion bits (routers), and look up state keyed on fields they can read.
+Whether the datagram arrives depends on which fields each device touches and which
+fields the receiver treats as authenticated or structural. This knowledge exists,
+but scattered across RFCs, middlebox measurement studies and kernel source; it is
+rarely stated as one testable rule, and rarely tested against more than one
+implementation.
 
-- **The rewrite is applied** iff the field is **visible** at the wire *and*
-  **reachable** within the middlebox's parse depth.
+We state such a rule and test it. A rewrite is **applied** iff the targeted field
+is **visible** at the wire and **reachable** within the middlebox's parse depth.
+It **breaks delivery** iff the field is **authenticated** (inside an integrity
+scope) or **structural** (length- or offset-bearing). We test the rule with
+predictions that were committed before any experiment code existed, at three
+fidelities of increasing realism, and we report every refutation rather than
+removing it.
+
+The rule survives, but is incomplete in four specific ways. Fields can be
+**quantised** (WireGuard rounds sizes up, so layer order changes wire bytes);
+**derived** (an inner UDP checksum depends on the outer address, so a rewrite
+breaks delivery without any integrity tag); **keys to a middlebox's own state**
+(two ESP clients cannot share a NAT address); and **decapsulation-coupled** (one
+outer ECN mark is fatal under IPIP and harmless under WireGuard and ESP).
+Reordering adds a state parameter: the integrity layer's replay window decides how
+much delay the stack tolerates.
+
+**Contributions.**
+
+1. A compact field-class model — visible, reachable, authenticated, structural,
+   quantised, derived, lookup-key, decapsulation-coupled — plus one state
+   parameter (the replay window).
+2. A method: predictions frozen in version control before harness code, three
+   fidelities, mutation and cause gates, explicit dispositions (CONFIRMED,
+   REFUTED, INCONCLUSIVE, INVALID, NOT RUN), and credences scored with a Brier
+   score.
+3. An open, reproducible Linux testbed and the measured facts it produced,
+   including the per-decapsulator ECN table and the first-come-first-served
+   ESP-through-NAT behaviour.
+
+**What we do not claim.** We do not claim a first measurement of anything; the
+middlebox literature and the RFCs are older than this work. We do not claim the
+rule generalises to arbitrary middleboxes, kernels or stacks. We do not evaluate
+cryptographic security. AH failing under NAT and WireGuard's padding are
+documented behaviours: confirming them validates the method and the harness, not
+a discovery. The informative results are the cases where the specification leaves
+behaviour open (P10, P12, P13, P14, P16).
+
+## 2. The model
+
+The rule has two events, kept separate:
+
+- **The rewrite is applied** iff the field is visible at the wire *and* reachable
+  within the middlebox's parse depth.
 - **The receiver accepts the datagram** unless the rewritten field is
-  **authenticated** (inside an integrity scope) or **structural** (length- or
+  authenticated (inside an integrity scope) or structural (length- or
   offset-bearing), which a rewrite invalidates.
 
-So a field that is visible and reachable, but neither authenticated nor
-structural, is silently rewritten and the datagram survives; a field that is
-authenticated or structural breaks delivery when rewritten. The testbed freezes
-this rule and then tests it, not the codec.
+Table 1 lists the classes the three rounds forced. Each is traceable to a test
+that found it; none is introduced by definition alone. Figure 1 shows, for the
+six orderings of tunnelling `T`, encryption `E` and sequencing `S`, which of two
+header fields is visible at the wire; visibility is recorded separately and is
+not itself a delivery prediction.
 
-The rule is not only a catalogue of middlebox failures. It also decides whether
-a network can route on a name carried in the packet header, and therefore
-whether a DNS-free name fabric is possible at all (§3). The fabric in this paper
-is not a new architecture — it is the ICN/NDN design, applied and measured:
+**Table 1. Field classes.**
 
-While the architectural principle of merging name resolution with forwarding is the foundation of Information-Centric Networking (ICN) and Named Data Networking (NDN), our contribution is empirical and quantitative. We do not claim to invent a new naming architecture. Instead, we provide the first direct, apples-to-apples measurement of service migration convergence latency between an NDN-style name fabric and a conventional DNS-based system with a standard TTL. Our results demonstrate that the TTL-bounded convergence of DNS (28.7 seconds) imposes a fundamental limit on dynamic service migration, whereas the name-based fabric achieves convergence in 35.7 milliseconds—a reduction of nearly three orders of magnitude. This quantifies a critical architectural advantage for future 7G networks where service instances must migrate rapidly.
+| Class | Definition | Found by | Effect on a rewrite |
+|---|---|---|---|
+| visible | readable at the wire (not inside an encryption layer) | P3, P4 | rewrite possible |
+| reachable | within the middlebox's parse depth | P6 | rewrite possible |
+| authenticated | covered by an integrity tag | P3, P8 | receiver rejects |
+| structural | length- or offset-bearing | P7, P11 | receiver rejects or mis-parses |
+| quantised | size rounded by a layer | P9, P10 | order changes wire bytes; layers no longer commute exactly |
+| derived | value computed from a field in another layer | P12 | rewrite elsewhere invalidates it without a tag |
+| lookup-key | selects state at the receiver (SA, policy) or the middlebox (conntrack) | P14 (middlebox key); P8b motivates the receiver-side variant | wrong or colliding key drops or merges flows |
+| decapsulation-coupled | outer value combined with an inner value on the way out | P13 | outcome depends on the decapsulator implementation |
 
-Sections 2 and 4 report the frozen layering cases (P1–P7) and the real-stack
-extension (P8–P12); §3 specifies the fabric and the one measurement this paper
-makes with it; §5 credits the prior art.
+A state parameter accompanies the classes: the **replay window** of the
+integrity layer (P16). With reordering depth at or above the window, valid
+packets are dropped though none was lost on the wire.
 
-## 2. What was tested (P1–P7)
+![Visibility of two header fields in six orderings of T, E, S](../figures/layering_visibility.png)
 
-The predictions ([`layering-predictions.md`](layering-predictions.md)) cover
-visible/mutation/acceptance for NAT and byte-mangling across six orderings of
-`T`, `E`, `S`, plus the six-layer permutations with `C` and `F`. The codec
-([`simulation/layering/`](../simulation/layering/)) and the SimPy model agree on
-every case; the validator lives in
-[`validation/layering/`](../validation/layering/). Notable outcomes:
+**Figure 1.** `T.src_port` is visible only when `T` is applied after `E`; `S.seq`
+is visible unless `S` is applied before `E`. Data: the P4 visibility table in
+[`layering-results.md`](layering-results.md).
 
-- **P1** — encrypt-before-compress inflates a compressible payload (size effect).
-- **P5** — fragment-before-compress raises the fragment count.
-- **P3** — authenticating the NAT-rewritten outer source breaks acceptance. The
-  same scope rule governs a rewritten name field (§3.3).
-- **P4** — fixed-overhead layers commute exactly; quantised layers do not (§4).
+## 3. Method
 
-## 3. Name Fabric Architecture
+**Pre-registration.** Three prediction files were committed before the code that
+tested them:
 
-The rule of §1 is usually read as a warning about middleboxes. It is also a
-design constraint: if a network routes on a name carried in the packet header,
-then the name is a field, and every rewrite of it is governed by the same
-visible / reachable / authenticated / structural test. This section specifies
-the DNS-free fabric the rule permits, the way nodes learn where a name lives,
-the cryptographic binding the fabric needs, and the seam through which it must
-speak to the legacy Internet. It is an architecture section; the one
-quantitative result it carries is the migration-convergence comparison of §3.2.
+| Round | Freeze commit | File |
+|---|---|---|
+| P1–P7 | `96d59f3` | [`layering-predictions.md`](layering-predictions.md) |
+| P8–P12 | `46c7b40` | [`layering-real-stack-predictions.md`](layering-real-stack-predictions.md) |
+| P13–P16 | `1b7e6ac` | [`layering-real-stack-predictions-round2.md`](layering-real-stack-predictions-round2.md) |
 
-### 3.1 Name structure
+The files are never edited after the freeze; corrections go to a dated addendum
+of the results document.
 
-The fabric's names are hierarchical, in the NDN idiom, with the service at the
-root and the object below it:
+**Fidelities.** P1–P7 were run in an executable Python model, in a SimPy model
+with a finite drop-tail queue, and on Linux network namespaces with a veth pair,
+TUN devices and seeded `tc netem` loss. The real-stack rounds run four Linux
+namespaces with kernel WireGuard, IPsec AH/ESP, IPIP and nftables masquerade;
+round 2 adds an ECN mangler, ESP-in-UDP, a second client namespace, fragment / SPI
+/ sequence capture and depth gates. The frozen protocol is 20 runs per case
+(round 2: 20 cases, 400 runs, 5,800 observation rows).
 
-```
-/service/<service-id>/<content-id>
-```
+**Gates and dispositions.** A case is scored only when its gates pass: warm-up,
+checksum offload, ECN mutation, SPI, fragment shape and reordering depth. Every
+case receives one disposition: CONFIRMED, REFUTED, INCONCLUSIVE (a cause gate
+failed), INVALID (another gate failed or setup error) or NOT RUN (facility
+missing). Only CONFIRMED and REFUTED are evidence; the Brier score ignores the
+rest. No case in the reported runs is INCONCLUSIVE, INVALID or NOT RUN.
 
-- `<service-id>` identifies a role-fluid service, not a host. It is the unit a
-  client asks for and the unit the fabric routes on.
-- `<content-id>` is a self-certifying digest of the bytes for immutable content,
-  and a signed descriptor bound to an epoch for a dynamic service (the
-  `IMMUTABLE` and `SERVICE` name classes of
-  [`simulation/name_fabric.py`](../simulation/name_fabric.py)). A digest names
-  bytes; a role-fluid service has no fixed bytes, so its name must be a signed
-  claim about which instance currently serves it.
+**Credence scoring.** Round 2 recorded a credence per prediction before the run
+and scores each outcome with the Brier term `(credence − outcome)²`. The purpose
+is to make "the prediction was easy" visible: a cautious set scores well only if
+the cases really were easy.
 
-The instance is deliberately not a component of the requested name. A
-deployment that wants to pin a replica can extend the hierarchy to
-`/service/<service-id>/<instance>/<content-id>`, but a name that contains the
-instance must be rewritten on every move — the exact coupling the fabric exists
-to remove. The prototype keeps instance selection below the name layer, in the
-FIB (§3.2).
+**Environment.** WSL2 Ubuntu 26.04.1 LTS; kernel `6.18.54.1-microsoft-standard-WSL2`
+for P1–P7 and `6.18.58.1-microsoft-standard-WSL2` for P8–P16; iproute2 6.19.0;
+wireguard-tools 1.0.20250521; nftables 1.1.6; `ipip`, `wireguard`, `esp4`,
+`ah4`, `act_pedit`, `act_csum`, `nft_masq` and `sch_netem` present. The Linux
+application payload is normalised to `model_payload − 28` bytes so the codec sees
+a `model_payload`-byte IP/UDP datagram; this normalisation is recorded in the
+predictions file and is the direct cause of the P5 refutation.
 
-The ns-3 prototype encodes only the service level on the wire: the custom
-`RoleFluidHeader` carries a 64-bit `name` field, alongside `seq`, fragment
-offset, `total`, `mtu`, hop limit, a send timestamp and an accumulated path
-cost; `name = node index / 5`, so 50 nodes expose 10 names. That is a prototype simplification — a flat 64-bit
-identifier for a 10-name space — not a claim that a production fabric should use
-flat names; route-by-name table size is unmodelled (see §6 and
-[`name-fabric.md`](name-fabric.md) §6).
+## 4. Results I: P1–P7
 
-This structure replaces the DNS A/AAAA record. An A/AAAA record is a binding from
-a name to a locator, cached with a TTL; a client that holds a stale record sends
-to the old locator until the TTL expires. In the fabric the name is the
-forwarding key itself: a request carries `/service/svc-3`, and each node's FIB
-maps that name to an egress device and a cost. There is no name→address binding
-to cache, so no TTL sits between an instance move and the next request.
+Table 2 gives the dispositions. The model and the SimPy implementation agree on
+all seven; Linux agrees on six and refutes P5.
 
-### 3.2 FIB update mechanism
+**Table 2. P1–P7 verdicts by fidelity.**
 
-Nodes do not query a directory. They learn the gradient that points at a name. In
-the ns-3 prototype
-([`validation/ns3/role-fluid-fabric.cc`](../validation/ns3/role-fluid-fabric.cc))
-the mechanism is:
+| Prediction | Model | SimPy | Linux | Overall |
+|---|---|---|---|---|
+| P1 — compress/encrypt size | CONFIRMED | CONFIRMED | CONFIRMED | **CONFIRMED** |
+| P2 — encrypt/fragment overhead | CONFIRMED | CONFIRMED | CONFIRMED | **CONFIRMED** |
+| P3 — integrity scope | CONFIRMED | CONFIRMED | CONFIRMED | **CONFIRMED** |
+| P4 — fixed-overhead commutativity | CONFIRMED | CONFIRMED | CONFIRMED | **CONFIRMED** |
+| P5 — compress/fragment delivery | CONFIRMED | CONFIRMED | **REFUTED** | **REFUTED** |
+| P6 — survival sweep (54 cases) | CONFIRMED | CONFIRMED | CONFIRMED | **CONFIRMED** |
+| P7 — structural inertness | CONFIRMED | CONFIRMED | CONFIRMED | **CONFIRMED** |
 
-1. A server announces its name with a `HELLO` control packet. The packet
-   accumulates a path cost (`costAccum`) as it is flooded.
-2. A node keeps, per name, the lowest-latency ingress it has seen
-   (`FibEntry{device, latencyMs, mtu}`). A `HELLO` that does not improve the best
-   known cost is dropped; one that improves it updates the FIB and is
-   re-flooded. Duplicates are suppressed by a seen-`HELLO` set.
-3. When the instance moves, the old server sends a `WITHDRAW` for the name and
-   the new server sends a `HELLO`; the gradient re-forms around the new
-   location. A pending-interest table (PIT) reverses the data path, so data
-   follows the reverse of the interest that created it.
-4. Data is served from the instance or from an on-path cache. No name lookup is
-   performed anywhere in this path.
+P1, P2, P4 and P5 are arithmetic regression tests: confirming them shows that the
+three implementations reproduce the specified arithmetic, not that a deployed
+network behaves this way. P3, P6 and P7 are the research content of this round.
 
-The analytic model abstracts one step further: `gradient_resolution()` computes
-the lowest-latency path from the client to the instance (Dijkstra, with the
-bottleneck capacity of that path), adds a utilisation-dependent queue delay and
-an exponential jitter term. It *assumes* the gradient exists; bootstrap is not
-modelled (stated in advance in [`name-fabric.md`](name-fabric.md) §3).
+![Dispositions by prediction and fidelity](../figures/layering_verdicts.png)
 
-Contrast this with DNS. DNS resolution requires a (usually centralized)
-authoritative server and a recursive resolver, and correctness after a move
-depends on cache invalidation: clients keep the old answer until the TTL
-expires. Under the model's defaults, a 30 s TTL produces a p95 time to first
-success of **28 677 ms** (28.7 s) and 150 failed requests per client. Name-based
-forwarding has no mapping to expire, and its p95 is **35.7 ms** — the path plus
-the queue to the new instance. The 10 ms absolute threshold pre-registered for
-the gradient **failed** (the new instance sits behind a saturated 80 Mbit/s
-link); the measured 35.4–36.0 ms band and the failure are reported in
-[`name-fabric.md`](name-fabric.md) §4.1 rather than moved.
+**Figure 2.** All sixteen headline predictions against the fidelity that tested
+them, built from the committed verdict CSVs. `C` = CONFIRMED, `R` = REFUTED,
+`1 R` = one refuted sub-case (P16d), `-` = not tested at that fidelity. P1–P7:
+model, SimPy, Linux. P8–P12: round-1 real stack. P13–P16: round-2 real stack.
 
-### 3.3 Security and AAD linkage
+**P3 (integrity scope).** Three cases: `E→T` with the target inside the AEAD's
+AAD, `E→T` with no AAD, and `T→E` where the target is invisible. Acceptance is
+exactly 0 %, 100 % and 100 % at every fidelity, with no intermediate value. Case
+(a) is the operational shape of the known NAT/IPsec failure; it is confirmed here
+for a toy AEAD and a scripted rewriter, which is narrower than the real-world
+claim.
 
-Because the name is in the header and is what routing acts on, its integrity is
-not optional. Two distinct requirements follow.
+**P5 is refuted at Linux.** The frozen prediction was `n1 = 3` fragments for
+compress-then-fragment and `n2 = 6` for fragment-then-compress, a delivery
+difference of `0.9³ − 0.9⁶ = 19.76` percentage points. The model and SimPy
+produce that difference (+20.25 pp on their draws); Linux produces **+12.35 pp**,
+outside the frozen 4.0 pp margin. The cause is measured, not guessed: the Linux
+`C→F` datagram has **four** fragments because the compressor saw the real 28-byte
+IP/UDP header, and with stock zlib 1.3.1 the packet compressed to about 4507 B,
+above the three-fragment boundary of 4476 B. Recomputing with the observed count
+gives `0.9⁴ − 0.9⁶ = 12.47` pp, which Linux reproduces. The frozen prediction
+stands as refuted; the predictions file is not edited.
 
-First, the scope rule of P3 (§2) applies to the name exactly as it applies to
-any other field. If the fabric does not rewrite the name, the name belongs
-inside the integrity scope: it is the field that binds a request to the object
-or service it asks for, and leaving it unauthenticated lets an on-path attacker
-steer the request by rewriting it. If an element on the path does rewrite the
-name — a gateway translating to DNS, or an anycast point selecting an instance —
-that field must be kept outside the AEAD's additional-authenticated-data (AAD)
-scope. When the name is inside the AAD and a middlebox rewrites it, the receiver
-computes a different tag and drops the packet: P3 measures exactly this, and
-acceptance is 0 % at all three fidelities. Rewriting an authenticated name does
-not degrade the fabric, it stops it.
+**P6 (54 cases).** All six orderings of `T`, `E`, `S` were crossed with two
+targets, parser depth 1–3 and AAD scope none or the target where valid: 54 cases.
+The formal predictor declares 36 visible and 18 invisible targets, 40 reachable
+and 14 unreachable, 32 rewrites applied, 16 authentication failures and 16
+delivery failures. Model, SimPy and Linux match the predictor on visibility,
+mutation, acceptance and delivery in **every case** (0 mismatches). Because the
+predictor and the relay encode the same rule, this is a consistency check of the
+implementation, not evidence that the rule matches deployed middleboxes.
 
-Second, where the name is not rewritten, it must be cryptographically bound to
-what it names. An unsigned name in a header is a routing hint that any on-path
-attacker can rewrite, which would let the attacker steer requests to a forged
-instance. The fabric therefore verifies at the edge:
+**P7 (structural inertness).** With a `T→F` stack and three fragments, both
+length-bearing rewrites (`F.length → 0x0009`, `T.udp_len → 0x0009`) give 0 %
+delivery at all three fidelities, although neither field is authenticated and
+both are visible; the inert source-port rewrite gives 100 %. Excluding a field
+from authentication is not sufficient for safe rewriting if it carries framing
+structure.
 
-- an `IMMUTABLE` name is a 128-bit digest checked against the payload, so a
-  forged name cannot match the bytes (structural, not probabilistic);
-- a `SERVICE` name is a signed descriptor bound to an epoch, verified with an
-  attestation strength chosen by the operator. The model measures the exposure
-  curve — forgery acceptance falls from 95.4 % at strength 0 to 0.18 % at
-  strength 3 — but those probabilities are **stipulated inputs**, not a
-  measurement of a real signature scheme ([`name-fabric.md`](name-fabric.md)
-  §4.2).
+## 5. Results II: P8–P12
 
-The residual is stated rather than hidden: self-certifying names remove
-poisoning for immutable content; dynamic service names can only reduce it, and
-the fabric's security therefore depends on an attestation design this paper does
-not evaluate.
+Round 1 of the real-stack testbed confirms all twelve cases of the five
+predictions (Table 3). The cases are executed 20 times each.
 
-### 3.4 The gateway seam
-
-A name fabric cannot be the whole Internet. Requests for external names must
-still become DNS queries and IP packets, and the component that does that is a
-gateway. The model includes one (node `G` in
-[`simulation/name_fabric.py`](../simulation/name_fabric.py)): internal requests
-are resolved by the gradient; external requests traverse `G`, pay an uncached
-DNS lookup (25 ms resolver RTT plus M/M/1 queueing at 5 000 QPS) and a gateway
-queue at 100 Mbit/s.
-
-The measured seam, at 2 000 requests/s with an 8 kB payload:
-
-| External share | Gateway utilisation | Internal p95 | External p95 |
-| ---: | ---: | ---: | ---: |
-| 0 % | 0.0 % | 21.28 ms | 42.28 ms |
-| 5 % | 6.4 % | 21.27 ms | 42.58 ms |
-| 20 % | 25.6 % | 21.15 ms | 44.88 ms |
-| 50 % | 64.0 % | 21.16 ms | 71.44 ms |
-
-An external request costs roughly twice an internal one even at an idle gateway,
-because it pays the uncached lookup and the gateway path; at a 50 % external
-share the gateway is at 64 % utilisation and its p95 has grown to 71 ms. This
-gateway is a centralization point, a potential bottleneck and an attack target:
-in this model, a DDoS on it takes the fabric's entire legacy reachability with
-it. Its performance and security are outside the scope of this measurement —
-one gateway, no protection and no failover is modelled. It is a critical area
-for future deployment and is stated here as a seam, not a solved component.
-
-### 3.5 What this measurement is, and what it is not
-
-The 28.7 s and 35.7 ms figures are produced by the same model
-([`simulation/name_fabric.py`](../simulation/name_fabric.py)) on the same
-eight-node topology, at the same 2 000 requests/s and 8 kB payload, under one
-seed. That is what makes them apples-to-apples: the comparison differs in the
-resolution mechanism (a DNS cache with a TTL versus gradient forwarding) and in
-nothing else. The 35.7 ms is link-limited — the path latency plus the queue of a
-saturated 80 Mbit/s link — and is not a claim that 35.7 ms is achievable on any
-topology.
-
-It is not packet-level. The ns-3 prototype carries names in a header and
-forwards on them, but it does not produce the TTL-versus-gradient head-to-head
-number; that comparison comes from the analytic/stochastic model, and the model
-assumes the gradient exists. Packet-level cross-validation of the name path, the
-name-table memory bound, and an explicit bootstrap model are future work
-([`name-fabric.md`](name-fabric.md) §6). The security numbers in §3.3 are
-stipulated, the gateway in §3.4 is not defended, and the migration floor is one
-topology at one load point.
-
-## 4. Real-stack extension (P8–P12)
-
-Predictions frozen before the harness in
-[`layering-real-stack-predictions.md`](layering-real-stack-predictions.md);
-results in [`layering-real-stack-results.md`](layering-real-stack-results.md).
-**Frozen protocol: 20 runs per case.**
+**Table 3. P8–P12 on the Linux stack.**
 
 | Prediction | Status | Evidence |
 |---|---|---|
-| P8a AH tunnel + NAT | **CONFIRMED** | 0 % delivery, `XfrmInStateProtoError` + datagrams |
-| P8b ESP tunnel + NAT | **CONFIRMED** | 100 % delivery (outer src outside ESP scope) |
+| P8a AH tunnel + NAT | **CONFIRMED** | 0 % delivery; `XfrmInStateProtoError` rises with the datagrams |
+| P8b ESP tunnel + NAT | **CONFIRMED** | 100 % delivery (outer source outside ESP scope) |
 | P8c WireGuard + NAT | **CONFIRMED** | 100 % delivery; peer learns the NAT endpoint |
-| P9 WireGuard overhead | **CONFIRMED** | `wire(L) = 60 + 16·⌈L/16⌉`, 9/9 lengths exact |
+| P9 WireGuard overhead | **CONFIRMED** | `wire(L) = 60 + 16·⌈L/16⌉`; 9/9 lengths exact |
 | P10a naive commutation | **CONFIRMED** | `d(L) ≠ 0` for every length |
 | P10b quantised model | **CONFIRMED** | `d(L) = −4 / +12` exact |
-| P11a UDP length, no csum | **CONFIRMED** | 0 % delivery, cause gate |
-| P11b UDP length, recomputed csum | **CONFIRMED** | 0 % delivery, cause gate |
-| P11c inert ToS control | **CONFIRMED** | 100 % delivery |
-| P12a ESP transport + NAT, inner csum | **CONFIRMED** | 0 %, `UdpInCsumErrors` + datagrams |
-| P12b inner csum zeroed | **CONFIRMED** | 100 % delivery |
+| P11a UDP length, no checksum | **CONFIRMED** | 0 % delivery; cause gate |
+| P11b UDP length, checksum recomputed | **CONFIRMED** | 0 % delivery; cause gate |
+| P11c inert ToS rewrite | **CONFIRMED** | 100 % delivery — the mangler is sound |
+| P12a ESP transport + NAT, inner checksum | **CONFIRMED** | 0 %; `UdpInCsumErrors` rises |
+| P12b inner checksum zeroed | **CONFIRMED** | 100 % delivery |
 | P12c control, no NAT | **CONFIRMED** | 100 % delivery |
 
-Three consequences for the model follow from the confirmed cases:
+AH dies under NAT while ESP and WireGuard survive (P8). This is textbook
+asymmetry — RFC 3715 describes the compatibility problem, RFC 4302 puts the outer
+IP header in AH's integrity scope and RFC 4303 does not for ESP — and the run
+validates the harness rather than discovering a fact.
 
-1. **`W` is quantised.** P9 shows WireGuard pads to 16 B, so the stipulated
-   56 B composite (`E = 28`, `T = 28`) is off by 4–16 B. The fixed-overhead
-   assumption (P4) is amended for quantising layers.
-2. **Fixed-overhead layers do not commute once one layer quantises size.** P10
-   shows `d(L)` is never zero: swapping IPIP and WireGuard changes the wire
-   length by −4 or +12 bytes.
-3. **Fields can be derived across layers.** P12 shows an inner UDP checksum
-   depending on the outer address is invalidated by a NAT rewrite without any
-   integrity tag.
+P9 is a calibration: the stipulated 56-byte composite (`E = 28`, `T = 28`, no
+padding) is low by `4 + (16·⌈L/16⌉ − L)` bytes. WireGuard is **quantised**.
+P10 makes that visible as a commutation failure: swapping IPIP and WireGuard
+changes the wire length by −4 or +12 bytes depending on `L mod 16`, and the
+quantised model `d(L) = R(L+20) − R(L) − 20` is exact.
 
-What that means for the rule: on this kernel, the rule held for the three
-integrity-scope cases (AH, ESP, WireGuard), the two size effects (P9, P10), the
-structural rewrite (P11) and the derived field (P12). That is evidence for the
-rule against independent implementations; it does not establish it in general
-(see §6).
+P11 separates a structural rewrite from a broken mangler. Rewriting the outer UDP
+length to 9 breaks delivery whether the checksum is left untouched (0 %) or
+recomputed (0 %), while an inert ToS rewrite with a recomputed IP checksum
+delivers 100 %. The raw-offset `pedit` form is used because iproute2 6.19 rejects
+the layered `udp len` field.
 
-## 5. Related work
+P12 is the **derived** class: ESP transport does not authenticate the outer IP
+header, so NAT passes the ESP check, but the inner UDP checksum covers a
+pseudo-header containing the rewritten outer address, so it fails (0 %); zeroing
+the inner checksum restores delivery (100 %), and the no-NAT control delivers
+100 %.
 
-- **Named Data Networking and ICN.** Named Data Networking makes the name the
-  forwarding key: an Interest carries a name, a router forwards it toward a
-  producer or a cache, and a Data packet is signed over its name and content
-  (Zhang et al., "Named Data Networking", *ACM SIGCOMM Computer Communication
-  Review* 44(3):66–73, 2014, DOI
-  [10.1145/2656877.2656887](https://doi.org/10.1145/2656877.2656887); the earlier
-  content-centric design is Jacobson et al., "Networking Named Content",
-  *CoNEXT* 2009, DOI
-  [10.1145/1658939.1658941](https://doi.org/10.1145/1658939.1658941)). The fabric
-  in §3 is that architecture, not a new one. What this paper adds is the
-  comparison in §3.2, not the design: name-based forwarding is prior art, and
-  the P3 AAD rule is the layering constraint that decides when it can be
-  deployed safely.
-- **Standardisation of name-based forwarding.** RFC 8677 defines a Name-Based
-  Service Function Forwarder (nSFF) inside the SFC framework: the logical service
-  path stays stable while the execution endpoint is selected by name, so moving
-  an instance does not require a rechain (Trossen, Purkayastha and Rahman,
-  "Name-Based Service Function Forwarder (nSFF) Component within a Service
-  Function Chaining (SFC) Framework", RFC 8677, November 2019, DOI
-  [10.17487/RFC8677](https://doi.org/10.17487/RFC8677); an Independent
-  Submission, informational, not IETF consensus). It shows that the operational
-  problem measured here — instance movement without a reconfiguration cycle — is
-  recognised in standards work. It does not report the TTL-versus-name
-  convergence comparison; that is the gap §3.2 fills.
-- **Service migration in ICN.** Karimzadeh, Satria and Karagiannis, "Utilizing
-  ICN/CCN for Service and VM Migration Support in Virtualized LTE Systems"
-  (*CLOSER* 2014, pp. 633–638, DOI
-  [10.5220/0004945606330638](https://doi.org/10.5220/0004945606330638)), and
-  Satria, Karimzadeh and Karagiannis, "Performance evaluation of ICN/CCN based
-  service migration approach in virtualized LTE systems" (*IEEE CloudNet* 2014,
-  pp. 461–467, DOI
-  [10.1109/CloudNet.2014.6969038](https://doi.org/10.1109/CloudNet.2014.6969038)),
-  apply ICN to service and VM migration and evaluate it in virtualized LTE. They
-  make the architectural case this paper takes as given. The contribution here is
-  different in kind: a like-for-like convergence-latency comparison against a
-  DNS baseline with a standard TTL — 28.7 s against 35.7 ms — rather than another
-  migration architecture.
-- **Middlebox behaviour.** Honda et al. measured how widely deployed middleboxes
-  drop or rewrite options and payloads, and concluded that new transport
-  extensions are hard to deploy *because of* such boxes. The present paper is
-  narrower: it does not measure middlebox prevalence, it tests a rule about which
-  field classes break when rewritten, with independently implemented stacks.
-- **IPsec and NAT.** RFC 3715 specifies the IPsec/NAT compatibility problem, RFC
-  4302 defines the AH integrity scope (which covers the outer IP header) and RFC
-  4303 defines ESP (which does not). P8 is a direct, executable restatement of
-  that asymmetry; AH dying under NAT is the expected textbook outcome, so P8
-  validates the harness rather than discovering a new fact.
-- **Layering and recursion.** RINA and the "divide and repeat" style of recursive
-  internetworking treat layering as a repeated composition problem. This paper
-  contributes a small empirical constraint on that composition: layers with
-  fixed size effects commute, layers that quantise size do not.
-- **End-to-end.** The survival rule is a framing-level counterpart to the
-  end-to-end argument of Saltzer, Reed and Clark: what a middlebox can touch is a
-  property of the header scope, not of the protocol's intent.
+## 6. Results III: P13–P16
 
-## 6. What is still open
+Round 2 is deliberately failure-prone: credences were recorded before the run,
+and the protocol was designed so that some predictions were expected to fail. Of
+18 scored predictions, **17 are confirmed and one (P16d) is refuted**; the Brier
+score is **0.0833**.
 
-The `lookup-key` class (P8b's interpretation) is not isolated by the experiment:
-P8b was confirmed as "ESP survives", consistent with a lookup not keyed on the
-outer source, but the test does not separate that mechanism from the ESP scope
-argument. The evidence is one kernel (WSL2), one NAT implementation (nftables
-masquerade), veth links, no wireless and no congestion; other stacks may pad
-differently or resolve SAs differently. The `tc pedit` result is a property of
-iproute2 6.19 — the layered `udp len` field is rejected, so the harness uses the
-raw-offset form.
+**Table 4. One outer field, three decapsulators.**
 
-The name-fabric figures in §3 come from the resolution-latency model, not from
-the kernel harness: 28.7 s and 35.7 ms are model outputs under one topology and
-one load point. Packet-level cross-validation of a name-carrying header is
-future work; the ns-3 prototype exists but does not produce that head-to-head
-comparison ([`kinematic-fabric.md`](kinematic-fabric.md) §6). The gateway is
-modelled as one undefended hop, not as a component with failover or DDoS
-protection.
+| Decapsulator | outer CE, inner Not-ECT | outer CE, inner ECT(0) |
+|---|---|---|
+| IPIP | **0 % delivery** (frame error) | 100 %; inner **CE** |
+| WireGuard | 100 %; inner Not-ECT | 100 %; inner CE |
+| ESP tunnel | 100 %; inner Not-ECT | 100 %; inner CE |
 
-## 7. Scope
+**One field, three answers.** A router marking Congestion Experienced on the
+outer header is legitimate behaviour. Under RFC 6040's decapsulation rule an
+outer CE over an inner Not-ECT packet should be dropped. We rewrote the outer ECN
+codepoint to CE after the NAT and recorded delivery per decapsulator over 20 runs
+of 50 datagrams. IPIP dropped every packet (`ipip0` `rx_frame_errors` rose by 50
+per run, a frame error rather than a queue drop). WireGuard and ESP tunnel mode
+delivered every packet and left the inner field Not-ECT; with an ECT(0) inner,
+all three delivered and propagated CE. The same visible, unauthenticated field is
+inert on two stacks and fatal on the third, so the rule cannot classify it by
+visibility alone: it has to name the decapsulator. This is the
+**decapsulation-coupled** class, with a per-implementation table rather than a
+field property.
 
-Measures sizes, delivery and drop causes. It does not evaluate cryptographic
-security; one kernel, one NAT implementation and veth links say nothing about
-arbitrary middleboxes. The conclusions bound these cases, not "all middleboxes".
-The name-fabric comparison in §3 is a resolution-latency measurement of named
-forwarding against a DNS baseline; it does not measure a deployed fabric, the
-name-table memory cost, or the security of a real signature scheme.
+**Two ESP clients and one NAT.** Two client namespaces, each with its own ESP
+tunnel-mode SA (distinct SPI and key) to one server behind one masquerade; one
+client warms up, then both send concurrently.
+
+**Table 5. NAT key behaviour with ESP clients.**
+
+| Case | Client 1 | Client 2 | SPI on the wire (1 / 2) | ESP conntrack entries |
+|---|---|---|---|---|
+| P14a (client 1 first) | **60/60** | **0/50** | 60 / 0 | 1 |
+| P14b (client 2 first) | **0/50** | **60/60** | 0 / 60 | 1 |
+| P14c (ESP-in-UDP + NAT) | 60/60 | 50/50 | 60 / 50 | 0 (tracked as UDP) |
+| P14d (no NAT) | 60/60 | 50/50 | 61 / 51 | 0 |
+
+The loser's packets never reach the router's egress: the second ESP flow gets no
+conntrack entry (one `unknown … 50` entry, not two), because the generic tracker
+has no per-flow key for protocol 50 and the reply tuple of a second inside host
+collides with the first. This is a lookup-key failure **at the middlebox**, and it
+is first-come-first-served: swapping which client sends first swaps the loser.
+With ESP-in-UDP both clients succeed, for two separate reasons the capture
+distinguishes: the UDP ports give the NAT a usable key (client 2's translated
+source port is remapped to a random value in 1496–64424 across runs), and the
+receiver, configured with `encap espinudp 4500 4500`, happily decapsulates
+packets whose source port is no longer 4500.
+
+**Fragmentation before or after the encryptor.** One inner datagram of 2000 B UDP
+payload: encrypt-then-fragment yields **2112 B** per datagram (1500 + 612), and
+fragment-then-encrypt yields **2180 B** (1480 + 700), a difference of exactly 68 B
+in 20/20 runs. Delivery under 5 % loss is 0.9003 and 0.9041 against a predicted
+0.9025 ± 0.015; the difference between orderings is 0.38 pp (limit 1.5 pp), so the
+delivery equivalence survives a real fragmenter and a quantising encryptor even
+though the wire cost differs.
+
+**The replay window, not the path, sets the loss.** Netem delays 75 % of a
+2000-datagram burst by 100 ms; 25 % go immediately, so the reordering depth is
+~2000. Table 6 gives the result.
+
+**Table 6. Reordering and the integrity window.**
+
+| Case | Stack | Window | Depth | Delivered | Reference filter | Seq errors |
+|---|---|---|---|---|---|---|
+| P16a | ESP tunnel | 32 | 1992–1999 | **476–565** | identical | 2000 − delivered |
+| P16b | ESP tunnel | 32 | 1 | 2000/2000 | 2000 | 0 |
+| P16c | WireGuard | ~8k | 1985–1999 | 2000/2000 | 2000 | — |
+| P16d | ESP tunnel | 256 (ESN) | 1991–1999 | **674–718** | identical | 2000 − delivered |
+
+P16a is exact in the strongest sense the protocol asked for: in 20/20 runs the
+delivered count equals the reference filter's count and the
+`XfrmInStateSeqError` delta equals `sent − delivered` to the packet. No packet
+was lost on the wire; about 74 % were discarded by the receiver for arriving too
+late. P16d predicted 100 % at window 256 and is **refuted**: the burst is ~2000
+deep, and a 256-packet window cannot span it (674–718 delivered). The mechanism
+was confirmed — the reference filter at window 256 matches the kernel exactly —
+but the operating point was mis-specified. Two caveats: on this kernel/iproute2
+`replay-window 256` silently turns the SA into an ESN SA, and the strict/inclusive
+boundary of `< window` was never hit exactly, so that edge is untested.
+
+**Credence scoring.** Table 7 gives the 18 scored predictions.
+
+**Table 7. Round-2 credences, outcomes and Brier terms.**
+
+| Prediction | Credence | Outcome | Brier |
+|---|---:|---:|---:|
+| P13a, P13b, P13c | 0.90 | 1 | 0.0100 each |
+| P13d, P13e | 0.70 | 1 | 0.0900 each |
+| P13f, P13g | 0.60 | 1 | 0.1600 each |
+| P13h (control set) | 0.95 | 1 | 0.0025 |
+| P14a, P14b | 0.60 | 1 | 0.1600 each |
+| P14c | 0.90 | 1 | 0.0100 |
+| P14d | 0.95 | 1 | 0.0025 |
+| P15 wire bytes | 0.80 | 1 | 0.0400 |
+| P15 delivery | 0.75 | 1 | 0.0625 |
+| P16a | 0.85 | 1 | 0.0225 |
+| P16b, P16c | 0.90 | 1 | 0.0100 each |
+| P16d | 0.70 | 0 | 0.4900 |
+| **Total** | | **17 / 18** | **0.0833** |
+
+Under the stated credences the expected score was 0.15 with 3.8 expected
+refutations; the observed score is 0.0833 with one refutation. The credences were
+too cautious on the implementation-detail cases (0.6–0.7), all of which came in.
+The one failure is not an implementation detail but a parameter: how deep a burst
+a 100 ms netem queue with a 33 kpps sender makes. The eight frozen assumptions
+about the kernel (A1–A8) all held.
+
+## 7. Related work
+
+**Middlebox behaviour.** Honda et al. measured how widely deployed middleboxes
+drop or rewrite options and payloads, and concluded that new transport extensions
+are hard to deploy because of such boxes (IMC 2011, DOI
+[10.1145/2068816.2068834](https://doi.org/10.1145/2068816.2068834)). The present
+paper is narrower: it does not measure middlebox prevalence, it tests a rule
+about which field classes break when rewritten, with independently implemented
+stacks.
+
+**IPsec, NAT and ECN.** RFC 3715 specifies the IPsec/NAT compatibility problem;
+RFC 4302 defines the AH integrity scope (which covers the outer IP header); RFC
+4303 defines ESP (which does not); RFC 6040 defines ECN tunnelling and the outer-
+CE/inner-Not-ECT drop rule. P8 is an executable restatement of the AH/ESP
+asymmetry, so it validates the harness. P13 measures the decapsulation rule per
+implementation rather than asserting conformance: Linux contains three different
+answers for the same outer field.
+
+**Layering and recursion.** RINA and the "divide and repeat" style of recursive
+internetworking treat layering as a repeated composition problem. This paper
+contributes a small empirical constraint on that composition: layers with fixed
+size effects commute, layers that quantise size do not, and a field's survival
+can depend on the decapsulator rather than on the field alone.
+
+**End-to-end.** The survival rule is a framing-level counterpart to the
+end-to-end argument of Saltzer, Reed and Clark: what a middlebox can touch is a
+property of the header scope and the path, not of the protocol's intent.
+
+## 8. Limitations
+
+- **One kernel series.** Two WSL2 builds of Linux 6.18 (`6.18.54.1` for P1–P7,
+  `6.18.58.1` for P8–P16), veth links, nftables masquerade as the only NAT; no
+  wireless, no congestion, no cross traffic. The frozen round-2 replication
+  clause asks for two kernels; P13's per-decapsulator table and P14's conntrack
+  behaviour are the results most likely to move on another kernel, and the
+  absence of a second kernel is reported rather than averaged away.
+- **Predictions were written by the same people who built the harness**, from
+  specifications they knew. Confirmation validates the method; the informative
+  results are the cases where the specification leaves behaviour open (P13, P14,
+  P16).
+- **P1–P7 use a toy AEAD and a stipulated user-space middlebox**; the real stack
+  starts at P8.
+- **Replay behaviour was measured at one reordering depth** (about 2000), so P16
+  does not locate the threshold between window sizes. Reordering was produced by
+  netem delay, not by multipath.
+- **P16d is refuted by our own parameter choice**, not by a failure of the
+  replay-window mechanism; the depth × rate estimate was missing from the frozen
+  text.
+- **The P5 refutation is a reproducibility hazard**: compression is
+  implementation-dependent (zlib-ng versus stock zlib), and payload normalisation
+  can change a discrete fragment count. Any future cross-fidelity prediction with
+  compressible data near a fragment boundary must state the encoded input, not
+  only the application payload.
+- **Security is not evaluated.** Keys, nonces and tags are out of scope; SPI and
+  sequence values are read from captures only to attribute packets.
+- **Scope.** The conclusions bound these cases, not "all middleboxes".
+
+## 9. Artifact and reproduction
+
+The repository contains the frozen predictions, the harnesses, the raw
+observations and the verdict CSVs. The three freeze commits are `96d59f3`
+(P1–P7), `46c7b40` (P8–P12) and `1b7e6ac` (P13–P16). Figure 2 is regenerated
+from the verdict CSVs, and Figure 1 from the P4 visibility table, by:
+
+```powershell
+py tools\make_layering_figures.py --output-dir figures
+```
+
+The model and Linux harnesses are reproduced from the repository root:
+
+```powershell
+py -3 -m validation.layering.run_model  --output validation\layering\results\model_observations.csv
+py -3 -m validation.layering.run_simpy  --output validation\layering\results\simpy_observations.csv
+py -3 -m validation.layering.run_linux  --output validation\layering\results\linux_observations.csv
+```
+
+The real-stack rounds run under Linux as root;
+
+```bash
+python3 -m validation.real_stack.run   # P8-P12, 20 runs per case
+python3 -m validation.round2.run        # P13-P16, 20 runs per case
+```
+
+The full guide is in [`REPLICATION.md`](../REPLICATION.md). The Linux privileges
+and topologies are in [`validation/linux_layering/README.md`](../validation/linux_layering/README.md)
+and [`validation/round2/README.md`](../validation/round2/README.md). The
+interpretation limits are stated in the results files, not only here.
 
 ## Cross-references
 
-- [`layering-predictions.md`](layering-predictions.md) — P1–P7 predictions.
-- [`layering-results.md`](layering-results.md) — P1–P7 results.
-- [`layering-real-stack-predictions.md`](layering-real-stack-predictions.md) — P8–P12 predictions (frozen).
+- [`layering-predictions.md`](layering-predictions.md) — P1–P7 predictions (frozen at `96d59f3`).
+- [`layering-results.md`](layering-results.md) — P1–P7 results, including the P5 refutation.
+- [`layering-real-stack-predictions.md`](layering-real-stack-predictions.md) — P8–P12 predictions (frozen at `46c7b40`).
 - [`layering-real-stack-results.md`](layering-real-stack-results.md) — P8–P12 results.
-- [`name-fabric.md`](name-fabric.md) — the name fabric: mechanism, results, limitations.
-- [`tndn.md`](tndn.md) — Topological NDN (M10) and its three baselines.
-- [`ddmr.md`](ddmr.md) — Dynamic Dimensionality Manifold Routing (M11).
-- [`future-work-complex-rotation.md`](future-work-complex-rotation.md) — CRMR proposal (H15, not tested).
-- [`validation/real_stack/`](../validation/real_stack/) — the executable harness.
-- [`validation/ns3/role-fluid-fabric.cc`](../validation/ns3/role-fluid-fabric.cc) — the name-carrying ns-3 prototype.
-
-## Epilogue
-
-While our current T-NDN uses static metric spaces, we propose Complex-Rotation Manifold Routing (CRMR) as a future extension. Instead of discrete state jumps, CRMR defines the node state as a complex number $\psi_n(t)=R_n(t)+iA_n(t)$, where $R$ is the baseline state and $A$ is the anomaly state. The network state evolves via unitary rotation $\psi_n(t+\Delta t)=\psi_n(t)e^{i\omega_n(t)\Delta t}$, where the angular velocity $\omega_n$ is driven by the kinematic anomaly score and damped to prevent oscillation. Routing decisions are made by projecting the complex FIB impedance $\Phi_p=|\Phi_p|e^{i\phi_p}$ onto the real axis: $\operatorname{Cost}_p=|\Phi_p|\cos(\phi_p-\theta_{\mathrm{network}}(t))$. This allows the network to smoothly rotate attack traffic into the imaginary dimension, maintaining real-axis stability without the convergence penalties of discrete state transitions.
-
-CRMR is a proposed future extension; it has not been implemented or evaluated in this paper.
+- [`layering-real-stack-predictions-round2.md`](layering-real-stack-predictions-round2.md) — P13–P16 predictions (frozen at `1b7e6ac`).
+- [`layering-real-stack-results-round2.md`](layering-real-stack-results-round2.md) — P13–P16 results and calibration.
+- [`validation/layering/`](../validation/layering/) — model, SimPy and Linux harness for P1–P7.
+- [`validation/real_stack/`](../validation/real_stack/) — round-1 real-stack harness.
+- [`validation/round2/`](../validation/round2/) — round-2 harness.

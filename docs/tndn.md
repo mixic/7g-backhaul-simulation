@@ -206,9 +206,9 @@ programme descends from.
   T-NDN is not a service architecture; it is a way to formalise the *namespace*
   such an architecture addresses — a metric, persistent clusters and loops —
   so that forwarding state can be derived from the namespace rather than from
-  per-name configuration. The service/instance/content naming of
-  [`paper-layering-testbed.md`](paper-layering-testbed.md) §3.1 is the natural
-  place to apply it.
+  per-name configuration. A service-centric namespace is the natural place to
+  apply it; the name classes used by the fabric are discussed in
+  [`name-fabric.md`](name-fabric.md).
 
 - **NDN forwarding strategies (Woo, Bachelor thesis, University of Bern,
   2025).** "Evaluation of Forwarding Strategies in Named Data Networking: A

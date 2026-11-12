@@ -10,10 +10,11 @@ The research material is deliberately split into **two focused papers** rather
 than one combined document, so each can be reviewed on its own terms:
 
 - **Paper A — [`docs/paper-layering-testbed.md`](docs/paper-layering-testbed.md)**:
-  *Empirical Commutation Rules for Protocol Layer Encapsulation in Heterogeneous
-  Networks.* Pure systems engineering: the survival rule, P1–P12, and the
-  DNS-free name fabric the rule implies (§3), including the DNS-TTL
-  migration-convergence comparison.
+  *Which Rewrites Survive? Pre-registered Tests of a Field-Class Model of
+  Encapsulation, Middleboxes and Decapsulation on Linux.* Three frozen rounds
+  (P1–P16) at three fidelities: six of seven initial predictions confirmed, five
+  real-stack predictions confirmed, and 17 of 18 in the failure-prone round
+  (Brier 0.083), with both refutations explained.
 - **Paper B — [`docs/paper-bio-control-limits.md`](docs/paper-bio-control-limits.md)**:
   *Why Fair-Queueing Beats the Fick Principle.* The negative result on
   bio-inspired control (M3–M6).
@@ -363,17 +364,23 @@ py tools/benchmark_surgical.py --replicates 30
 py tools/plot_surgical.py
 ```
 
-## Layered-protocol testbed (phase 0)
+## Layered-protocol testbed (P1–P16)
 
-The repository also contains a three-fidelity testbed for encapsulated stacks.
-[docs/layering-predictions.md](docs/layering-predictions.md) froze seven
-predictions over wire size, delivery, ordering and authentication scope;
-[docs/layering-results.md](docs/layering-results.md) classifies them in the
-executable model, SimPy and a Linux network-namespace/TUN data plane under
-`tc netem`. Six predictions are confirmed; P5 is refuted at the Linux fidelity
-and the cause (a payload normalisation that changes the fragment count) is
-explained rather than removed. The testbed measures size, delivery and
-authentication acceptance only, and makes no cryptographic security claim.
+The repository contains a three-fidelity testbed for encapsulated stacks, run in
+three frozen rounds. P1–P7
+([predictions](docs/layering-predictions.md), [results](docs/layering-results.md))
+were tested in an executable model, SimPy and a Linux namespace/TUN data plane
+under `tc netem`; six are confirmed and P5 is refuted at Linux, with the cause
+(a payload normalisation that changes the fragment count) explained rather than
+removed. P8–P12
+([predictions](docs/layering-real-stack-predictions.md),
+[results](docs/layering-real-stack-results.md)) run kernel WireGuard, IPsec
+AH/ESP and nftables NAT, and all twelve cases are confirmed. P13–P16
+([predictions](docs/layering-real-stack-predictions-round2.md),
+[results](docs/layering-real-stack-results-round2.md)) are a deliberately
+failure-prone round: 17 of 18 predictions confirmed, P16d refuted by a
+mis-specified reordering depth, Brier 0.083. The testbed measures size, delivery
+and authentication acceptance only, and makes no cryptographic security claim.
 Reproduction commands are in [REPLICATION.md](REPLICATION.md).
 
 ## The name fabric: DNS-independence as one operation
@@ -386,12 +393,11 @@ change and the requests that follow it.
 
 **This is not a new architecture.** Resolution collapsed into forwarding is the
 ICN/NDN model (Zhang et al., 2014; RFC 8677); the fabric here implements it
-rather than inventing it. The contribution is the measurement: a like-for-like
-comparison of service-migration convergence — 28.7 s at a 30 s DNS TTL against
-35.7 ms with name-based forwarding, under one topology and one load point.
-[Paper A §3](docs/paper-layering-testbed.md#3-name-fabric-architecture) specifies
-the architecture; [docs/name-fabric.md](docs/name-fabric.md) reports the full
-result set and its limits.
+rather than inventing it. The reported comparison is a like-for-like model
+result: 28.7 s at a 30 s DNS TTL against 35.7 ms with name-based forwarding,
+under one topology and one load point. The figures are model outputs, not packet
+measurements. [docs/name-fabric.md](docs/name-fabric.md) specifies the
+architecture and reports the full result set and its limits.
 
 `simulation/name_fabric.py` implements that fabric with two name classes:
 self-certifying digests for immutable content (poisoning structurally
@@ -752,7 +758,7 @@ The honest verdicts:
 │   ├── kalman-filtering-foundation.md # Kalman correlation (EWMA/ABG/MKB as steady-state)
 │   ├── kalman-filtering-internal-review.md # Internal review of the Kalman foundation doc
 │   ├── break-even-analysis.md    # Stipulated-constant break-even thresholds (M5/M6)
-│   ├── paper-layering-testbed.md # Paper A: empirical commutation rules (P1-P12)
+│   ├── paper-layering-testbed.md # Paper A: pre-registered rewrite tests (P1-P16)
 │   ├── paper-bio-control-limits.md # Paper B: fair-queueing beats the Fick principle
 │   ├── kinematic-fabric.md       # Role-fluid kinematic fabric in ns-3
 │   ├── ip46-services.md          # IPv4 vs IPv6 overhead and agnostic services

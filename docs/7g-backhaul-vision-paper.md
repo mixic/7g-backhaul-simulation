@@ -101,7 +101,7 @@ networking; network sustainability
 > **Document framing.** This paper is the long-horizon *vision* document. Its
 > abstract summarises the empirical boundary condition, but that negative result is
 > reported in full, and on its own terms, in [`m6-energy-paper.md`](m6-energy-paper.md);
-> the layering testbed (P1–P7 and the real-stack P8–P12) is its own paper in
+> the layering testbed (P1–P16) is its own paper in
 > [`paper-layering-testbed.md`](paper-layering-testbed.md). Readers who want a single
 > focused negative result or a single focused layering study should use those two
 > papers rather than this one.
