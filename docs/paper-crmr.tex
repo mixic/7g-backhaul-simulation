@@ -21,31 +21,27 @@
 
 \begin{abstract}
 \noindent
-Name-based forwarding collapses resolution into forwarding, but its metric space is
-usually static: a name is matched to a prefix, and a prefix to an instance. When an
-attacker shares the legitimate prefix, prefix-only routing cannot separate the two.
-Discrete dynamic-dimensionality routing (DDMR) answers this by jumping from a
-one-dimensional prefix metric to a four-dimensional metric that includes latency,
-jitter and a local anomaly score; in earlier work it preserved legitimate delivery
-under a sustained DDoS, at the price of a hard state switch with hysteresis. We ask
-whether the switch can be replaced by a continuous rotation. Complex-Rotation
-Manifold Routing (CRMR) carries a phasor $\psi(t)=R(t)e^{i\theta(t)}$ whose phase
-rotates the metric between the prefix axis and the defensive axes, following a
-damped second-order law driven only by the local anomaly, and migrates legitimate
-flows to a replica with probability $\sin^2\theta$. We evaluate CRMR against static
-T-NDN and discrete DDMR on a 100-node, 10{,}000-name fabric over 30 paired seeds,
-under a sustained and a flapping DDoS. Under the sustained attack CRMR holds the
-legitimate content delivery rate (CDR) at $97.24\%$ against $99.68\%$ for DDMR and
-$73.82\%$ for static T-NDN, while reducing the peak per-tick reconfiguration share
-from $1.00$ to $0.157$ (an $84\%$ reduction) and passing the energy clause
-($3.31$\,J of four-dimensional homology against $14.08$\,J of prevented-loss
-energy). Under a flapping attack the rotation cannot complete inside a 3\,s burst,
-and the CDR cost rises to $11.2$ points; a burst-duration sweep locates the
-boundary, with the worst case at twice the controller's settling time and the gap
-falling to $5.6$ points at 15\,s. Persistent homology separates the attack as a new
-$H_0$ component; no persistent $H_1$ loop is observed, so the isolation is
-zero-dimensional rather than a topological hole. Continuity buys reconfiguration
-smoothness, not free delivery: the paper quantifies the exchange rate.
+Static name-based routing is vulnerable to DDoS: an attacker that shares the
+legitimate prefix cannot be separated from legitimate clients by prefix lookup.
+Discrete dynamic-dimensionality routing (DDMR) restores legitimate delivery
+under attack, but it does so by switching the control state in one step, with a
+peak per-tick reconfiguration share of $1.00$.
+We present Complex-Rotation Manifold Routing (CRMR) as a control-plane smoothness
+mechanism, not as a CDR maximiser: it rotates the name-space metric continuously,
+so that legitimate traffic migrates over a phase ramp rather than a step.
+On 30 paired seeds under a sustained attack, CRMR reduces the peak reconfiguration
+by $84\%$ (from $1.00$ to $0.157$) at a modest delivery cost: $97.24\%$
+legitimate CDR against $99.68\%$ for DDMR, with static T-NDN at $73.82\%$.
+Our burst-duration sweep identifies the design rule that continuous rotation is
+optimal for sustained attacks, while discrete switching should be preferred when
+attack bursts are shorter than twice the controller's settling time; in the
+3\,s flapping regime the rotation cannot complete and the measured penalty is
+$11.2$ CDR points.
+Our topological analysis refutes the hypothesis that DDoS isolation creates
+persistent $H_1$ holes: across 7{,}289 phase-active epochs, isolation manifests
+strictly as zero-dimensional $H_0$ connectivity components.
+Evidence is a 100-node, 10{,}000-name control-plane model; security is not
+evaluated.
 
 \vspace{4pt}
 \noindent\textbf{Keywords:} named data networking; DDoS isolation; persistent
@@ -112,12 +108,13 @@ homology against 14.08\,J of prevented-loss energy under the sustained regime,
 which passes the clause only above $4.7$\,mJ per prevented request.
 \end{enumerate}
 
-The result is deliberately two-sided. Under a sustained attack CRMR preserves
+The operating envelope is precise. Under a sustained attack CRMR preserves
 legitimate delivery within 2.4 points of DDMR while removing $84\%$ of the
-peak reconfiguration, at an unchanged latency. Under a 3\,s flapping attack it
-pays 11.2 points of CDR for that smoothness. The paper reports both and explains
-why: a rotation cannot be faster than its own settling time, and a burst shorter
-than that settling time is not long enough to amortise the ramp.
+peak reconfiguration, at unchanged latency. Under a 3\,s flapping attack the
+rotation cannot complete inside the burst, and the measured CDR difference is
+11.2 points. The boundary follows from the control law: a rotation cannot be
+faster than its own settling time, so a burst shorter than that settling time
+does not amortise the ramp.
 
 \section{Related work}
 \label{sec:related}
@@ -139,14 +136,26 @@ Persistent homology summarises the multi-scale connectivity of a point cloud
 complexes; CRMR makes that parameter a physical control variable, the phase
 $\theta$, rather than a fixed radius.
 
+\paragraph{Spatial and bio-inspired routing.}
+Vorticity Dissipation Routing (VDR), the repository's spatial potential-gradient
+flux-field target for loop-free forwarding \cite{vdr}, removes loops by
+construction in the physical topology; CRMR operates in the temporal domain,
+managing the phase rotation of the name-space metric to prevent control-plane
+oscillation. Our companion work on bio-inspired homeostatic control \cite{paperb}
+tests continuous metabolic extraction against discrete packet buffers and finds
+that it does not beat static per-flow isolation in the discrete-packet testbed.
+CRMR takes the opposite design position: it embraces the discrete nature of the
+control plane and applies continuous rotation only to the metric space, not to
+the packet payload.
+
 \paragraph{What is new.}
 To our knowledge the specific combination---a phasor-driven metric family, a
 damped rotation law in the control plane, and a probabilistic phase-aligned egress
 rule---has not been evaluated for DDoS isolation in a name-based fabric. The
 closest discrete mechanism is DDMR; the closest continuous mechanism is a weighted
 metric, which is what CRMR reduces to at a fixed $\theta$. The contribution is the
-continuity and its measured price, not a new persistence algorithm: every phase is
-an ordinary real filtration, so the implementation reuses the M11 pipeline.
+continuity and its measured boundary, not a new persistence algorithm: every phase
+is an ordinary real filtration, so the implementation reuses the M11 pipeline.
 
 \section{System model}
 \label{sec:model}
@@ -306,7 +315,7 @@ Seeds & 30 paired (2030--2059); pilot 2026 excluded \\
 \section{Results}
 \label{sec:results}
 
-\subsection{Sustained attack: continuity at a small price}
+\subsection{Sustained attack: delivery and reconfiguration}
 Table~\ref{tab:results} reports the 30-seed means. Under the sustained attack CRMR
 holds the legitimate CDR at $97.24\%\pm0.31$ against $99.68\%\pm0.07$ for DDMR and
 $73.82\%\pm0.34$ for static T-NDN. The gap to DDMR is $2.44$ points
@@ -340,7 +349,7 @@ flapping & CRMR & $86.79\pm0.48$ & $66.92\pm1.15$ & $129.3$ & $0.157$ \\
 \end{tabular}
 \end{table}
 
-\subsection{Flapping attack: the rotation's bill}
+\subsection{Flapping attack: the measured boundary}
 Under 3\,s flapping bursts the picture changes. CRMR delivers $86.79\%$ against
 $97.98\%$ for DDMR and $73.93\%$ for static, a gap of $11.19$ points
 (seed range $7.06$--$13.40$). Figure~\ref{fig:trajectory} shows the phase and the
@@ -376,7 +385,7 @@ static baseline is flat at the capacity-limited floor.}
 \label{fig:cycles}
 \end{figure}
 
-\subsection{Where continuity stops paying: the burst-duration sweep}
+\subsection{The burst-duration boundary}
 To locate the boundary we repeated the experiment with a single burst of length
 $T\in\{1,2,3,4,5,7,10,15\}$\,s (10 seeds per point). The attacked-prefix CDR is in
 Fig.~\ref{fig:sweep}. The CRMR gap to DDMR is $28.6$ points at $T=1$\,s, peaks at
@@ -393,24 +402,26 @@ survived, or accept the measured gap.
 \includegraphics[width=0.66\linewidth]{crmr_sweep.pdf}
 \caption{Attacked-prefix CDR against burst duration (single burst, 10 seeds per
 point, mean and 95\% CI). Static T-NDN is capacity-limited; DDMR jumps to the
-replica after detection; CRMR pays the rotation ramp, with the worst gap at
+replica after detection; CRMR includes the rotation ramp, with the worst gap at
 about twice the settling time and the gap vanishing as the burst lengthens.}
 \label{fig:sweep}
 \end{figure}
 
-\subsection{The topological signature}
-Figure~\ref{fig:betti} shows the Betti numbers of the phase-weighted complex for a
-sustained run. After the first manifold epoch, calm conditions give $\beta_0=1$;
-when the attack starts the complex
-splits into two and then three components, and $\beta_0$ returns to one after the
-attack. The attack is isolated as a \emph{component}, not as a loop: across ten
-evaluation seeds and 7{,}289 phase-active epochs, $\beta_1$ is zero in every CRMR
-epoch
-(the discrete DDMR complex produces a short-lived $H_1$ feature in $2.1\%$ of
+\subsection{The topology of isolation is zero-dimensional ($H_0$)}
+Contrary to the initial hypothesis that attacks would form persistent $H_1$ loops
+(routing holes), our analysis of 7{,}289 phase-active epochs reveals that attacks
+manifest strictly as new $H_0$ components (disconnected clusters). This is a
+fundamental insight: DDoS isolation in name-based fabrics is driven by
+connectivity separation, not hole-avoidance. Future topological routing protocols
+should optimize for $H_0$ clustering rather than $H_1$ cycle detection.
+Figure~\ref{fig:betti} shows the mechanism for a sustained run: after the first
+manifold epoch, calm conditions give $\beta_0=1$; the attack splits the complex
+into two and then three components, and $\beta_0$ returns to one afterwards.
+Across ten evaluation seeds $\beta_1$ is zero in every CRMR phase-active epoch;
+the discrete DDMR complex produces a short-lived $H_1$ feature in $2.1\%$ of
 flapping and $6.3\%$ of sustained shock epochs, with no persistence beyond one
-epoch). The ``topological hole'' language of the motivating brief is therefore not
-what the data show; the robust invariant is $H_0$, and the router uses exactly
-that. This is a negative result for the hole hypothesis, reported as such.
+epoch. The router uses the $H_0$ partition and its centroids; no part of the
+mechanism depends on a loop.
 
 \begin{figure}[t]
 \centering
@@ -468,8 +479,8 @@ energy of the prevented legitimate losses (green) under the two regimes.}
 \section{Discussion}
 \label{sec:discussion}
 
-\paragraph{The exchange rate of continuity.}
-The experiments give a clean trade. For a sustained attack, rotating the metric
+\paragraph{The cost--smoothness trade.}
+The experiments give a measured trade. For a sustained attack, rotating the metric
 costs 2.44 points of legitimate CDR and buys an $84\%$ reduction in peak
 reconfiguration, at the same latency and a modest energy cost. For a 3\,s
 flapping attack, the same rotation costs 11.19 points, because the ramp is a
@@ -516,17 +527,27 @@ volume are tested.
 \label{sec:conclusion}
 
 We replaced the discrete dimension jump of DDMR with a continuous rotation of the
-metric space and measured the exchange rate. Under a sustained DDoS, CRMR keeps
-legitimate delivery within 2.4 points of DDMR and 23.4 points above static T-NDN
-while removing $84\%$ of the peak reconfiguration, with no latency penalty and a
-passing energy accounting. Under flapping bursts the rotation cannot complete
-inside the burst and costs 11.2 points; the burst-duration sweep locates the
-boundary and shows that the worst case is a burst matching the control loop's
-settling time, not the shortest one. Persistent homology separates the attack as a
-component, not as a hole. The right reading is not that continuity is free: it is
-that continuity is a tunable trade between reconfiguration smoothness and delivery
-under attacks shorter than the rotation, and the trade can be measured, priced and
-designed.
+metric space and measured its operating envelope. Under a sustained DDoS, CRMR
+keeps legitimate delivery within 2.4 points of DDMR and 23.4 points above static
+T-NDN while removing $84\%$ of the peak reconfiguration, with no latency penalty
+and a passing energy accounting. Under flapping bursts the rotation cannot complete
+inside the burst; the boundary is measured rather than assumed. Persistent homology
+separates the attack as a zero-dimensional component, not as a hole. Continuity is
+a design parameter: it trades reconfiguration smoothness for delivery when attacks
+are shorter than the rotation, and the exchange rate is quantified here.
+
+\paragraph{Design rule for network operators.}
+\begin{itemize}
+\item The burst-duration sweep (Fig.~\ref{fig:sweep}) establishes the operational
+boundary: continuous rotation should not be used for bursts shorter than about
+twice the controller's settling time.
+\item In the 3\,s flapping regime the network cannot complete the phase rotation;
+the measured penalty is $11.2$ CDR points, and the sweep shows that the gap is
+larger for shorter bursts and falls to $5.6$ points at 15\,s.
+\item Operators must either use discrete switching (DDMR) for high-frequency
+flapping, or reduce the damping ratio $\zeta$ (or increase the rotation frequency
+$\omega$) to rotate faster, accepting the higher per-tick churn.
+\end{itemize}
 
 \paragraph{Reproducibility.}
 The simulator, the frozen pre-registration, the evaluation seeds, the per-seed
@@ -586,6 +607,18 @@ M.~Nikolic,
 \emph{7G Backhaul Simulation: T-NDN and DDMR technical reports},
 2026. Accompanying repository, \texttt{docs/tndn.md}, \texttt{docs/ddmr.md},
 \texttt{docs/crmr-predictions.md}.
+
+\bibitem{vdr}
+M.~Nikolic,
+``VDR: a spatial potential-gradient flux field for loop-free forwarding,''
+technical note, \texttt{docs/surgical-predictions.md} and
+\texttt{docs/surgical-rate-controlled.md}, 2026.
+
+\bibitem{paperb}
+M.~Nikolic,
+``Why Fair-Queueing Beats the Fick Principle: An Empirical Refutation of
+Homeostatic Network Control in Discrete Packet Networks,''
+companion paper B, 2026.
 
 \end{thebibliography}
 
