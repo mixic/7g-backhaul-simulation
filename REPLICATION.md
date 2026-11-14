@@ -24,6 +24,7 @@ listed. That table is currently empty by design; see
 - [Run the sensitivity benchmark](#run-the-sensitivity-benchmark)
 - [Run the cooperative benchmark replicates](#run-the-cooperative-benchmark-replicates)
 - [Run the layered-protocol testbed](#run-the-layered-protocol-testbed)
+- [Second-kernel replication (prepared, NOT RUN)](#second-kernel-replication-prepared-not-run)
 - [Run the dual-role comparison](#run-the-dual-role-comparison)
 - [The validation I/O tool](#the-validation-io-tool)
 - [Produce a comparison CSV from an external simulator](#produce-a-comparison-csv-from-an-external-simulator)
@@ -200,6 +201,25 @@ tables to `docs/layering-results.generated.md` when the hand-maintained
 the refutation explanation. All three fidelities share the codec, so agreement
 checks the codec under different execution environments, not independent
 protocol semantics.
+
+## Second-kernel replication (prepared, NOT RUN)
+
+The frozen round-2 protocol asks for a second kernel. The agent's host has one
+WSL2 kernel, so this is **NOT RUN**, not a result. The human runbook is
+[`validation/real_stack/RUNBOOK-second-kernel.md`](validation/real_stack/RUNBOOK-second-kernel.md);
+the empty layout and status are in
+[`results/second-kernel/README.md`](results/second-kernel/README.md). The
+comparison tool is:
+
+```bash
+python3 tools/compare_kernels.py \
+    --left validation/round2/results \
+    --right results/<kernel-id>/round2 \
+    --out results/<kernel-id>/comparison.md
+```
+
+It reports per-case verdicts and every differing observation; a disagreement is
+a finding, not a reason to edit the frozen predictions.
 
 ## Run the dual-role comparison
 
