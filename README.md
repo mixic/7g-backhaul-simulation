@@ -18,6 +18,8 @@ combined document, so each can be reviewed on its own terms:
 - **Paper B — [`Markdown`](docs/paper-bio-control-limits.md) · [`PDF`](docs/paper-bio-control-limits.pdf)**:
   *Why Fair-Queueing Beats the Fick Principle.* The negative result on
   bio-inspired control (M3–M6).
+<!-- Paper C links back to this README from its Reproducibility section
+     (docs/paper-crmr.tex, footnote to ../README.md). -->
 - **Paper C — [`LaTeX`](docs/paper-crmr.tex) · [`PDF`](docs/paper-crmr.pdf)**:
   *Complex-Rotation Manifold Routing: Continuous Phase Control for DDoS
   Isolation in Name-Based Networks.* Continuous rotation of the DDMR metric over
