@@ -346,14 +346,14 @@ though the wire cost differs.
 | P16a | ESP tunnel | 32 | 1992–1999 | **476–565** | identical | 2000 − delivered |
 | P16b | ESP tunnel | 32 | 1 | 2000/2000 | 2000 | 0 |
 | P16c | WireGuard | ~8k | 1985–1999 | 2000/2000 | 2000 | — |
-| P16d | ESP tunnel | 256 (ESN) | 1991–1999 | **674–718** | identical | 2000 − delivered |
+| P16d | ESP tunnel | 256 (ESN) | 1991–1999 | **673–717** | identical | 2000 − delivered |
 
 P16a is exact in the strongest sense the protocol asked for: in 20/20 runs the
 delivered count equals the reference filter's count and the
 `XfrmInStateSeqError` delta equals `sent − delivered` to the packet. No packet
 was lost on the wire; about 74 % were discarded by the receiver for arriving too
 late. P16d predicted 100 % at window 256 and is **refuted**: the burst is ~2000
-deep, and a 256-packet window cannot span it (674–718 delivered). The mechanism
+deep, and a 256-packet window cannot span it (673–717 delivered). The mechanism
 was confirmed — the reference filter at window 256 matches the kernel exactly —
 but the operating point was mis-specified. Two caveats: on this kernel/iproute2
 `replay-window 256` silently turns the SA into an ESN SA, and the strict/inclusive

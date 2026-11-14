@@ -14,6 +14,7 @@ fixed/closed with a commit hash and a test command.
 | Plot stack | matplotlib 3.11.2, numpy 2.5.3 |
 | Linux facility | WSL2 Ubuntu, kernel `6.18.58.1-microsoft-standard-WSL2`; uid 1000, **no passwordless sudo** |
 | Full suite at baseline | `py -3.14 -m unittest discover -s tests -q` → **Ran 433 tests, OK (skipped=1)** in 95.1 s |
+| Full suite after M1 | **Ran 466 tests, OK (skipped=1)** in 93.2 s |
 | Git state | `main...origin/main`, clean at `e394135`; no tags |
 
 This is a **one-kernel** environment. The frozen round-2 replication clause asks
@@ -24,7 +25,7 @@ Linux host is available to the agent. That is F2, not a result.
 
 | Quantity | Count | Source |
 |---|---:|---|
-| Unit tests | 433 passed, 1 skipped | test run above |
+| Unit tests | 466 passed, 1 skipped (after M1) | test run above |
 | Paper A controlled predictions | P1–P7 (7), P8–P12 (12 cases), P13–P16 (18 scored) | `docs/layering-*-predictions*.md` |
 | Paper A round-2 outcome | 17/18 CONFIRMED, 1 REFUTED (P16d), Brier 0.0833 | `docs/layering-real-stack-results-round2.md` |
 | Paper D arms / events / seeds | 9 / 10 / 30 | `docs/common-mode-predictions.md` |
@@ -36,9 +37,9 @@ Linux host is available to the agent. That is F2, not a result.
 
 | # | Finding | Status at baseline | Where |
 |---|---|---|---|
-| F1 | P16d delivered range written as 674–718; CSV gives **673–717** | **OPEN** — confirmed by recomputing `delivered_datagrams` over 20 runs | `docs/layering-real-stack-results-round2.md` (2 places), `docs/paper-layering-testbed.md` (2 places) |
+| F1 | P16d delivered range written as 674–718; CSV gives **673–717** | **FIXED (M1)** — all four occurrences corrected; generator and lint now require 673–717 | `docs/layering-real-stack-results-round2.md`, `docs/paper-layering-testbed.md` |
 | F2 | Replication clause (two kernels) unmet; one WSL2 kernel only | **BLOCKED (H)** — no second kernel/host; must be stated in abstract and limits if not run | round-2 results, Environment and limits |
-| F3 | Table generator and tests not in repo; Paper A tables hand-copied | **OPEN** — generator + tests delivered as an attached patch; not yet applied | `tools/make_paper_tables.py`, `tests/test_make_paper_tables.py` |
+| F3 | Table generator and tests not in repo; Paper A tables hand-copied | **FIXED (M1)** — generator, 16 tests, committed table snapshot; `--check` passes | `tools/make_paper_tables.py`, `tests/test_make_paper_tables.py`, `docs/paper-tables/` |
 | F4 | P16d follow-up missing: depth gate has no upper bound; `replay-window 256` silently became ESN; boundary (`max − seq` equal to window) untested | **OPEN** | round-2 results |
 | F5 | P13 (ECN decapsulation) and P14 (NAT/ESP conntrack) not checked against prior art | **OPEN** | none |
 | F6 | Paper D results defined by stipulated constants; abstract says results "support three claims"; one "pre-registered results"; no break-even analysis | **OPEN** | `docs/paper-common-mode.md` |
@@ -60,8 +61,8 @@ Linux host is available to the agent. That is F2, not a result.
 
 | Milestone | Status | Commit | Evidence |
 |---|---|---|---|
-| M0 Baseline | in progress | — | this file; 433-test run |
-| M1 Traceability | not started | — | — |
+| M0 Baseline | **done** | `33aeb61` | this file; 433-test run |
+| M1 Traceability | **done** (this commit) | see `git log --grep '^M1:'` | `make_paper_tables.py --check` 0 FAIL; `lint_claims.py` PASS; 466 tests OK |
 | M2 Paper A pass | not started | — | — |
 | M3 Second kernel | not started (H) | — | — |
 | M4 P16 follow-up | not started | — | — |

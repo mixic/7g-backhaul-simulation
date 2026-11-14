@@ -20,6 +20,10 @@ jobs:
       - name: Run tests
         run: |
           python -m unittest discover -s tests -v
+      - name: Paper A traceability gates
+        run: |
+          python tools/make_paper_tables.py --check
+          python tools/lint_claims.py
       - name: M3 smoke (2 seeds, all three experiments)
         run: |
           python run_m3_experiments.py --seeds 2

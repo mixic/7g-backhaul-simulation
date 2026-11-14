@@ -25,8 +25,8 @@ identity failure (0% vs 0%); three paths over one conduit fail together (0% vs
 90% under an AI control-plane failure against 0% without it; the
 isolation-multipath interaction is +44.4 points; and a global controller loses
 100 points when it fails with its primary path. A tested fallback is worth 34.5
-points over an untested one on the same failure. The results support three
-claims: current cloud isolation is the wrong cut for common-mode failure;
+points over an untested one on the same failure. Under the stipulated model the
+checks bear on three claims: current cloud isolation is the wrong cut for common-mode failure;
 multipath must be independent, not merely multiple; and a controller is a
 dependency, not an abstraction above dependencies. Evidence is a stipulated
 flow-level scenario, not a production measurement.
@@ -91,7 +91,7 @@ provides?
    provider, multi-zone and multi-region paths, tenant isolation, independent
    control planes and a global orchestrator --- and the two-axis principles of
    isolation plus independent multipath plus a tested fallback.
-3. Five pre-registered results: tenant isolation is the wrong cut for a shared
+3. Five model checks with thresholds frozen before the simulator existed: tenant isolation is the wrong cut for a shared
    control plane; multipath gain tracks path independence, not path count; a
    one-way boundary without local capacity is a partition; the isolation-
    multipath interaction is positive; and a global cooperative controller is a

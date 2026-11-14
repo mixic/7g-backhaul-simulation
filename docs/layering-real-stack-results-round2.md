@@ -36,7 +36,7 @@ SPI, fragment, depth) passed in all 400 runs.
 | P16a (ESP, window 32, 100 ms) | **CONFIRMED** | delivered = reference count exactly in 20/20; `XfrmInStateSeqError` delta = sent − delivered |
 | P16b (ESP, window 32, 4 ms) | **CONFIRMED** | 2000/2000 in 20/20; sequence-error delta 0 |
 | P16c (WireGuard, 100 ms) | **CONFIRMED** | 2000/2000 in 20/20 at reordering depth ≈ 1995 |
-| P16d (ESP, window 256, 100 ms) | **REFUTED** | 674–718 of 2000 delivered: the burst is ~2000 deep and a 256-packet window cannot span it |
+| P16d (ESP, window 256, 100 ms) | **REFUTED** | 673–717 of 2000 delivered: the burst is ~2000 deep and a 256-packet window cannot span it |
 
 ## P13 — three decapsulators, one visible field, three answers
 
@@ -148,7 +148,7 @@ new maximum, or `max_seq_seen − seq < window` and it was not already accepted.
 | P16a | ESP tunnel | 32 | 100 ms | 1992–1999 | **476–565** | identical | 2000 − delivered |
 | P16b | ESP tunnel | 32 | 4 ms | 1 | 2000/2000 | 2000 | 0 |
 | P16c | WireGuard | ~8k | 100 ms | 1985–1999 | 2000/2000 | 2000 | — |
-| P16d | ESP tunnel | 256 (ESN) | 100 ms | 1991–1999 | **674–718** | identical | 2000 − delivered |
+| P16d | ESP tunnel | 256 (ESN) | 100 ms | 1991–1999 | **673–717** | identical | 2000 − delivered |
 
 P16a is exact in the strongest sense the file asked for: in **20/20 runs** the
 number of datagrams delivered equals the reference filter's count, and the

@@ -19,6 +19,7 @@ listed. That table is currently empty by design; see
 
 - [Before you start](#before-you-start)
 - [Install and run the test suite](#install-and-run-the-test-suite)
+- [Run the Paper A traceability gates](#run-the-paper-a-traceability-gates)
 - [Run the vision benchmark](#run-the-vision-benchmark)
 - [Run the sensitivity benchmark](#run-the-sensitivity-benchmark)
 - [Run the cooperative benchmark replicates](#run-the-cooperative-benchmark-replicates)
@@ -77,6 +78,33 @@ The vision paper records **93 tests passing** (plus 7 parameterised subtests)
 for the version it describes (2 November 2026). Re-run the suite yourself; do
 not take that number on trust. If a test fails, report the failure rather than
 working around it.
+
+## Run the Paper A traceability gates
+
+Two commands turn the "every number is traceable" rule into a build gate. Both
+must exit 0 before a release commit:
+
+```powershell
+py -3 tools\make_paper_tables.py --check
+py -3 tools\lint_claims.py
+```
+
+`make_paper_tables.py --check` recomputes the invariants in the committed
+`validation/*/results` CSVs (20 runs per kernel case, the P9/P10 formulas,
+delivery extremes, the P13–P16 gates, the P16 replay filter, and the calibration
+table). It also regenerates every Paper A results table under
+`docs/paper-tables/`; paste from `tables.md`, never retype a number.
+
+`lint_claims.py` fails if Papers A or D contain an overclaiming phrase
+(`results support`, `pre-registered results`, `first direct`,
+`apples-to-apples`, `strongest available evidence`), if Paper A's title or
+abstract contains `7G` or `heterogeneous`, if the old rule wording
+`survives a rewrite iff` returns, or if a key number disagrees with the CSVs:
+the P16d delivered range (673–717), the P5 Linux delivery difference (12.35 pp),
+the P15 wire totals (2112 / 2180 B), the round-2 Brier score (0.0833), or the
+headline counts (6/7, 5/5, 17/18). The tests in
+`tests/test_make_paper_tables.py` and `tests/test_lint_claims.py` tamper with
+the data and require each gate to fail, so a green run means the check works.
 
 ## Run the vision benchmark
 
