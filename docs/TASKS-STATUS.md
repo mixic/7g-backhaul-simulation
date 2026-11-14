@@ -65,13 +65,13 @@ Linux host is available to the agent. That is F2, not a result.
 | Milestone | Status | Commit | Evidence |
 |---|---|---|---|
 | M0 Baseline | **done** | `33aeb61` | this file; 433-test run |
-| M1 Traceability | **done** (this commit) | see `git log --grep '^M1:'` | `make_paper_tables.py --check` 0 FAIL; `lint_claims.py` PASS; 466 tests OK |
-| M2 Paper A pass | **done** (this commit) | see `git log --grep '^M2:'` | all results tables pasted from `docs/paper-tables/tables.md`; abstract counts 6/7, 5/5, 17/18, 28/30; P16d mis-specified depth stated; PDF rebuilt |
-| M3 Second kernel | **prepared; execution NOT RUN (H)** | see `git log --grep '^M3:'` | runbook, empty layout, `tools/compare_kernels.py` + 5 tests; no second kernel available |
-| M4 P16 follow-up | **done** (this commit) | see `git log --grep '^M4:'` | P17 frozen at `285c8e9` before harness; 100 runs; P17a-f all CONFIRMED; Brier 0.0542; 511 tests OK |
-| M5 Prior art P13/P14 | **done** (this commit) | see `git log --grep '^M5:'` | `docs/prior-art-p13-p14.md`; RFC 6040/3715/3948, WireGuard patch, strongSwan, Linux sources verified; Paper A wording aligned |
-| M6 Paper D rework | **done** (this commit) | see `git log --grep '^M6:'` | break-even table; sensitivity figure; per-seed figure; verified event sources; short 6-page version; lint passes; 477 tests OK |
-| M7 Postmortem scaffold | **done** (this commit) | see `git log --grep '^M7:'` | predictions/template/coder prompt; frame builder; analyser with Wilson/Newcombe/Mann-Whitney/kappa gates; 22 synthetic tests; no real coding |
+| M1 Traceability | **done** | `0af7974` | `make_paper_tables.py --check` 0 FAIL; `lint_claims.py` PASS; 466 tests OK |
+| M2 Paper A pass | **done** | `5a6feb7` | all results tables pasted from `docs/paper-tables/tables.md`; abstract counts 6/7, 5/5, 17/18, 28/30; P16d mis-specified depth stated; PDF rebuilt |
+| M3 Second kernel | **prepared; execution NOT RUN (H)** | `0200064` | runbook, empty layout, `tools/compare_kernels.py` + 5 tests; no second kernel available |
+| M4 P16 follow-up | **done** | freeze `285c8e9`; run `4efafe4` | 100 runs; P17a-f all CONFIRMED; Brier 0.0542; 511 tests OK |
+| M5 Prior art P13/P14 | **done** | `22308de` | `docs/prior-art-p13-p14.md`; RFC 6040/3715/3948, WireGuard patch, strongSwan, Linux sources verified; Paper A wording aligned |
+| M6 Paper D rework | **done** | `82415bf` | break-even table; sensitivity figure; per-seed figure; verified event sources; short 6-page version; lint passes; 477 tests OK at that commit |
+| M7 Postmortem scaffold | **done** | `fc91471` | predictions/template/coder prompt; frame builder; analyser with Wilson/Newcombe/Mann-Whitney/kappa gates; 22 synthetic tests; no real coding |
 | M8 Study execution | human | — | out of agent scope |
 | M9 Release package | **done** | `eeb2c11` | `.zenodo.json`, CITATION 0.2.0, release notes, review request, venue checklist |
-| M10 Audit | **done** (final commit) | see `git log --grep '^M10:'` | `docs/RELEASE-AUDIT.md`; 511 tests OK; 0 FAIL; lint PASS; no `[unverified]` headline claim |
+| M10 Audit | **done** | `5ffc524` | `docs/RELEASE-AUDIT.md`; 511 tests OK; 0 FAIL; lint PASS; no `[unverified]` headline claim |
