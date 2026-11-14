@@ -455,7 +455,10 @@ citation metadata — are in place: [REPLICATION.md](REPLICATION.md),
 [CITATION.cff](CITATION.cff) and
 [docs/community-engagement.md](docs/community-engagement.md). Research
 directions now include wireless and trace-based validation, MPTCP LIA/OLIA
-comparisons, independent review and replication. See the
+comparisons, independent review and replication, and common-mode resilience of
+AI-dependent backhaul
+([docs/common-mode-resilience.md](docs/common-mode-resilience.md), a proposal
+with no results yet). See the
 [vision paper](docs/7g-backhaul-vision-paper.md) for the staged evaluation
 plan.
 
