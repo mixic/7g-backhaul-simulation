@@ -42,7 +42,7 @@ Linux host is available to the agent. That is F2, not a result.
 | F2 | Replication clause (two kernels) unmet; one WSL2 kernel only | **BLOCKED (H)** — no second kernel/host. The shortfall is now stated in Paper A's abstract and limits; M3 runbook is prepared, status NOT RUN | round-2 results, Paper A §8 |
 | F3 | Table generator and tests not in repo; Paper A tables hand-copied | **FIXED (M1)** — generator, 16 tests, committed table snapshot; `--check` passes | `tools/make_paper_tables.py`, `tests/test_make_paper_tables.py`, `docs/paper-tables/` |
 | F4 | P16d follow-up missing: depth gate has no upper bound; `replay-window 256` silently became ESN; boundary (`max − seq` equal to window) untested | **OPEN** | round-2 results |
-| F5 | P13 (ECN decapsulation) and P14 (NAT/ESP conntrack) not checked against prior art | **OPEN** | none |
+| F5 | P13 (ECN decapsulation) and P14 (NAT/ESP conntrack) not checked against prior art | **FIXED (M5)** — search log and source audit; Paper A wording now calls P13/P14 conformance checks | `docs/prior-art-p13-p14.md`, Paper A §1/§7/§8 |
 | F6 | Paper D results defined by stipulated constants; abstract says results "support three claims"; one "pre-registered results"; no break-even analysis | **FIXED (M6)** — abstract is model-check wording; `--sensitivity` mode, 25-point grid, break-even table, figures 4-5, short version; 477 tests OK | `docs/paper-common-mode.md`, `docs/paper-common-mode-short.md`, `docs/paper-tables/common-mode-break-even.md` |
 | F7 | Paper D motivation merges 3 September 2026 and 13 November 2026 events | **FIXED (M6)** — events separated and dated, primary/verified sources, no common-cause claim | `docs/paper-common-mode.md` §1, §6.4, refs 15-21 |
 | F8 | Paper D related work lacks empirical outage literature | **FIXED (M6)** — Gunawi 2016, Talluri 2025, Paladugu 2026 preprint, provider corpora | `docs/paper-common-mode.md` §2.5, refs 22-28 |
@@ -67,7 +67,7 @@ Linux host is available to the agent. That is F2, not a result.
 | M2 Paper A pass | **done** (this commit) | see `git log --grep '^M2:'` | all results tables pasted from `docs/paper-tables/tables.md`; abstract counts 6/7, 5/5, 17/18, 28/30; P16d mis-specified depth stated; PDF rebuilt |
 | M3 Second kernel | not started (H) | — | — |
 | M4 P16 follow-up | not started | — | — |
-| M5 Prior art P13/P14 | not started | — | — |
+| M5 Prior art P13/P14 | **done** (this commit) | see `git log --grep '^M5:'` | `docs/prior-art-p13-p14.md`; RFC 6040/3715/3948, WireGuard patch, strongSwan, Linux sources verified; Paper A wording aligned |
 | M6 Paper D rework | **done** (this commit) | see `git log --grep '^M6:'` | break-even table; sensitivity figure; per-seed figure; verified event sources; short 6-page version; lint passes; 477 tests OK |
 | M7 Postmortem scaffold | not started | — | — |
 | M8 Study execution | human | — | out of agent scope |

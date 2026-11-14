@@ -80,15 +80,20 @@ much delay the stack tolerates.
    score.
 3. An open, reproducible Linux testbed and the measured facts it produced,
    including the per-decapsulator ECN table and the first-come-first-served
-   ESP-through-NAT behaviour.
+   ESP-through-NAT behaviour. P13 and P14 check documented rules; the
+   per-implementation table is the contribution, not the rule.
 
 **What we do not claim.** We do not claim a first measurement of anything; the
 middlebox literature and the RFCs are older than this work. We do not claim the
 rule generalises to arbitrary middleboxes, kernels or stacks. We do not evaluate
-cryptographic security. AH failing under NAT and WireGuard's padding are
-documented behaviours: confirming them validates the method and the harness, not
-a discovery. The informative results are the cases where the specification leaves
-behaviour open (P10, P12, P13, P14, P16).
+cryptographic security. AH failing under NAT, the RFC 6040 decapsulation drop
+rule and the ESP/NAT limitation are documented behaviours: confirming them
+validates the method and the harness, not a discovery. P13 and P14 are
+executable conformance checks on one kernel, not new field classes or new NAT
+requirements. The informative results are the cases where the specification
+leaves behaviour to the implementation (P10, P12, P16) and the per-decapsulator
+differences that the RFCs do not settle, together with the measured
+first-come-first-served conntrack behaviour.
 
 ## 2. The model
 
@@ -500,11 +505,15 @@ stacks.
 
 **IPsec, NAT and ECN.** RFC 3715 specifies the IPsec/NAT compatibility problem;
 RFC 4302 defines the AH integrity scope (which covers the outer IP header); RFC
-4303 defines ESP (which does not); RFC 6040 defines ECN tunnelling and the outer-
-CE/inner-Not-ECT drop rule. P8 is an executable restatement of the AH/ESP
-asymmetry, so it validates the harness. P13 measures the decapsulation rule per
-implementation rather than asserting conformance: Linux contains three different
-answers for the same outer field.
+4303 defines ESP (which does not); RFC 6040 defines ECN tunnelling and the
+outer-CE/inner-Not-ECT drop rule; RFC 3948 defines ESP-in-UDP for NAT traversal.
+P8 is an executable restatement of the AH/ESP asymmetry, so it validates the
+harness. P13 is an executable check of the RFC 6040 rule per implementation, not
+a new rule; the WireGuard patch discussion records a deliberate decision not to
+drop the outer-CE/inner-Not-ECT case, so the three-answer table is a conformance
+observation on this kernel. P14 is the same kind of check for the documented
+ESP/NAT limitation. The search log and source audit are in
+[`prior-art-p13-p14.md`](prior-art-p13-p14.md).
 
 **Layering and recursion.** RINA and the "divide and repeat" style of recursive
 internetworking treat layering as a repeated composition problem. This paper
@@ -544,6 +553,11 @@ property of the header scope and the path, not of the protocol's intent.
   only the application payload.
 - **Security is not evaluated.** Keys, nonces and tags are out of scope; SPI and
   sequence values are read from captures only to attribute packets.
+- **P13/P14 are conformance checks, not discoveries.** The RFCs and the WireGuard
+  patch history already document the rules and the trade-off. The prior-art log
+  is [`prior-art-p13-p14.md`](prior-art-p13-p14.md); the contribution is the
+  per-decapsulator and per-conntrack table on one kernel, not the behaviour
+  itself.
 - **Scope.** The conclusions bound these cases, not "all middleboxes".
 
 ## 9. Artifact and reproduction
@@ -591,3 +605,5 @@ interpretation limits are stated in the results files, not only here.
 - [`validation/layering/`](../validation/layering/) — model, SimPy and Linux harness for P1–P7.
 - [`validation/real_stack/`](../validation/real_stack/) — round-1 real-stack harness.
 - [`validation/round2/`](../validation/round2/) — round-2 harness.
+- [`prior-art-p13-p14.md`](prior-art-p13-p14.md) — search log and source audit
+  for the ECN and ESP/NAT behaviour in P13 and P14.
