@@ -120,7 +120,7 @@ A state parameter accompanies the classes: the **replay window** of the
 integrity layer (P16). With reordering depth at or above the window, valid
 packets are dropped though none was lost on the wire.
 
-![Visibility of two header fields in six orderings of T, E, S](../figures/layering_visibility.png)
+![](../figures/layering_visibility.png){width=75%}
 
 **Figure 1.** `T.src_port` is visible only when `T` is applied after `E`; `S.seq`
 is visible unless `S` is applied before `E`. Data: the P4 visibility table in
@@ -189,7 +189,7 @@ P1, P2, P4 and P5 are arithmetic regression tests: confirming them shows that th
 three implementations reproduce the specified arithmetic, not that a deployed
 network behaves this way. P3, P6 and P7 are the research content of this round.
 
-![Dispositions by prediction and fidelity](../figures/layering_verdicts.png)
+![](../figures/layering_verdicts.png){width=70%}
 
 **Figure 2.** All sixteen headline predictions against the fidelity that tested
 them, built from the committed verdict CSVs. `C` = CONFIRMED, `R` = REFUTED,
@@ -457,9 +457,12 @@ py tools\make_layering_figures.py --output-dir figures
 The model and Linux harnesses are reproduced from the repository root:
 
 ```powershell
-py -3 -m validation.layering.run_model  --output validation\layering\results\model_observations.csv
-py -3 -m validation.layering.run_simpy  --output validation\layering\results\simpy_observations.csv
-py -3 -m validation.layering.run_linux  --output validation\layering\results\linux_observations.csv
+py -3 -m validation.layering.run_model `
+  --output validation\layering\results\model_observations.csv
+py -3 -m validation.layering.run_simpy `
+  --output validation\layering\results\simpy_observations.csv
+py -3 -m validation.layering.run_linux `
+  --output validation\layering\results\linux_observations.csv
 ```
 
 The real-stack rounds run under Linux as root;

@@ -6,18 +6,27 @@ The CDN direction is inspired by Milan Nikolic's University of Bern master's the
 
 ## Publications
 
-The research material is deliberately split into **two focused papers** rather
-than one combined document, so each can be reviewed on its own terms:
+The research material is split into **three focused papers** rather than one
+combined document, so each can be reviewed on its own terms:
 
-- **Paper A — [`docs/paper-layering-testbed.md`](docs/paper-layering-testbed.md)**:
+- **Paper A — [`Markdown`](docs/paper-layering-testbed.md) · [`PDF`](docs/paper-layering-testbed.pdf)**:
   *Which Rewrites Survive? Pre-registered Tests of a Field-Class Model of
   Encapsulation, Middleboxes and Decapsulation on Linux.* Three frozen rounds
   (P1–P16) at three fidelities: six of seven initial predictions confirmed, five
   real-stack predictions confirmed, and 17 of 18 in the failure-prone round
   (Brier 0.083), with both refutations explained.
-- **Paper B — [`docs/paper-bio-control-limits.md`](docs/paper-bio-control-limits.md)**:
+- **Paper B — [`Markdown`](docs/paper-bio-control-limits.md) · [`PDF`](docs/paper-bio-control-limits.pdf)**:
   *Why Fair-Queueing Beats the Fick Principle.* The negative result on
   bio-inspired control (M3–M6).
+- **Paper C — [`LaTeX`](docs/paper-crmr.tex) · [`PDF`](docs/paper-crmr.pdf)**:
+  *Complex-Rotation Manifold Routing: Continuous Phase Control for DDoS
+  Isolation in Name-Based Networks.* Continuous rotation of the DDMR metric over
+  30 paired seeds: 84 % lower peak reconfiguration (1.00 to 0.157) at a 2.4-point
+  sustained CDR gap, zero-dimensional H₀ isolation rather than H₁ holes, and
+  the burst-duration boundary that separates sustained attacks from flapping.
+
+The PDFs are generated from the sources: A and B from their Markdown with
+pandoc + XeLaTeX, C from its LaTeX source with pdfLaTeX.
 
 The long-horizon vision remains in
 [`docs/7g-backhaul-vision-paper.md`](docs/7g-backhaul-vision-paper.md).
@@ -759,7 +768,11 @@ The honest verdicts:
 │   ├── kalman-filtering-internal-review.md # Internal review of the Kalman foundation doc
 │   ├── break-even-analysis.md    # Stipulated-constant break-even thresholds (M5/M6)
 │   ├── paper-layering-testbed.md # Paper A: pre-registered rewrite tests (P1-P16)
+│   ├── paper-layering-testbed.pdf # Paper A PDF (pandoc + XeLaTeX)
 │   ├── paper-bio-control-limits.md # Paper B: fair-queueing beats the Fick principle
+│   ├── paper-bio-control-limits.pdf # Paper B PDF (pandoc + XeLaTeX)
+│   ├── paper-crmr.tex            # Paper C: complex-rotation manifold routing
+│   ├── paper-crmr.pdf            # Paper C PDF (pdfLaTeX)
 │   ├── kinematic-fabric.md       # Role-fluid kinematic fabric in ns-3
 │   ├── ip46-services.md          # IPv4 vs IPv6 overhead and agnostic services
 │   ├── layering-predictions.md   # Frozen P1-P7 encapsulation predictions
