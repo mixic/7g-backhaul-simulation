@@ -38,7 +38,7 @@ Linux host is available to the agent. That is F2, not a result.
 | # | Finding | Status at baseline | Where |
 |---|---|---|---|
 | F1 | P16d delivered range written as 674–718; CSV gives **673–717** | **FIXED (M1)** — all four occurrences corrected; generator and lint now require 673–717 | `docs/layering-real-stack-results-round2.md`, `docs/paper-layering-testbed.md` |
-| F2 | Replication clause (two kernels) unmet; one WSL2 kernel only | **BLOCKED (H)** — no second kernel/host; must be stated in abstract and limits if not run | round-2 results, Environment and limits |
+| F2 | Replication clause (two kernels) unmet; one WSL2 kernel only | **BLOCKED (H)** — no second kernel/host. The shortfall is now stated in Paper A's abstract and limits; M3 runbook is prepared, status NOT RUN | round-2 results, Paper A §8 |
 | F3 | Table generator and tests not in repo; Paper A tables hand-copied | **FIXED (M1)** — generator, 16 tests, committed table snapshot; `--check` passes | `tools/make_paper_tables.py`, `tests/test_make_paper_tables.py`, `docs/paper-tables/` |
 | F4 | P16d follow-up missing: depth gate has no upper bound; `replay-window 256` silently became ESN; boundary (`max − seq` equal to window) untested | **OPEN** | round-2 results |
 | F5 | P13 (ECN decapsulation) and P14 (NAT/ESP conntrack) not checked against prior art | **OPEN** | none |
@@ -63,7 +63,7 @@ Linux host is available to the agent. That is F2, not a result.
 |---|---|---|---|
 | M0 Baseline | **done** | `33aeb61` | this file; 433-test run |
 | M1 Traceability | **done** (this commit) | see `git log --grep '^M1:'` | `make_paper_tables.py --check` 0 FAIL; `lint_claims.py` PASS; 466 tests OK |
-| M2 Paper A pass | not started | — | — |
+| M2 Paper A pass | **done** (this commit) | see `git log --grep '^M2:'` | all results tables pasted from `docs/paper-tables/tables.md`; abstract counts 6/7, 5/5, 17/18, 28/30; P16d mis-specified depth stated; PDF rebuilt |
 | M3 Second kernel | not started (H) | — | — |
 | M4 P16 follow-up | not started | — | — |
 | M5 Prior art P13/P14 | not started | — | — |

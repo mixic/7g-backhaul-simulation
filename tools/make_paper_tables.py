@@ -271,7 +271,10 @@ def frange(values: list[float], digits: int = 0) -> str:
 
 
 def mark(ok: bool) -> str:
-    return "✓" if ok else "✗"
+    # ASCII on purpose: the Markdown tables are rendered to PDF with a Latin
+    # Modern font that has no U+2713 glyph, so a check mark would silently
+    # disappear.  "yes"/"no" is unambiguous in both Markdown and PDF.
+    return "yes" if ok else "no"
 
 
 def agg_verdict(verdicts: list[str]) -> str:
@@ -372,7 +375,7 @@ def t_rs_p9(d: Data) -> Table:
         ok = bool(low) and all(v == pred.wg_wire(length) for v in low + high)
         dev = (min(low) - length - pred.STIPULATED_COMPOSITE) if low else math.nan
         rows.append([str(length), str(pred.r16(length)), str(pred.wg_wire(length)), observed, fnum(dev), mark(ok)])
-    return Table("realstack_p9", "P9: WireGuard wire size against the formula 60 + 16⌈L/16⌉",
+    return Table("realstack_p9", "P9: WireGuard wire size against the formula 60 + 16*ceil(L/16)",
                  ["Inner length L (B)", "R(L)", "Predicted wire (B)", "Observed wire (B)", "Observed − (L + 56)", "Match"], rows,
                  ["Column 5 is the error of the stipulated 56-byte composite overhead."])
 
