@@ -457,9 +457,11 @@ citation metadata — are in place: [REPLICATION.md](REPLICATION.md),
 directions now include wireless and trace-based validation, MPTCP LIA/OLIA
 comparisons, independent review and replication, and the two resilience axes —
 isolation (tenant, provider, control-plane, physical one-way) and multipath
-self-scaling on cooperative backhaul — for AI-dependent networks
-([docs/common-mode-resilience.md](docs/common-mode-resilience.md), a proposal
-with no results yet). See the
+self-scaling on cooperative backhaul — for AI-dependent networks. The argument is
+in [docs/isolation-concentration-multipath.md](docs/isolation-concentration-multipath.md);
+the frozen protocol and hypotheses are in
+[docs/common-mode-resilience.md](docs/common-mode-resilience.md), a proposal with
+no results yet. See the
 [vision paper](docs/7g-backhaul-vision-paper.md) for the staged evaluation
 plan.
 

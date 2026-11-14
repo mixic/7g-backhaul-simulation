@@ -4,11 +4,15 @@
 model and five falsifiable hypotheses. It contains no implementation, no
 simulation and no results. Nothing here should be cited as a measurement.
 
-The topic comes from a simple structural observation about recent outages: a
-legacy router failure and a cloud/identity failure have different triggers but
-the same propagation signature — a shared dependency with no independent failure
-domain behind it. The engineering response has two halves, and they are not
-substitutes:
+The argument is developed in the companion position paper,
+[`docs/isolation-concentration-multipath.md`](isolation-concentration-multipath.md);
+this note is the experimental protocol behind it. The topic comes from a simple
+structural observation about two reported outages in the same week — a
+telecommunications capacity failure behind a national aviation ground stop and a
+cloud network-upgrade failure that coincided with AI service disruptions. They
+have different triggers and the same propagation signature: a shared dependency
+with no independent failure domain behind it. The engineering response has two
+halves, and they are not substitutes:
 
 - **Multipath and diversity** keep service running while a path, link or provider
   degrades.
@@ -75,9 +79,9 @@ Self-scaling cooperative backhaul adds a fourth property:
    by a shared cooperative controller. A global controller is a new common-mode
    carrier: if it fails, the multipath advantage disappears.
 
-A useful composite metric is the **path independence index**: the fraction of
-candidate paths that fail independently under the tested event set. It is the
-multipath analogue of blast radius.
+A useful composite metric is the **path independence index**: the size of the
+largest subset of candidate paths with pairwise independent failures, divided by
+the number of candidate paths. It is the multipath analogue of blast radius.
 
 ## 4. The interaction: a 2×2 of regimes
 
