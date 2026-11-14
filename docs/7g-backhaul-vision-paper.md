@@ -98,13 +98,23 @@ on an NPU in space or on Earth.
 congestion forecasting; edge computing; orbital computing; delay-tolerant
 networking; network sustainability
 
-> **Document framing.** This paper is the long-horizon *vision* document. Its
-> abstract summarises the empirical boundary condition, but that negative result is
-> reported in full, and on its own terms, in [`m6-energy-paper.md`](m6-energy-paper.md);
-> the layering testbed (P1–P16) is its own paper in
-> [`paper-layering-testbed.md`](paper-layering-testbed.md). Readers who want a single
-> focused negative result or a single focused layering study should use those two
-> papers rather than this one.
+> **Document framing.** This paper is the long-horizon *vision* document and is a
+> snapshot dated 2 November 2026. Its abstract summarises the empirical boundary
+> condition, but that negative result is reported in full, and on its own terms,
+> in Paper B ([`paper-bio-control-limits.md`](paper-bio-control-limits.md)), with
+> the energy analysis in [`m6-energy-paper.md`](m6-energy-paper.md). The layering
+> testbed (P1–P16) is Paper A
+> ([`paper-layering-testbed.md`](paper-layering-testbed.md)); the name-fabric work
+> is in [`tndn.md`](tndn.md), [`ddmr.md`](ddmr.md) and Paper C
+> ([`paper-crmr.pdf`](paper-crmr.pdf)). Readers who want a single focused result
+> should use those documents rather than this one.
+>
+> **Revision note (12 November 2026).** The core vision claims are unchanged and
+> no new evidence is claimed here. Since the 2 November snapshot, the layering
+> paper has been restructured to P1–P16 (three frozen rounds), Paper B and Paper C
+> have been finalised, and the local test suite has grown from the 93 tests
+> recorded in §15 to 410 passing tests (1 skipped). The historical figures in §15
+> are retained as the snapshot they are.
 
 ## 1. Introduction
 
@@ -1519,12 +1529,14 @@ undersized comparisons.
 On 2 November 2026, the full local Python test suite completed with **93 tests
 passing** (plus 7 parameterised subtests; `py -m pytest`), including the
 validation-workflow, link-queue, controlled-benchmark and coupled
-congestion-control tests. A measured-trace smoke run using generated temporary
-input, two replicates, and one custom scenario completed and produced the
-expected outputs for all six policies. These results establish software
-behaviour for the tested code paths only. They are not wireless PHY validation,
-operational-trace calibration, MPTCP conformance, or testbed evidence, and they
-do not validate physical-network fidelity.
+congestion-control tests. As of the 12 November 2026 revision, the suite has
+**410 passing tests and 1 skipped** (plus 295 parameterised subtests); the
+93-test figure is retained as the 2 November snapshot. A measured-trace smoke run
+using generated temporary input, two replicates, and one custom scenario
+completed and produced the expected outputs for all six policies. These results
+establish software behaviour for the tested code paths only. They are not
+wireless PHY validation, operational-trace calibration, MPTCP conformance, or
+testbed evidence, and they do not validate physical-network fidelity.
 
 The policy benchmark uses a simple second-order extrapolation,
 \(\hat{x}(t+H)=x(t)+vH+\tfrac{1}{2}aH^2\), with finite-difference estimates
