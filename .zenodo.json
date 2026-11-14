@@ -1,0 +1,33 @@
+{
+  "title": "7G Multi-Medium Backhaul and Self-Scaling CDN Simulator",
+  "description": "An early-stage, single-author research prototype for application-session continuity across heterogeneous microwave, HF, satellite, mobile, Wi-Fi and drone-relay links, with adaptive MTU, carrier bonding, self-scaling CDN, edge orchestration, a quantum-key-resource abstraction, a layered-protocol testbed (Papers A), a bio-inspired control study (Paper B), a CRMR model study (Paper C), and a flow-level common-mode resilience testbed with a one-factor break-even analysis (Paper D). The release includes frozen prediction files, CSV-backed table generators, a claims lint, synthetic tests, and a postmortem-study scaffold. The transport model has one author-performed ns-3.49 cross-check; wireless PHY/MAC, TCP/MPTCP, and the CDN/cloud submodels remain unvalidated. The work has not been peer reviewed and has no independent replication as of this release. Intended for hypothesis generation, replication attempts and methodological critique, not as evidence of deployed-network performance.",
+  "creators": [
+    {
+      "name": "Nikolic, Milan",
+      "affiliation": "Independent Researcher"
+    }
+  ],
+  "upload_type": "software",
+  "publication_date": "2026-11-14",
+  "version": "0.2.0",
+  "license": "GPL-3.0-or-later",
+  "language": "eng",
+  "keywords": [
+    "7G",
+    "multi-medium backhaul",
+    "multipath transport",
+    "self-scaling CDN",
+    "network simulation",
+    "common-mode failure",
+    "reproducibility",
+    "pre-registration"
+  ],
+  "related_identifiers": [
+    {
+      "relation": "isSupplementTo",
+      "identifier": "https://github.com/mixic/7g-backhaul-simulation",
+      "scheme": "url"
+    }
+  ],
+  "notes": "Release candidate for external review. No second-kernel replication and no real postmortem coding are included; both are marked NOT RUN or human in the release audit."
+}

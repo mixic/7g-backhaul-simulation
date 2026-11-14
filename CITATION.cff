@@ -17,14 +17,18 @@ abstract: >-
   submodels remain unvalidated. A controlled ablation finds no goodput
   advantage from predictive pressure forecasting. As of version 0.1.0 there
   has been no external issue, pull request, fork contribution, or citation, and
-  the work has not been peer reviewed. The prototype is intended for hypothesis
-  generation, replication attempts, and methodological critique, not as evidence
-  of deployed-network performance.
+  the work has not been peer reviewed. Release 0.2.0 adds a CSV-backed table
+  generator and claims lint for Paper A, a one-factor sensitivity/break-even
+  analysis and short version for Paper D, a prior-art audit for P13/P14, and a
+  scaffolded postmortem study; the second-kernel replication and real postmortem
+  coding are not included. The prototype is intended for hypothesis generation,
+  replication attempts, and methodological critique, not as evidence of
+  deployed-network performance.
 authors:
   - family-names: Nikolic
     given-names: Milan
-version: 0.1.0
-date-released: 2026-11-02
+version: 0.2.0
+date-released: 2026-11-14
 license: GPL-3.0-or-later
 repository-code: "https://github.com/mixic/7g-backhaul-simulation"
 url: "https://github.com/mixic/7g-backhaul-simulation"
