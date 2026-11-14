@@ -459,9 +459,10 @@ comparisons, independent review and replication, and the two resilience axes —
 isolation (tenant, provider, control-plane, physical one-way) and multipath
 self-scaling on cooperative backhaul — for AI-dependent networks. The argument is
 in [docs/isolation-concentration-multipath.md](docs/isolation-concentration-multipath.md);
-the frozen protocol and hypotheses are in
-[docs/common-mode-resilience.md](docs/common-mode-resilience.md), a proposal with
-no results yet. See the
+the frozen protocol is
+[docs/common-mode-predictions.md](docs/common-mode-predictions.md) and the
+30-seed results are in
+[docs/common-mode-results.md](docs/common-mode-results.md). See the
 [vision paper](docs/7g-backhaul-vision-paper.md) for the staged evaluation
 plan.
 
@@ -538,6 +539,48 @@ per-seed CSVs are in `figures/crmr_*`; the frozen protocol is
 [docs/crmr-predictions.md](docs/crmr-predictions.md); the simulator is
 [`simulation/crmr.py`](simulation/crmr.py) and
 [`simulation/crmr_scenario.py`](simulation/crmr_scenario.py).
+
+## Isolation and multipath under common-mode failure (H16–H20)
+
+A flow-level testbed for the two resilience axes: nine arms (concentration,
+shared-fate multipath, SRLG-disjoint multipath, tenant isolation, independent
+control, one-way boundary with tested or untested fallback, global cooperative
+controller, and an isolation-only fallback arm) over ten outage events — link,
+conduit SRLG, full backhaul cut, provider control plane, identity, AI endpoint,
+tenant gateway, controller plus link, and AI plus link. 30 paired seeds, 2,700
+runs.
+
+All five hypotheses are supported under the frozen scenario:
+
+- **H16** — tenant isolation turns a tenant-shared gateway failure from 0 % to
+  **100 %**, but does nothing for an identity failure (0 % vs 0 %).
+- **H17** — three paths over one conduit fail together (A2: **0 %** under the
+  conduit failure), while three SRLG-disjoint paths survive (**100 %**); under an
+  independent link failure multipath is 100 % and the single path is 0 %.
+- **H18** — a one-way boundary with a tested fallback holds **90 %** under an AI
+  control-plane failure against 0 % without it, at a 10-point normal-operation
+  cost.
+- **H19** — the isolation-by-multipath interaction is **+44.38 points** under the
+  combined AI + link failure (A6 90 %, A9 45.6 %, A3 0 %, A1 0 %).
+- **H20** — the global cooperative controller is a new common-mode carrier: A5
+  (local) is 100 % and A8 (global) is 0 % under controller + primary-link
+  failure.
+
+Results: [docs/common-mode-results.md](docs/common-mode-results.md). Frozen
+protocol: [docs/common-mode-predictions.md](docs/common-mode-predictions.md).
+Argument: [docs/isolation-concentration-multipath.md](docs/isolation-concentration-multipath.md).
+Research note: [docs/common-mode-resilience.md](docs/common-mode-resilience.md).
+
+```bash
+py -3 tools/benchmark_common_mode.py --seeds 30
+py -3 -m unittest tests.test_common_mode -v
+```
+
+The simulator is [`simulation/common_mode.py`](simulation/common_mode.py), the
+benchmark is [`tools/benchmark_common_mode.py`](tools/benchmark_common_mode.py)
+and the tests are [`tests/test_common_mode.py`](tests/test_common_mode.py). The
+run/extend guide is
+[docs/common-mode-testbed.md](docs/common-mode-testbed.md).
 
 ## M3: runnable models and paired-seed CSVs
 
@@ -781,6 +824,11 @@ The honest verdicts:
 │   ├── paper-bio-control-limits.pdf # Paper B PDF (pandoc + XeLaTeX)
 │   ├── paper-crmr.tex            # Paper C: complex-rotation manifold routing
 │   ├── paper-crmr.pdf            # Paper C PDF (pdfLaTeX)
+│   ├── isolation-concentration-multipath.md # Position paper: one risk, two mitigations
+│   ├── common-mode-predictions.md # Frozen H16-H20 protocol and scenario
+│   ├── common-mode-results.md    # H16-H20 30-seed flow-level results
+│   ├── common-mode-testbed.md    # Run and extend the isolation/multipath testbed
+│   ├── common-mode-resilience.md # Research note: isolation and multipath axes
 │   ├── kinematic-fabric.md       # Role-fluid kinematic fabric in ns-3
 │   ├── ip46-services.md          # IPv4 vs IPv6 overhead and agnostic services
 │   ├── layering-predictions.md   # Frozen P1-P7 encapsulation predictions
@@ -900,6 +948,7 @@ The honest verdicts:
 │   ├── router.py                 # Soft path allocation
 │   ├── role_fluid.py             # Role-fluid potential-field model and controllers
 │   ├── dual_role.py              # Continuous alpha serve/balance model and DDoS scenario
+│   ├── common_mode.py            # Flow-level isolation/multipath common-mode testbed (H16-H20)
 │   ├── sdn_plane.py              # Southbound messages and SDN role-override policy
 │   ├── oef_controller.py         # Fick-principle OEF controller (H5)
 │   ├── mkb_controller.py         # 4D kinematic baselining controller (H6)
@@ -930,6 +979,7 @@ The honest verdicts:
 │   ├── benchmark_sdn.py          # SDN role-override comparison
 │   ├── plot_sdn.py               # Delivery-by-target and steady-state plots
 │   ├── benchmark_vision.py       # CDN, handover, and backhaul policy studies
+│   ├── benchmark_common_mode.py  # H16-H20 isolation/multipath paired-seed run
 │   ├── benchmark_surgical.py     # 840-run surgical kinematic benchmark
 │   ├── plot_surgical.py          # Surgical H1-H4 figures
 │   ├── plot_fabric.py            # Role-fluid kinematic fabric figures
@@ -971,6 +1021,7 @@ The honest verdicts:
 │   ├── test_rfmp.py
 │   ├── test_role_fluid.py
 │   ├── test_dual_role.py
+│   ├── test_common_mode.py
 │   ├── test_sdn_plane.py
 │   ├── test_layering_codec.py
 │   ├── test_layering_linux.py

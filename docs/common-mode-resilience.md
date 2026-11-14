@@ -1,8 +1,11 @@
 # Research note: isolation and multipath as the two resilience axes for cooperative AI-dependent backhaul
 
-**Status: proposal only.** This note defines the research question, a two-axis
-model and five falsifiable hypotheses. It contains no implementation, no
-simulation and no results. Nothing here should be cited as a measurement.
+**Status: protocol implemented; results reported separately.** This note defines
+the research question, the two-axis model and five falsifiable hypotheses. The
+frozen protocol is in [`common-mode-predictions.md`](common-mode-predictions.md);
+the 30-seed flow-level results are in
+[`common-mode-results.md`](common-mode-results.md). The note itself remains a
+model description, not a measurement of a production network.
 
 The argument is developed in the companion position paper,
 [`docs/isolation-concentration-multipath.md`](isolation-concentration-multipath.md);
@@ -216,15 +219,20 @@ If the hypotheses survive, the natural Paper D is *Isolation and Multipath:
 Common-Mode Resilience for Cooperative AI-Dependent Backhaul*. The 7G backhaul
 prototype is the instantiation: an AI-assisted control plane that depends on a
 cloud model service, with a local degraded mode as the fallback and a cooperative
-controller whose own centrality is part of the experiment.
+controller whose own centrality is part of the experiment. The frozen flow-level
+test supports H16-H20 under its stipulated scenario; a real-stack extension is
+the next step, not a claim made here.
 
 ## 11. Next steps
 
-1. Freeze `docs/common-mode-predictions.md` with the thresholds, arms, scenarios
-   and SRLG definitions before writing code.
-2. Implement `simulation/common_mode.py` (multipath graph, SRLG failures, isolation
-   cuts, fallback, controller locality) and `tools/benchmark_common_mode.py`.
-3. Report paired-seed results, including refutations, and decide whether Paper D
-   is warranted.
+1. ~~Freeze `docs/common-mode-predictions.md`~~ — done at commit `1c781f3`.
+2. ~~Implement `simulation/common_mode.py` and `tools/benchmark_common_mode.py`~~
+   — done; 30 seeds and 2 700 runs are reported in
+   [`common-mode-results.md`](common-mode-results.md).
+3. Add a real-stack variant on Linux network namespaces (multipath routes,
+   `tc`/link-down outages, an nftables control-plane cut) and compare it with the
+   flow-level model.
+4. Decide whether Paper D is warranted; if so, use the argument document as the
+   framing and this note plus the results as the protocol.
 
-No part of this has been implemented or measured yet.
+The flow-level test is implemented and measured; the real-stack test is not.

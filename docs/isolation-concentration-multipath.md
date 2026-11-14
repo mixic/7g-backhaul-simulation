@@ -5,7 +5,9 @@
 **Status: position and analysis draft, 14 November 2026.** This document makes
 no new measurements. External events are cited as reported; their root causes are
 not independently verified here, and no claim below depends on a particular root
-cause being correct.
+cause being correct. The 30-seed flow-level test of the structural claims is in
+[`common-mode-results.md`](common-mode-results.md); it supports H16-H20 under a
+stipulated scenario and is not a measurement of a production network.
 
 ## Abstract
 
