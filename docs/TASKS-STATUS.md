@@ -49,7 +49,7 @@ Linux host is available to the agent. That is F2, not a result.
 | F7 | Paper D motivation merges 3 September 2026 and 13 November 2026 events | **FIXED (M6)** — events separated and dated, primary/verified sources, no common-cause claim | `docs/paper-common-mode.md` §1, §6.4, refs 15-21 |
 | F8 | Paper D related work lacks empirical outage literature | **FIXED (M6)** — Gunawi 2016, Talluri 2025, Paladugu 2026 preprint, provider corpora | `docs/paper-common-mode.md` §2.5, refs 22-28 |
 | F9 | Postmortem study only a draft predictions file; no frame, no analysis script | **SCAFFOLD FIXED (M7)** — predictions + template committed, frame builder and analyser with synthetic tests, C2 prompt; real frame and coding remain **H (M8)** | `docs/postmortem-study-predictions.md`, `tools/build_postmortem_frame.py`, `tools/analyze_postmortems.py`, `study/README.md` |
-| F10 | No release metadata / review package; README statuses unchecked | **OPEN** | no `.zenodo.json`, no review note |
+| F10 | No release metadata / review package; README statuses unchecked | **FIXED (M9)** — `.zenodo.json`, CITATION 0.2.0, release notes, review request, venue checklist, README status table | root, `docs/RELEASE-NOTES-0.2.0.md`, `docs/review-request-paperA.md`, `docs/venue-checklist.md` |
 
 ## What has not been done, and why
 
@@ -73,5 +73,5 @@ Linux host is available to the agent. That is F2, not a result.
 | M6 Paper D rework | **done** (this commit) | see `git log --grep '^M6:'` | break-even table; sensitivity figure; per-seed figure; verified event sources; short 6-page version; lint passes; 477 tests OK |
 | M7 Postmortem scaffold | **done** (this commit) | see `git log --grep '^M7:'` | predictions/template/coder prompt; frame builder; analyser with Wilson/Newcombe/Mann-Whitney/kappa gates; 22 synthetic tests; no real coding |
 | M8 Study execution | human | — | out of agent scope |
-| M9 Release package | not started | — | — |
-| M10 Audit | not started | — | — |
+| M9 Release package | **done** | `eeb2c11` | `.zenodo.json`, CITATION 0.2.0, release notes, review request, venue checklist |
+| M10 Audit | **done** (final commit) | see `git log --grep '^M10:'` | `docs/RELEASE-AUDIT.md`; 511 tests OK; 0 FAIL; lint PASS; no `[unverified]` headline claim |
