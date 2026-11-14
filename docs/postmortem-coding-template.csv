@@ -1,0 +1,9 @@
+incident_id,provider,report_url,report_sha256,publication_date,coder,V1_trigger,V1b_secondary_trigger,V2_failed_plane,V3_shared_dependency,V4_blast_radius,V5_independence_breach,V6_fallback_outcome,V7_central_controller,V8a_tenant_isolation_retained,V8b_multipath_or_multiprovider_retained,V8c_tested_local_fallback_retained,V9_duration_minutes,V10_known_before_freeze,evidence_V1,evidence_V2,evidence_V3,evidence_V4,evidence_V5,evidence_V6,evidence_V7,evidence_V8,notes
+# allowed V1: config_change|software_release|capacity_or_network_upgrade|hardware_or_physical|overload_or_cascade|security_attack|third_party_or_upstream|other|unclear
+# allowed V2: data_plane|control_plane|identity_auth|dns_naming|config_distribution_orchestration|network_backbone_physical|storage_or_database_service|other|unclear
+# allowed V3: shared_global|shared_regional|localized|unclear
+# allowed V4: single_zone|single_region|multi_region|global
+# allowed V5,V7,V8a,V8b,V8c: yes|no|unclear
+# allowed V6: none_mentioned|worked|failed_or_not_triggered|slow_or_manual
+# allowed V10: yes|no
+# one row per incident per coder (C1, C2, C3 final); evidence = section heading or paragraph number in the saved report

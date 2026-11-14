@@ -16,6 +16,7 @@ fixed/closed with a commit hash and a test command.
 | Full suite at baseline | `py -3.14 -m unittest discover -s tests -q` → **Ran 433 tests, OK (skipped=1)** in 95.1 s |
 | Full suite after M1 | **Ran 466 tests, OK (skipped=1)** in 93.2 s |
 | Full suite after M6 | **Ran 477 tests, OK (skipped=1)** in 64.8 s |
+| Full suite after M7 | **Ran 499 tests, OK (skipped=1)** in 65.3 s |
 | Git state | `main...origin/main`, clean at `e394135`; no tags |
 
 This is a **one-kernel** environment. The frozen round-2 replication clause asks
@@ -26,7 +27,7 @@ Linux host is available to the agent. That is F2, not a result.
 
 | Quantity | Count | Source |
 |---|---:|---|
-| Unit tests | 477 passed, 1 skipped (after M6) | test run above |
+| Unit tests | 499 passed, 1 skipped (after M7) | test run above |
 | Paper A controlled predictions | P1–P7 (7), P8–P12 (12 cases), P13–P16 (18 scored) | `docs/layering-*-predictions*.md` |
 | Paper A round-2 outcome | 17/18 CONFIRMED, 1 REFUTED (P16d), Brier 0.0833 | `docs/layering-real-stack-results-round2.md` |
 | Paper D arms / events / seeds | 9 / 10 / 30 | `docs/common-mode-predictions.md` |
@@ -46,7 +47,7 @@ Linux host is available to the agent. That is F2, not a result.
 | F6 | Paper D results defined by stipulated constants; abstract says results "support three claims"; one "pre-registered results"; no break-even analysis | **FIXED (M6)** — abstract is model-check wording; `--sensitivity` mode, 25-point grid, break-even table, figures 4-5, short version; 477 tests OK | `docs/paper-common-mode.md`, `docs/paper-common-mode-short.md`, `docs/paper-tables/common-mode-break-even.md` |
 | F7 | Paper D motivation merges 3 September 2026 and 13 November 2026 events | **FIXED (M6)** — events separated and dated, primary/verified sources, no common-cause claim | `docs/paper-common-mode.md` §1, §6.4, refs 15-21 |
 | F8 | Paper D related work lacks empirical outage literature | **FIXED (M6)** — Gunawi 2016, Talluri 2025, Paladugu 2026 preprint, provider corpora | `docs/paper-common-mode.md` §2.5, refs 22-28 |
-| F9 | Postmortem study only a draft predictions file; no frame, no analysis script | **OPEN** | `postmortem-study-predictions.md` |
+| F9 | Postmortem study only a draft predictions file; no frame, no analysis script | **SCAFFOLD FIXED (M7)** — predictions + template committed, frame builder and analyser with synthetic tests, C2 prompt; real frame and coding remain **H (M8)** | `docs/postmortem-study-predictions.md`, `tools/build_postmortem_frame.py`, `tools/analyze_postmortems.py`, `study/README.md` |
 | F10 | No release metadata / review package; README statuses unchecked | **OPEN** | no `.zenodo.json`, no review note |
 
 ## What has not been done, and why
@@ -69,7 +70,7 @@ Linux host is available to the agent. That is F2, not a result.
 | M4 P16 follow-up | not started | — | — |
 | M5 Prior art P13/P14 | **done** (this commit) | see `git log --grep '^M5:'` | `docs/prior-art-p13-p14.md`; RFC 6040/3715/3948, WireGuard patch, strongSwan, Linux sources verified; Paper A wording aligned |
 | M6 Paper D rework | **done** (this commit) | see `git log --grep '^M6:'` | break-even table; sensitivity figure; per-seed figure; verified event sources; short 6-page version; lint passes; 477 tests OK |
-| M7 Postmortem scaffold | not started | — | — |
+| M7 Postmortem scaffold | **done** (this commit) | see `git log --grep '^M7:'` | predictions/template/coder prompt; frame builder; analyser with Wilson/Newcombe/Mann-Whitney/kappa gates; 22 synthetic tests; no real coding |
 | M8 Study execution | human | — | out of agent scope |
 | M9 Release package | not started | — | — |
 | M10 Audit | not started | — | — |
