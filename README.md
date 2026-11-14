@@ -40,6 +40,25 @@ combined document, so each can be reviewed on its own terms:
   efficiency); the paper says explicitly that these are model checks, not
   empirical support.
 
+### Paper status at 0.2.0
+
+| Paper | Status | Evidence type |
+|---|---|---|
+| A | ready for external review at the release commit; not submitted | three-fidelity Linux tests, 28/30 scored predictions, Brier 0.0833 |
+| B | scoped model-check / negative result; not submitted | flow-level simulation |
+| C | scoped model study; not submitted | flow-level simulation with a real persistent-homology library |
+| D | model-check study with break-even analysis; empirical anchor is the postmortem study, scaffolded but not run; not submitted | stipulated flow-level simulation |
+
+No paper has been peer reviewed or independently replicated. The second-kernel
+replication and the real postmortem coding are **NOT RUN**; see
+[`docs/TASKS-STATUS.md`](docs/TASKS-STATUS.md) and the release audit.
+
+**Review package:** [`review request`](docs/review-request-paperA.md) ·
+[`release notes`](docs/RELEASE-NOTES-0.2.0.md) ·
+[`release audit`](docs/RELEASE-AUDIT.md) ·
+[`venue checklist`](docs/venue-checklist.md) ·
+[`Zenodo metadata`](.zenodo.json).
+
 The PDFs are generated from the sources: A, B, D and the short D position paper
 from their Markdown with pandoc + XeLaTeX, and C from its LaTeX source with
 pdfLaTeX.
@@ -404,9 +423,14 @@ AH/ESP and nftables NAT, and all twelve cases are confirmed. P13–P16
 ([predictions](docs/layering-real-stack-predictions-round2.md),
 [results](docs/layering-real-stack-results-round2.md)) are a deliberately
 failure-prone round: 17 of 18 predictions confirmed, P16d refuted by a
-mis-specified reordering depth, Brier 0.083. The testbed measures size, delivery
-and authentication acceptance only, and makes no cryptographic security claim.
-Reproduction commands are in [REPLICATION.md](REPLICATION.md).
+mis-specified reordering depth, Brier 0.083. A round-3 follow-up (P17) adds a
+rate-limited depth band, an exact captured-and-reinjected ESP boundary at
+`window - 1` and `window`, and explicit legacy/ESN mode recording; it is
+reported separately in
+[`docs/layering-real-stack-results-round3.md`](docs/layering-real-stack-results-round3.md).
+The testbed measures size, delivery and authentication acceptance only, and
+makes no cryptographic security claim. Reproduction commands are in
+[REPLICATION.md](REPLICATION.md).
 
 ## The name fabric: DNS-independence as one operation
 

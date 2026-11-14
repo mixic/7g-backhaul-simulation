@@ -5,7 +5,7 @@ test suite, regenerate its benchmarks, and compare its outputs with an external
 simulator or testbed. It is written so that a third party can attempt a
 replication without private context.
 
-**Status as of version 0.1.0 (2 November 2026):** this project has received no
+**Status as of version 0.2.0 (14 November 2026):** this project has received no
 external issue, pull request, fork contribution, or citation, and no independent
 replication has been published. The software and the vision paper have not been
 peer reviewed. Nothing in this guide should be read as evidence that anyone
@@ -24,6 +24,7 @@ listed. That table is currently empty by design; see
 - [Run the sensitivity benchmark](#run-the-sensitivity-benchmark)
 - [Run the cooperative benchmark replicates](#run-the-cooperative-benchmark-replicates)
 - [Run the layered-protocol testbed](#run-the-layered-protocol-testbed)
+- [Run the round-3 P17 follow-up](#run-the-round-3-p17-follow-up)
 - [Second-kernel replication (prepared, NOT RUN)](#second-kernel-replication-prepared-not-run)
 - [Run the dual-role comparison](#run-the-dual-role-comparison)
 - [The validation I/O tool](#the-validation-io-tool)
@@ -201,6 +202,26 @@ tables to `docs/layering-results.generated.md` when the hand-maintained
 the refutation explanation. All three fidelities share the codec, so agreement
 checks the codec under different execution environments, not independent
 protocol semantics.
+
+## Run the round-3 P17 follow-up
+
+The round-3 predictions are frozen in
+[`docs/layering-real-stack-predictions-round3.md`](docs/layering-real-stack-predictions-round3.md).
+They follow up P16d with a rate-limited depth band, an exact
+captured-and-reinjected ESP boundary, and explicit legacy/ESN mode recording.
+The harness needs root and the same facilities as round 2:
+
+```bash
+python3 -m validation.round3.run --probe
+python3 -m validation.round3.run --dry-run --only P17a
+python3 -m validation.round3.run --runs 20
+```
+
+Outputs go to `validation/round3/results/`. The results document is
+[`docs/layering-real-stack-results-round3.md`](docs/layering-real-stack-results-round3.md).
+The raw capture/reinjection helper is
+[`validation/round3/raw.py`](validation/round3/raw.py); it is a controlled
+harness action on packets the harness generated, not a replay attack.
 
 ## Second-kernel replication (prepared, NOT RUN)
 
@@ -645,7 +666,7 @@ module.
 
 ## Published external validations
 
-**Third-party entries: none.** As of version 0.1.0, no independent replication
+**Third-party entries: none.** As of version 0.2.0, no independent replication
 or third-party validation has been completed, submitted, or published. There is
 nothing to cite and no one outside the project has used the software in a way
 this project can verify.
@@ -660,7 +681,7 @@ contribution the project could receive right now.
 | Reference | Reporter / affiliation (optional) | Submodel(s) | External reference | Scenario(s) / seeds | Project commit | Result | Link |
 |---|---|---|---|---|---|---|---|
 | Author-performed, not independent | Milan Nikolic | transport, queueing, scheduling, handover | ns-3.49 | S1: `s0_nominal` and `s1_handover`, seeds 1-8 | recorded in the report | queue-free model matched within 0.02 % at low load and over-reported delivery by 6.5 points under handover overload; FIFO model matched within 0.01 points | [external-validation.md](docs/external-validation.md) |
-| *No third-party runs as of version 0.1.0* | — | — | — | — | — | — | — |
+| *No third-party runs as of version 0.2.0* | — | — | — | — | — | — | — |
 
 To get a run listed:
 

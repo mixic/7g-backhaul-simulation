@@ -1,0 +1,7 @@
+prediction,case,verdict,detail
+P17a,P17a,CONFIRMED,"depth in [64, 200] and every datagram delivered"
+P17b,P17b,CONFIRMED,32-packet displacement gives 1/1
+P17c,P17c,CONFIRMED,31-packet displacement gives 2/2
+P17d,P17d,CONFIRMED,256-packet displacement gives 1/1
+P17e,P17e,CONFIRMED,255-packet displacement gives 2/2
+P17f,P17f,CONFIRMED,"window 32 legacy, window 256 ESN in every run"
