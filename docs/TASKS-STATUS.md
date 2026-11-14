@@ -1,0 +1,73 @@
+# TASKS-STATUS — GOAL-release baseline
+
+**Baseline commit:** `e394135` (`Add Paper D: common-mode resilience testbed study`, 14 November 2026).
+**Status date:** 14 November 2026.
+**Rule:** this file records status, not new claims. A milestone may only be marked
+fixed/closed with a commit hash and a test command.
+
+## Environment actually observed
+
+| Item | Value |
+|---|---|
+| Host | Windows 11 workstation (`ThinkStation`), PowerShell via the DSH harness |
+| Python | 3.14.7 (`py -3.14`); 3.12 also installed |
+| Plot stack | matplotlib 3.11.2, numpy 2.5.3 |
+| Linux facility | WSL2 Ubuntu, kernel `6.18.58.1-microsoft-standard-WSL2`; uid 1000, **no passwordless sudo** |
+| Full suite at baseline | `py -3.14 -m unittest discover -s tests -q` → **Ran 433 tests, OK (skipped=1)** in 95.1 s |
+| Git state | `main...origin/main`, clean at `e394135`; no tags |
+
+This is a **one-kernel** environment. The frozen round-2 replication clause asks
+for a second kernel; the available WSL2 host cannot supply one, and no native
+Linux host is available to the agent. That is F2, not a result.
+
+## Current counts at baseline
+
+| Quantity | Count | Source |
+|---|---:|---|
+| Unit tests | 433 passed, 1 skipped | test run above |
+| Paper A controlled predictions | P1–P7 (7), P8–P12 (12 cases), P13–P16 (18 scored) | `docs/layering-*-predictions*.md` |
+| Paper A round-2 outcome | 17/18 CONFIRMED, 1 REFUTED (P16d), Brier 0.0833 | `docs/layering-real-stack-results-round2.md` |
+| Paper D arms / events / seeds | 9 / 10 / 30 | `docs/common-mode-predictions.md` |
+| Paper D runs | 2,700 | 9 × 10 × 30 |
+| Paper D hypotheses | H16–H20, all PASS on the frozen scenario | `docs/common-mode-results.md` |
+| Postmortem study predictions | E1–E8, draft, no frame, no analyser | `postmortem-study-predictions.md` (outside repo at baseline) |
+
+## F-item table
+
+| # | Finding | Status at baseline | Where |
+|---|---|---|---|
+| F1 | P16d delivered range written as 674–718; CSV gives **673–717** | **OPEN** — confirmed by recomputing `delivered_datagrams` over 20 runs | `docs/layering-real-stack-results-round2.md` (2 places), `docs/paper-layering-testbed.md` (2 places) |
+| F2 | Replication clause (two kernels) unmet; one WSL2 kernel only | **BLOCKED (H)** — no second kernel/host; must be stated in abstract and limits if not run | round-2 results, Environment and limits |
+| F3 | Table generator and tests not in repo; Paper A tables hand-copied | **OPEN** — generator + tests delivered as an attached patch; not yet applied | `tools/make_paper_tables.py`, `tests/test_make_paper_tables.py` |
+| F4 | P16d follow-up missing: depth gate has no upper bound; `replay-window 256` silently became ESN; boundary (`max − seq` equal to window) untested | **OPEN** | round-2 results |
+| F5 | P13 (ECN decapsulation) and P14 (NAT/ESP conntrack) not checked against prior art | **OPEN** | none |
+| F6 | Paper D results defined by stipulated constants; abstract says results "support three claims"; one "pre-registered results"; no break-even analysis | **OPEN** | `docs/paper-common-mode.md` |
+| F7 | Paper D motivation merges 3 September 2026 and 13 November 2026 events | **OPEN** | `docs/paper-common-mode.md` §1, §6.4, refs 15–18 |
+| F8 | Paper D related work lacks empirical outage literature | **OPEN** | `docs/paper-common-mode.md` §2 |
+| F9 | Postmortem study only a draft predictions file; no frame, no analysis script | **OPEN** | `postmortem-study-predictions.md` |
+| F10 | No release metadata / review package; README statuses unchecked | **OPEN** | no `.zenodo.json`, no review note |
+
+## What has not been done, and why
+
+- **No real postmortem coding.** The agent has read the predictions; it is not a
+  blind coder. M8 remains human.
+- **No second kernel.** No native Linux host and no root in WSL; M3 is prepared,
+  not executed.
+- **No fabricated data.** Where a facility is missing, the disposition is NOT RUN
+  or blocked, with the reason recorded here.
+
+## Milestone log
+
+| Milestone | Status | Commit | Evidence |
+|---|---|---|---|
+| M0 Baseline | in progress | — | this file; 433-test run |
+| M1 Traceability | not started | — | — |
+| M2 Paper A pass | not started | — | — |
+| M3 Second kernel | not started (H) | — | — |
+| M4 P16 follow-up | not started | — | — |
+| M5 Prior art P13/P14 | not started | — | — |
+| M6 Paper D rework | not started | — | — |
+| M7 Postmortem scaffold | not started | — | — |
+| M8 Study execution | human | — | out of agent scope |
+| M9 Release package | not started | — | — |
+| M10 Audit | not started | — | — |
