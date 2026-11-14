@@ -283,15 +283,328 @@ def cost_resilience(rows: dict[tuple[str, str], dict[str, str]]) -> None:
     _save(fig, "common_mode_cost_resilience")
 
 
+DEFAULT_PER_SEED = REPO / "docs" / "paper-tables" / "common-mode-per-seed.csv"
+DEFAULT_SENSITIVITY = REPO / "docs" / "paper-tables" / "common-mode-sensitivity.csv"
+DEFAULT_BREAK_EVEN = REPO / "docs" / "paper-tables" / "common-mode-break-even.csv"
+
+
+def _read_rows(path: Path) -> list[dict[str, str]]:
+    with path.open(encoding="utf-8") as handle:
+        return list(csv.DictReader(handle))
+
+
+def _seed_index(
+    rows: list[dict[str, str]],
+) -> dict[tuple[int, str, str], float]:
+    return {
+        (int(row["seed"]), row["event"], row["arm"]): float(
+            row["availability_event_pct"]
+        )
+        for row in rows
+    }
+
+
+def _paired(
+    index: dict[tuple[int, str, str], float],
+    event: str,
+    left: str,
+    right: str,
+) -> list[float]:
+    seeds = sorted({seed for seed, kind, _ in index if kind == event})
+    return [index[(seed, event, left)] - index[(seed, event, right)] for seed in seeds]
+
+
+def _interaction(index: dict[tuple[int, str, str], float]) -> list[float]:
+    seeds = sorted({seed for seed, kind, _ in index if kind == "ai_link"})
+    return [
+        (index[(seed, "ai_link", "A6")] - index[(seed, "ai_link", "A3")])
+        - (index[(seed, "ai_link", "A9")] - index[(seed, "ai_link", "A1")])
+        for seed in seeds
+    ]
+
+
+def _strip_box(
+    ax: plt.Axes,
+    values: list[float],
+    title: str,
+    threshold: float,
+    colour: str,
+) -> None:
+    box_style = {
+        "widths": 0.45,
+        "patch_artist": True,
+        "boxprops": {"facecolor": colour, "alpha": 0.25, "linewidth": 0.8},
+        "medianprops": {"color": colour, "linewidth": 1.2},
+        "whiskerprops": {"linewidth": 0.8},
+        "capprops": {"linewidth": 0.8},
+        "flierprops": {"marker": "", "linestyle": "none"},
+    }
+    try:
+        # Matplotlib >= 3.10 renamed ``vert`` to ``orientation``.
+        ax.boxplot(values, orientation="vertical", **box_style)
+    except TypeError:  # pragma: no cover - old Matplotlib
+        ax.boxplot(values, vert=True, **box_style)
+    rng = np.random.default_rng(2026)
+    jitter = rng.uniform(-0.09, 0.09, size=len(values))
+    ax.scatter(
+        np.ones(len(values)) + jitter,
+        values,
+        s=10,
+        color=colour,
+        alpha=0.55,
+        linewidths=0,
+        zorder=3,
+    )
+    centre = float(np.mean(values))
+    ax.axhline(threshold, color="#444444", linestyle="--", linewidth=0.8)
+    ax.axhline(centre, color=colour, linestyle="-", linewidth=1.0)
+    ax.set_xticks([1], ["30 seeds"])
+    ax.set_title(title, fontsize=8.5)
+    ax.set_ylabel("percentage points", fontsize=7.5)
+    ax.tick_params(axis="both", labelsize=7)
+    ax.grid(axis="y", alpha=0.22, linewidth=0.5)
+    ax.text(
+        1.02,
+        centre,
+        f"mean {centre:.1f}",
+        transform=ax.get_yaxis_transform(),
+        fontsize=7,
+        va="center",
+    )
+
+
+def seed_distributions(rows: list[dict[str, str]]) -> None:
+    """Per-seed paired differences for the six mechanism comparisons."""
+    index = _seed_index(rows)
+    panels = [
+        (
+            "Tenant isolation: tenant gateway",
+            _paired(index, "tenant_gw", "A4", "A3"),
+            50.0,
+            "#2166ac",
+        ),
+        (
+            "Disjoint multipath: conduit SRLG",
+            _paired(index, "srlg", "A3", "A2"),
+            20.0,
+            "#1b7837",
+        ),
+        (
+            "One-way boundary + fallback: AI",
+            _paired(index, "ai", "A6", "A5"),
+            50.0,
+            "#1b7837",
+        ),
+        (
+            "Tested minus untested: backhaul cut",
+            _paired(index, "backhaul_cut", "A6", "A7"),
+            0.0,
+            "#d6604d",
+        ),
+        (
+            "Local minus global controller: controller + link",
+            _paired(index, "controller_link", "A5", "A8"),
+            50.0,
+            "#1b7837",
+        ),
+        (
+            "Isolation x multipath interaction: AI + link",
+            _interaction(index),
+            20.0,
+            "#762a83",
+        ),
+    ]
+    fig, axes = plt.subplots(2, 3, figsize=(10.2, 5.6))
+    for ax, (title, values, threshold, colour) in zip(axes.reshape(-1), panels):
+        _strip_box(ax, values, title, threshold, colour)
+    fig.suptitle(
+        "Per-seed paired differences (30 seeds); dashed line = frozen threshold",
+        fontsize=10,
+    )
+    fig.tight_layout(rect=(0, 0, 1, 0.95))
+    _save(fig, "common_mode_seed_distributions")
+
+
+def _sensitivity_rows(
+    rows: list[dict[str, str]],
+) -> dict[str, list[dict[str, str]]]:
+    grouped: dict[str, list[dict[str, str]]] = {}
+    for row in rows:
+        grouped.setdefault(row["parameter"], []).append(row)
+    for values in grouped.values():
+        values.sort(key=lambda item: float(item["value"]))
+    return grouped
+
+
+def _break_even(
+    rows: list[dict[str, str]], parameter: str, criterion: str
+) -> float | None:
+    for row in rows:
+        if row["parameter"] == parameter and row["criterion"] == criterion:
+            if row["break_even_value"] == "":
+                return None
+            return float(row["break_even_value"])
+    return None
+
+
+def _plot_series(
+    ax: plt.Axes,
+    points: list[dict[str, str]],
+    field: str,
+    label: str,
+    colour: str,
+    style: str = "-",
+) -> None:
+    ax.plot(
+        [float(point["value"]) for point in points],
+        [float(point[field]) for point in points],
+        style,
+        color=colour,
+        linewidth=1.3,
+        label=label,
+    )
+
+
+def _mark(
+    ax: plt.Axes,
+    break_even: float | None,
+    current: float,
+    label: str,
+) -> None:
+    ax.axvline(current, color="#777777", linestyle=":", linewidth=0.9)
+    if break_even is not None:
+        ax.axvline(break_even, color="#b2182b", linestyle="--", linewidth=1.0)
+        ax.annotate(
+            f"{label} {break_even:g}",
+            xy=(break_even, 0.02),
+            xycoords=("data", "axes fraction"),
+            fontsize=7,
+            color="#b2182b",
+            rotation=90,
+            ha="right",
+            va="bottom",
+        )
+
+
+def sensitivity_figure(
+    rows: list[dict[str, str]], break_rows: list[dict[str, str]]
+) -> None:
+    grouped = _sensitivity_rows(rows)
+    fig, axes = plt.subplots(2, 2, figsize=(10.2, 6.0))
+
+    ax = axes[0, 0]
+    points = grouped["one_way_efficiency"]
+    _plot_series(ax, points, "a6_ai", "A6 under AI", "#1b7837")
+    _plot_series(ax, points, "a6_ai_link", "A6 under AI + link", "#1b7837", "--")
+    _plot_series(ax, points, "a5_ai", "A5 under AI", "#b2182b")
+    ax.axhline(80, color="#444444", linestyle="--", linewidth=0.8)
+    _mark(
+        ax,
+        _break_even(break_rows, "one_way_efficiency", "H18_normal_cost"),
+        0.90,
+        "break-even",
+    )
+    ax.set_title("Efficiency of the one-way boundary (H18)", fontsize=8.5)
+    ax.set_xlabel("local-policy efficiency", fontsize=7.5)
+    ax.set_ylabel("availability during event (%)", fontsize=7.5)
+    ax.legend(fontsize=6.5, frameon=False, loc="lower right")
+
+    ax = axes[0, 1]
+    points = grouped["fallback_tested_probability"]
+    _plot_series(ax, points, "a6_backhaul", "A6 tested", "#1b7837")
+    _plot_series(ax, points, "a7_backhaul", "A7 untested", "#d6604d")
+    _plot_series(ax, points, "a9_link", "A9 under link", "#2166ac")
+    _mark(
+        ax,
+        _break_even(break_rows, "fallback_tested_probability", "fallback_gap"),
+        0.98,
+        "break-even",
+    )
+    ax.set_title("Tested fallback activation probability", fontsize=8.5)
+    ax.set_xlabel("activation probability", fontsize=7.5)
+    ax.set_ylabel("availability during event (%)", fontsize=7.5)
+    ax.legend(fontsize=6.5, frameon=False, loc="lower right")
+
+    ax = axes[1, 0]
+    points = grouped["fallback_tested_delay_s"]
+    _plot_series(ax, points, "a6_backhaul", "A6 tested", "#1b7837")
+    _plot_series(ax, points, "a7_backhaul", "A7 untested", "#d6604d")
+    _plot_series(ax, points, "a9_link", "A9 under link", "#2166ac")
+    _mark(
+        ax,
+        _break_even(break_rows, "fallback_tested_delay_s", "fallback_gap"),
+        2.0,
+        "break-even",
+    )
+    ax.set_title("Tested fallback activation delay", fontsize=8.5)
+    ax.set_xlabel("delay (s)", fontsize=7.5)
+    ax.set_ylabel("availability during event (%)", fontsize=7.5)
+    ax.legend(fontsize=6.5, frameon=False, loc="lower right")
+
+    ax = axes[1, 1]
+    points = grouped["fallback_tested_capacity_gbps"]
+    _plot_series(ax, points, "a6_backhaul", "A6 tested", "#1b7837")
+    _plot_series(ax, points, "a7_backhaul", "A7 untested", "#d6604d")
+    _plot_series(ax, points, "a9_link", "A9 under link", "#2166ac")
+    _mark(
+        ax,
+        _break_even(break_rows, "fallback_tested_capacity_gbps", "fallback_gap"),
+        0.50,
+        "gap",
+    )
+    twin = ax.twinx()
+    twin.plot(
+        [float(point["value"]) for point in points],
+        [float(point["interaction"]) for point in points],
+        color="#762a83",
+        linewidth=1.0,
+        linestyle=":",
+        label="H19 interaction (right)",
+    )
+    twin.axhline(20, color="#762a83", linestyle="--", linewidth=0.6)
+    h19 = _break_even(break_rows, "fallback_tested_capacity_gbps", "H19_interaction")
+    _mark(ax, h19, 0.50, "H19")
+    twin.set_ylabel("interaction (points)", fontsize=7, color="#762a83")
+    twin.tick_params(axis="y", labelsize=6.5, colors="#762a83")
+    ax.set_title("Tested fallback capacity", fontsize=8.5)
+    ax.set_xlabel("capacity (Gbps)", fontsize=7.5)
+    ax.set_ylabel("availability during event (%)", fontsize=7.5)
+    ax.legend(fontsize=6.5, frameon=False, loc="lower right")
+
+    for ax in axes.reshape(-1):
+        ax.grid(alpha=0.22, linewidth=0.5)
+        ax.tick_params(axis="both", labelsize=7)
+    fig.suptitle(
+        "Sensitivity of the model checks to the stipulated constants "
+        "(dotted = stipulated, dashed = break-even)",
+        fontsize=9.5,
+    )
+    fig.tight_layout(rect=(0, 0, 1, 0.95))
+    _save(fig, "common_mode_sensitivity")
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--summary", type=Path, default=DEFAULT_SUMMARY)
+    parser.add_argument("--per-seed", type=Path, default=DEFAULT_PER_SEED)
+    parser.add_argument("--sensitivity", type=Path, default=DEFAULT_SENSITIVITY)
+    parser.add_argument("--break-even", type=Path, default=DEFAULT_BREAK_EVEN)
     args = parser.parse_args(argv)
     _ensure_summary(args.summary)
     rows = _read(args.summary)
     heatmap(rows)
     mechanisms(rows)
     cost_resilience(rows)
+    if args.per_seed.exists():
+        seed_distributions(_read_rows(args.per_seed))
+    else:
+        print(f"{args.per_seed} missing; skipped seed distributions")
+    if args.sensitivity.exists() and args.break_even.exists():
+        sensitivity_figure(
+            _read_rows(args.sensitivity), _read_rows(args.break_even)
+        )
+    else:
+        print("sensitivity artifacts missing; skipped sensitivity figure")
     return 0
 
 

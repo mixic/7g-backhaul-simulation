@@ -1,0 +1,91 @@
+event,arm,label,availability_event_mean_pct,availability_event_ci95_pct,availability_overall_mean_pct,recovery_mean_s,blast_radius_mean_pct,path_independence_mean,fallback_rate_mean_pct,cost_index
+none,A1,Concentration,100.0,0.0,100.0,0.0,0.0,1.0,0.0,0.5
+none,A2,"Multipath, shared fate",100.0,0.0,100.0,0.0,0.0,0.3333,0.0,1.5
+none,A3,"Multipath, SRLG-disjoint",100.0,0.0,100.0,0.0,0.0,1.0,0.0,1.5
+none,A4,A3 + tenant isolation,100.0,0.0,100.0,0.0,0.0,1.0,0.0,1.6
+none,A5,A4 + independent control,100.0,0.0,100.0,0.0,0.0,1.0,0.0,1.7
+none,A6,A5 + one-way boundary + tested fallback,90.0,0.0,90.0,0.0,0.0,1.0,0.0,1.8
+none,A7,A6 with untested fallback,90.0,0.0,90.0,0.0,0.0,1.0,0.0,1.8
+none,A8,A5 + global cooperative controller,100.0,0.0,100.0,0.0,0.0,1.0,0.0,1.75
+none,A9,A1 + isolation + tested fallback,90.0,0.0,90.0,0.0,0.0,1.0,0.0,0.8
+link,A1,Concentration,0.0,0.0,60.1111,24.3832,100.0,1.0,0.0,0.5
+link,A2,"Multipath, shared fate",100.0,0.0,100.0,0.4499,0.0,0.3333,0.0,1.5
+link,A3,"Multipath, SRLG-disjoint",100.0,0.0,100.0,0.4499,0.0,1.0,0.0,1.5
+link,A4,A3 + tenant isolation,100.0,0.0,100.0,0.4499,0.0,1.0,0.0,1.6
+link,A5,A4 + independent control,100.0,0.0,100.0,0.4499,0.0,1.0,0.0,1.7
+link,A6,A5 + one-way boundary + tested fallback,90.0,0.0,90.0,0.4499,0.0,1.0,0.0,1.8
+link,A7,A6 with untested fallback,90.0,0.0,90.0,0.4499,0.0,1.0,0.0,1.8
+link,A8,A5 + global cooperative controller,100.0,0.0,100.0,0.4499,0.0,1.0,0.0,1.75
+link,A9,A1 + isolation + tested fallback,45.6242,0.5727,72.3207,24.3832,100.0,1.0,99.4444,0.8
+srlg,A1,Concentration,0.0,0.0,60.1111,24.3832,100.0,1.0,0.0,0.5
+srlg,A2,"Multipath, shared fate",0.0,0.0,60.1111,24.3832,100.0,0.3333,0.0,1.5
+srlg,A3,"Multipath, SRLG-disjoint",100.0,0.0,100.0,0.4499,0.0,1.0,0.0,1.5
+srlg,A4,A3 + tenant isolation,100.0,0.0,100.0,0.4499,0.0,1.0,0.0,1.6
+srlg,A5,A4 + independent control,100.0,0.0,100.0,0.4499,0.0,1.0,0.0,1.7
+srlg,A6,A5 + one-way boundary + tested fallback,90.0,0.0,90.0,0.4499,0.0,1.0,0.0,1.8
+srlg,A7,A6 with untested fallback,90.0,0.0,90.0,0.4499,0.0,1.0,0.0,1.8
+srlg,A8,A5 + global cooperative controller,100.0,0.0,100.0,0.4499,0.0,1.0,0.0,1.75
+srlg,A9,A1 + isolation + tested fallback,45.6242,0.5727,72.3207,24.3832,100.0,1.0,99.4444,0.8
+backhaul_cut,A1,Concentration,0.0,0.0,60.1111,24.3832,100.0,1.0,0.0,0.5
+backhaul_cut,A2,"Multipath, shared fate",0.0,0.0,60.1111,24.3832,100.0,0.3333,0.0,1.5
+backhaul_cut,A3,"Multipath, SRLG-disjoint",0.0,0.0,60.1111,24.3832,100.0,1.0,0.0,1.5
+backhaul_cut,A4,A3 + tenant isolation,0.0,0.0,60.1111,24.3832,100.0,1.0,0.0,1.6
+backhaul_cut,A5,A4 + independent control,0.0,0.0,60.1111,24.3832,100.0,1.0,0.0,1.7
+backhaul_cut,A6,A5 + one-way boundary + tested fallback,45.6242,0.5727,72.3207,24.3832,100.0,1.0,99.4444,1.8
+backhaul_cut,A7,A6 with untested fallback,11.1067,1.6094,58.5477,24.3832,100.0,1.0,56.1111,1.8
+backhaul_cut,A8,A5 + global cooperative controller,0.0,0.0,60.1111,24.3832,100.0,1.0,0.0,1.75
+backhaul_cut,A9,A1 + isolation + tested fallback,45.6242,0.5727,72.3207,24.3832,100.0,1.0,99.4444,0.8
+provider_cp,A1,Concentration,0.0,0.0,60.1111,24.3832,100.0,1.0,0.0,0.5
+provider_cp,A2,"Multipath, shared fate",100.0,0.0,100.0,0.4499,0.0,0.3333,0.0,1.5
+provider_cp,A3,"Multipath, SRLG-disjoint",100.0,0.0,100.0,0.4499,0.0,1.0,0.0,1.5
+provider_cp,A4,A3 + tenant isolation,100.0,0.0,100.0,0.4499,0.0,1.0,0.0,1.6
+provider_cp,A5,A4 + independent control,100.0,0.0,100.0,0.4499,0.0,1.0,0.0,1.7
+provider_cp,A6,A5 + one-way boundary + tested fallback,90.0,0.0,90.0,0.4499,0.0,1.0,0.0,1.8
+provider_cp,A7,A6 with untested fallback,90.0,0.0,90.0,0.4499,0.0,1.0,0.0,1.8
+provider_cp,A8,A5 + global cooperative controller,100.0,0.0,100.0,0.4499,0.0,1.0,0.0,1.75
+provider_cp,A9,A1 + isolation + tested fallback,45.6242,0.5727,72.3207,24.3832,100.0,1.0,99.4444,0.8
+idp,A1,Concentration,0.0,0.0,60.1111,24.3832,100.0,1.0,0.0,0.5
+idp,A2,"Multipath, shared fate",0.0,0.0,60.1111,24.3832,100.0,0.3333,0.0,1.5
+idp,A3,"Multipath, SRLG-disjoint",0.0,0.0,60.1111,24.3832,100.0,1.0,0.0,1.5
+idp,A4,A3 + tenant isolation,0.0,0.0,60.1111,24.3832,100.0,1.0,0.0,1.6
+idp,A5,A4 + independent control,100.0,0.0,100.0,0.4499,0.0,1.0,0.0,1.7
+idp,A6,A5 + one-way boundary + tested fallback,90.0,0.0,90.0,0.4499,0.0,1.0,0.0,1.8
+idp,A7,A6 with untested fallback,90.0,0.0,90.0,0.4499,0.0,1.0,0.0,1.8
+idp,A8,A5 + global cooperative controller,100.0,0.0,100.0,0.4499,0.0,1.0,0.0,1.75
+idp,A9,A1 + isolation + tested fallback,90.0,0.0,90.0,0.4499,0.0,1.0,0.0,0.8
+ai,A1,Concentration,0.0,0.0,60.1111,24.3832,100.0,1.0,0.0,0.5
+ai,A2,"Multipath, shared fate",0.0,0.0,60.1111,24.3832,100.0,0.3333,0.0,1.5
+ai,A3,"Multipath, SRLG-disjoint",0.0,0.0,60.1111,24.3832,100.0,1.0,0.0,1.5
+ai,A4,A3 + tenant isolation,0.0,0.0,60.1111,24.3832,100.0,1.0,0.0,1.6
+ai,A5,A4 + independent control,0.0,0.0,60.1111,24.3832,100.0,1.0,0.0,1.7
+ai,A6,A5 + one-way boundary + tested fallback,90.0,0.0,90.0,0.4499,0.0,1.0,0.0,1.8
+ai,A7,A6 with untested fallback,90.0,0.0,90.0,0.4499,0.0,1.0,0.0,1.8
+ai,A8,A5 + global cooperative controller,0.0,0.0,60.1111,24.3832,100.0,1.0,0.0,1.75
+ai,A9,A1 + isolation + tested fallback,90.0,0.0,90.0,0.4499,0.0,1.0,0.0,0.8
+tenant_gw,A1,Concentration,0.0,0.0,60.1111,24.3832,100.0,1.0,0.0,0.5
+tenant_gw,A2,"Multipath, shared fate",0.0,0.0,60.1111,24.3832,100.0,0.3333,0.0,1.5
+tenant_gw,A3,"Multipath, SRLG-disjoint",0.0,0.0,60.1111,24.3832,100.0,1.0,0.0,1.5
+tenant_gw,A4,A3 + tenant isolation,100.0,0.0,100.0,0.4499,0.0,1.0,0.0,1.6
+tenant_gw,A5,A4 + independent control,100.0,0.0,100.0,0.4499,0.0,1.0,0.0,1.7
+tenant_gw,A6,A5 + one-way boundary + tested fallback,90.0,0.0,90.0,0.4499,0.0,1.0,0.0,1.8
+tenant_gw,A7,A6 with untested fallback,90.0,0.0,90.0,0.4499,0.0,1.0,0.0,1.8
+tenant_gw,A8,A5 + global cooperative controller,100.0,0.0,100.0,0.4499,0.0,1.0,0.0,1.75
+tenant_gw,A9,A1 + isolation + tested fallback,90.0,0.0,90.0,0.4499,0.0,1.0,0.0,0.8
+controller_link,A1,Concentration,0.0,0.0,60.1111,24.3832,100.0,1.0,0.0,0.5
+controller_link,A2,"Multipath, shared fate",100.0,0.0,100.0,0.4499,0.0,0.3333,0.0,1.5
+controller_link,A3,"Multipath, SRLG-disjoint",100.0,0.0,100.0,0.4499,0.0,1.0,0.0,1.5
+controller_link,A4,A3 + tenant isolation,100.0,0.0,100.0,0.4499,0.0,1.0,0.0,1.6
+controller_link,A5,A4 + independent control,100.0,0.0,100.0,0.4499,0.0,1.0,0.0,1.7
+controller_link,A6,A5 + one-way boundary + tested fallback,90.0,0.0,90.0,0.4499,0.0,1.0,0.0,1.8
+controller_link,A7,A6 with untested fallback,90.0,0.0,90.0,0.4499,0.0,1.0,0.0,1.8
+controller_link,A8,A5 + global cooperative controller,0.0,0.0,60.1111,24.3832,100.0,1.0,0.0,1.75
+controller_link,A9,A1 + isolation + tested fallback,45.6242,0.5727,72.3207,24.3832,100.0,1.0,99.4444,0.8
+ai_link,A1,Concentration,0.0,0.0,60.1111,24.3832,100.0,1.0,0.0,0.5
+ai_link,A2,"Multipath, shared fate",0.0,0.0,60.1111,24.3832,100.0,0.3333,0.0,1.5
+ai_link,A3,"Multipath, SRLG-disjoint",0.0,0.0,60.1111,24.3832,100.0,1.0,0.0,1.5
+ai_link,A4,A3 + tenant isolation,0.0,0.0,60.1111,24.3832,100.0,1.0,0.0,1.6
+ai_link,A5,A4 + independent control,0.0,0.0,60.1111,24.3832,100.0,1.0,0.0,1.7
+ai_link,A6,A5 + one-way boundary + tested fallback,90.0,0.0,90.0,0.4499,0.0,1.0,0.0,1.8
+ai_link,A7,A6 with untested fallback,90.0,0.0,90.0,0.4499,0.0,1.0,0.0,1.8
+ai_link,A8,A5 + global cooperative controller,0.0,0.0,60.1111,24.3832,100.0,1.0,0.0,1.75
+ai_link,A9,A1 + isolation + tested fallback,45.6242,0.5727,72.3207,24.3832,100.0,1.0,99.4444,0.8

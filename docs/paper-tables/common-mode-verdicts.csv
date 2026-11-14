@@ -1,0 +1,18 @@
+hypothesis,criterion,event,arm,reference_arm,value,threshold,pass_fraction,verdict,detail
+H16,tenant isolation contains a tenant-shared fault,tenant_gw,A4,A3,100.0,>= 50,1.0,PASS,"A4 - A3, A4 = A3 + tenant isolation"
+H16,tenant isolation does not contain a shared control-plane fault,idp,A4,A3,0.0,|value| <= 5,1.0,PASS,|A4 - A3| under global identity failure
+H16,overall,"tenant_gw, idp",A4 vs A3,,,both criteria,1.0,PASS,"isolation is a boundary, not a control-plane cut"
+H17,SRLG-disjoint multipath under a conduit failure,srlg,A3,A2,100.0,>= 20,1.0,PASS,"A3 - A2, disjoint minus shared-fate"
+H17,multipath under an independent link failure,link,A2,A1,100.0,>= 50,1.0,PASS,"A2 - A1, multipath minus single path"
+H17,overall,"srlg, link","A2, A3 vs A1",,,both criteria,1.0,PASS,"independence, not path count"
+H18,one-way boundary survives an AI control-plane failure,ai,A6,A5,90.0,>= 50,1.0,PASS,A6 - A5 under AI failure
+H18,fallback restores at least 80 % under an AI failure,ai,A6,,90.0,>= 80,1.0,PASS,A6 level under AI failure
+H18,normal-operation cost of isolation is at most 15 points,none,A5,A6,10.0,<= 15,1.0,PASS,A5 - A6 with no failure
+H18,overall,"ai, none","A5, A6",,,all three criteria,1.0,PASS,a boundary without capacity is a partition
+H19,super-additive interaction under AI + link failure,ai_link,"A6 vs A3, A9 vs A1",,44.3758,>= 20,1.0,PASS,(A6 - A3) - (A9 - A1)
+H19,combined arm level under AI + link failure,ai_link,A6,,90.0,>= 80,1.0,PASS,A6 level
+H19,isolation-only arm level under AI + link failure,ai_link,A3,,0.0,<= 20,1.0,PASS,A3 level
+H19,overall,ai_link,"A1, A3, A6, A9",,,all three criteria,1.0,PASS,isolation and multipath are not substitutes
+H20,global controller failure erases the multipath gain,controller_link,A5,A8,100.0,>= 50,1.0,PASS,A5 - A8 under controller + link failure
+H20,global controller does not change normal operation,none,A5,A8,0.0,|value| <= 5,1.0,PASS,|A5 - A8| with no failure
+H20,overall,"controller_link, none",A5 vs A8,,,both criteria,1.0,PASS,locality is a design variable

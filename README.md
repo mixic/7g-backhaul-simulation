@@ -26,7 +26,7 @@ combined document, so each can be reviewed on its own terms:
   30 paired seeds: 84 % lower peak reconfiguration (1.00 to 0.157) at a 2.4-point
   sustained CDR gap, zero-dimensional H₀ isolation rather than H₁ holes, and
   the burst-duration boundary that separates sustained attacks from flapping.
-- **Paper D — [`Markdown`](docs/paper-common-mode.md) · [`PDF`](docs/paper-common-mode.pdf)**:
+- **Paper D — [`Markdown`](docs/paper-common-mode.md) · [`PDF`](docs/paper-common-mode.pdf) · [`short position`](docs/paper-common-mode-short.md) · [`short PDF`](docs/paper-common-mode-short.pdf)**:
   *Beyond Tenant Isolation: A Flow-Level Testbed for Common-Mode Resilience in
   Cloud-Dependent Backhaul.* Nine architectures over ten outage events and 30
   paired seeds (2,700 runs). Tenant isolation contains a tenant gateway fault but
@@ -35,11 +35,14 @@ combined document, so each can be reviewed on its own terms:
   tested fallback holds 90 % under an AI failure; the isolation-multipath
   interaction is +44.4 points; and a global cooperative controller is itself a
   common-mode carrier. The comparison is flow-level and stipulated, not a
-  production measurement.
+  production measurement. A one-factor sensitivity analysis reports break-even
+  values for every stipulated constant (e.g. H18 fails below 0.85 local-policy
+  efficiency); the paper says explicitly that these are model checks, not
+  empirical support.
 
-The PDFs are generated from the sources: A and B from their Markdown with
-pandoc + XeLaTeX, C from its LaTeX source with pdfLaTeX, and D from its Markdown
-with pandoc + pdfLaTeX.
+The PDFs are generated from the sources: A, B, D and the short D position paper
+from their Markdown with pandoc + XeLaTeX, and C from its LaTeX source with
+pdfLaTeX.
 
 The long-horizon vision remains in
 [`docs/7g-backhaul-vision-paper.md`](docs/7g-backhaul-vision-paper.md).

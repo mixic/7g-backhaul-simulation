@@ -142,6 +142,27 @@ class Scenario:
 
 
 @dataclass(frozen=True)
+class ScenarioParams:
+    """Constants that may be varied by a sensitivity analysis.
+
+    The defaults are the frozen values used by the reported experiment.  A
+    sensitivity run passes a modified instance; it never mutates the module
+    constants, so the frozen scenario remains reproducible.
+    """
+
+    one_way_efficiency: float = ONE_WAY_EFFICIENCY
+    fallback_tested_probability: float = FALLBACK_TESTED_PROBABILITY
+    fallback_untested_probability: float = FALLBACK_UNTESTED_PROBABILITY
+    fallback_tested_delay_s: float = FALLBACK_TESTED_DELAY_S
+    fallback_untested_delay_s: float = FALLBACK_UNTESTED_DELAY_S
+    fallback_tested_capacity_gbps: float = FALLBACK_TESTED_CAPACITY_GBPS
+    fallback_untested_capacity_gbps: float = FALLBACK_UNTESTED_CAPACITY_GBPS
+
+
+DEFAULT_PARAMS = ScenarioParams()
+
+
+@dataclass(frozen=True)
 class FallbackProfile:
     probability: float
     delay_s: float
@@ -490,18 +511,20 @@ def build_seed_inputs(scenario: Scenario, seed: int, event_kind: str) -> SeedInp
     )
 
 
-def _fallback_profile(arm: Arm) -> FallbackProfile | None:
+def _fallback_profile(
+    arm: Arm, params: ScenarioParams = DEFAULT_PARAMS
+) -> FallbackProfile | None:
     if arm.fallback == "tested":
         return FallbackProfile(
-            FALLBACK_TESTED_PROBABILITY,
-            FALLBACK_TESTED_DELAY_S,
-            FALLBACK_TESTED_CAPACITY_GBPS,
+            params.fallback_tested_probability,
+            params.fallback_tested_delay_s,
+            params.fallback_tested_capacity_gbps,
         )
     if arm.fallback == "untested":
         return FallbackProfile(
-            FALLBACK_UNTESTED_PROBABILITY,
-            FALLBACK_UNTESTED_DELAY_S,
-            FALLBACK_UNTESTED_CAPACITY_GBPS,
+            params.fallback_untested_probability,
+            params.fallback_untested_delay_s,
+            params.fallback_untested_capacity_gbps,
         )
     return None
 
@@ -544,6 +567,7 @@ def _service(
     event: Event,
     fallback_draw: float,
     fallback: FallbackProfile | None,
+    params: ScenarioParams = DEFAULT_PARAMS,
 ) -> tuple[float, bool]:
     control_ok = _control_ok(scenario, arm, failed_nodes)
     available = [
@@ -563,7 +587,7 @@ def _service(
     path_capacity = sum(path.capacity_gbps for path in available) if control_ok else 0.0
     path_served = min(demand_gbps, path_capacity)
     if arm.one_way:
-        path_served *= ONE_WAY_EFFICIENCY
+        path_served *= params.one_way_efficiency
 
     need_fallback = (not control_ok) or (not available)
     fallback_active = False
@@ -593,13 +617,19 @@ def simulate(
     scenario: Scenario | None = None,
     seed: int = BASE_SEED,
     event_kind: str = "none",
+    params: ScenarioParams | None = None,
 ) -> RunResult:
-    """Run one arm on one seed and one event."""
+    """Run one arm on one seed and one event.
+
+    ``params`` defaults to the frozen constants.  A sensitivity run passes a
+    modified ``ScenarioParams``; the module constants are never mutated.
+    """
     scenario = scenario or build_backhaul_scenario()
+    params = params or DEFAULT_PARAMS
     inputs = build_seed_inputs(scenario, seed, event_kind)
     event = inputs.event
     paths_by_tenant = select_paths(scenario, arm)
-    fallback = _fallback_profile(arm)
+    fallback = _fallback_profile(arm, params)
     tenant_runs: list[TenantRun] = []
 
     for tenant in scenario.tenants:
@@ -626,6 +656,7 @@ def simulate(
                 event,
                 fallback_draw,
                 fallback,
+                params,
             )
             served.append(amount / demand if demand > 0 else 0.0)
             if active and used_fallback:

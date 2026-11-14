@@ -58,6 +58,22 @@ Outputs go to `output/common-mode/` by default:
 | `common_mode_summary.csv` | mean and 95 % CI per event and arm |
 | `common_mode_verdicts.csv` | H16-H20 criteria, thresholds, per-seed pass fractions |
 
+### 2.1 Sensitivity and break-even
+
+The constants can be varied one at a time without touching the frozen defaults:
+
+```bash
+py -3 tools/benchmark_common_mode.py --sensitivity --seeds 30 --sensitivity-points 25
+```
+
+It writes `common-mode-sensitivity.csv` (the grid), `common-mode-break-even.csv`
+(one row per constant and criterion), and a generated Markdown table under
+`docs/paper-tables/`. The simulator takes an optional
+`simulation.common_mode.ScenarioParams`; `simulate(..., params=...)` uses the
+override for that call and never mutates the module constants. The default
+`simulate(...)` is bit-identical to the frozen run (tested in
+`tests/test_common_mode_sensitivity.py`).
+
 ## 3. Add an arm
 
 Add an `Arm` to `ARMS` in `simulation/common_mode.py`:

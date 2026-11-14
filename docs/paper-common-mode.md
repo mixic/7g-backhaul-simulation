@@ -19,6 +19,8 @@ the hypotheses and thresholds frozen in version control before the simulator
 existed. The architectures range from a single provider to tenant isolation,
 SRLG-disjoint multipath, independent control planes, a one-way boundary with a
 tested fallback, an untested fallback and a global cooperative controller.
+
+Under the frozen scenario the model makes five checks, not empirical claims.
 Tenant isolation contains a tenant-shared gateway fault (100% vs 0%) but not an
 identity failure (0% vs 0%); three paths over one conduit fail together (0% vs
 100% for SRLG-disjoint paths); a one-way boundary with a tested fallback holds
@@ -26,25 +28,47 @@ identity failure (0% vs 0%); three paths over one conduit fail together (0% vs
 isolation-multipath interaction is +44.4 points; and a global controller loses
 100 points when it fails with its primary path. A tested fallback is worth 34.5
 points over an untested one on the same failure. Under the stipulated model the
-checks bear on three claims: current cloud isolation is the wrong cut for common-mode failure;
-multipath must be independent, not merely multiple; and a controller is a
-dependency, not an abstraction above dependencies. Evidence is a stipulated
-flow-level scenario, not a production measurement.
+checks bear on three claims: current cloud isolation is the wrong cut for
+common-mode failure; multipath must be independent, not merely multiple; and a
+controller is a dependency, not an abstraction above dependencies.
+
+Every one of those numbers is conditional on a stipulated constant, so the paper
+also reports a one-factor sensitivity analysis and break-even values. H18 fails
+only below 0.85 local-policy efficiency (stipulated 0.90); the tested-fallback
+gap closes below 0.22 activation probability (stipulated 0.98), above 18.2 s
+activation delay (2 s), or below 0.122 Gbps fallback capacity (0.50 Gbps); the
+untested fallback would have to improve beyond the swept range to erase the gap.
+H19's absolute level fails below 0.80 efficiency, while its interaction term
+alone survives to 0.656. Evidence is a stipulated flow-level scenario, not a
+production measurement. The break-even table is the honest form of the result:
+it shows how far each conclusion is from its stipulated operating point, and the
+paper states what would count as a refutation.
 
 **Keywords:** common-mode failure; cloud resilience; network isolation;
 multipath; data diode; tested fallback; SRLG; cooperative backhaul.
 
 ## 1. Introduction
 
-In November 2026 two disruptions in the same week had different triggers and the
-same propagation signature. A national aviation ground stop followed a
-telecommunications outage [15,16]; a Microsoft cloud outage, reported as a failed
-network capacity upgrade, coincided with disruptions to AI services including
-Claude, ChatGPT and Grok [17,18]. One event sits in a legacy-adjacent
-telecommunications chain; the other in a modern cloud control plane. The
-contrast defeats the comfortable explanation that legacy technology is the
-problem. The modern stack reproduced the same category without the legacy: a
-shared node failed, and every consumer behind it failed together.
+In the same week of November 2026 two unrelated disruptions were reported. On
+13 November the FAA issued a nationwide ground stop after an old
+telecommunications system used by air-traffic control was overloaded; the stop
+lasted about four hours and twenty minutes, and the FAA and the Department of
+Homeland Security reported no evidence of a cyber or AI attack [15,16].
+Separately, Microsoft reported a Microsoft 365 outage that it attributed to an
+issue introduced during an earlier network capacity upgrade; Outlook, Teams,
+Copilot and other services were affected, and Microsoft said a full
+post-incident report would follow [17,18]. AI services including ChatGPT and
+Claude also reported disruption during the same period [18]. These are separate
+events with separate triggers; the public reports do not establish a common
+cause.
+
+The same kind of coincidence appears earlier. On 2-3 September 2026 Microsoft
+365 reported degradation affecting Outlook, Teams, SharePoint and Copilot [19],
+while on the evening of 3 September ChatGPT, Claude and Grok reported elevated
+errors [20,21]. The AI providers described infrastructure and compute-center
+problems; the public reports do not establish that the Microsoft 365 degradation
+and the AI outages shared a root cause. The coincidence is a reason to ask the
+structural question, not evidence for the answer.
 
 The structural cause is concentration. A dependency shared by many consumers,
 with no independent failure domain behind it, turns a local fault into a
@@ -61,7 +85,7 @@ correlated exposure.
 
 Cloud architecture does have isolation, but it isolates the wrong boundary for
 this failure. Logical tenant isolation (VPCs, IAM, hypervisors) cuts
-tenant-to-tenant; confidential computing and TEEs cut workload-to-host [20];
+tenant-to-tenant; confidential computing and TEEs cut workload-to-host [30];
 regions and availability zones cut region-to-region; provider diversity cuts
 provider A from provider B [1-4]. None of these cuts tenant-to-provider,
 consumer-to-control-plane, or consumer-to-shared-dependency. The weak point was
@@ -96,16 +120,19 @@ provides?
    one-way boundary without local capacity is a partition; the isolation-
    multipath interaction is positive; and a global cooperative controller is a
    new common-mode carrier.
-4. An open artifact: frozen protocol, simulator, benchmark, figures, raw CSV
-   outputs and tests.
+4. An open artifact: frozen protocol, simulator, benchmark, a one-factor
+   sensitivity and break-even analysis, figures, raw CSV outputs and tests.
 
-**What we do not claim.** This is not a measurement of AWS, Azure, Google Cloud
-or any production network. The current-cloud architectures in Table 1 are
-structural analogues, not reconstructions of a particular provider. The model is
-flow-level: it computes capacity and dependency conjunction, not packets, queues,
-TCP behaviour or hardware. Security is not evaluated. The two motivating
-outages are reported events; their root causes are not independently verified
-here, and no result depends on a particular root cause being correct.
+**What we do not claim.** This is not a measurement of AWS, Azure, Google Cloud,
+Cloudflare or any production network. The current-cloud architectures in Table 1
+are structural analogues, not reconstructions of a particular provider. The
+model is flow-level: it computes capacity and dependency conjunction, not
+packets, queues, TCP behaviour or hardware. Security is not evaluated. The
+motivating outages are reported events; their root causes are not independently
+verified here, and no result depends on a particular root cause being correct.
+No result is empirical support for the model's claims; the model checks are
+statements about the model, and the postmortem study is the separate empirical
+test.
 
 ## 2. Related Work
 
@@ -172,6 +199,31 @@ failure, and that neither substitutes for the other. The comparison is against
 stylized current-cloud architectures, not against a new protocol. The
 contribution is the joint test, the frozen protocol and the measured interaction,
 not a claim of priority over the individual mechanisms.
+
+### 2.5 Empirical outage studies and provider postmortems
+
+The empirical literature on cloud outages is thinner than the operational
+literature, but it is not absent. Gunawi et al. coded more than 3,000 issues in
+cloud systems [6] and later asked why the cloud stops computing in a study of
+hundreds of service outages [22]. Talluri et al. release the Cloud Uptime
+Archive, a multi-vantage availability dataset, and report mean time between
+failures, recovery times and operator-stated root causes; in their one-year
+operator subset, configuration errors dominate multi-regional outages [23].
+Paladugu coded 70 official postmortems from 22 providers (2019-2026): changes
+started 52 of the 70 incidents (74.3%), configuration changes alone accounted
+for 28 of the 52 change-triggered incidents (53.8%), and 10 of 11 globally pushed
+changes produced wide impact [24]. That study is a preprint, not peer-reviewed,
+and its frame is published postmortems, not all outages.
+
+The provider corpora are the primary material: AWS Post-Event Summaries [25],
+Azure post-incident reviews [26], Google Cloud Service Health [27] and
+Cloudflare's postmortem archive [28]. Their disclosure depth and cadence differ,
+so they cannot be treated as a random sample. Two Cloudflare examples show the
+class this paper models: a December 2025 configuration-change outage lasted about
+25 minutes, and a November 2025 bug in a Bot Management feature file affected
+many services [28]. We do not code those incidents here; the companion
+postmortem study does that under a frozen codebook, and its results are reported
+separately.
 
 ## 3. Principles and Model
 
@@ -255,6 +307,8 @@ endpoint from the availability path and serves path traffic at 0.9 efficiency
 probability 0.98 after 2 s at 0.50 Gbps; **untested** activates with probability
 0.60 after 8 s at 0.30 Gbps. **Global controller** uses only the primary path
 when the controller is down; **local** reallocates across all surviving paths.
+These constants are the ones varied one at a time in Section 5.9; the topology,
+event targets, demand jitter and seed set stay fixed.
 
 ### 3.4 Events
 
@@ -345,13 +399,19 @@ reproduction command is
 
 ```bash
 py -3 tools/benchmark_common_mode.py --seeds 30
-py -3 -m unittest tests.test_common_mode -v
+py -3 tools/benchmark_common_mode.py --sensitivity --seeds 30 --sensitivity-points 25
+py -3 -m unittest tests.test_common_mode tests.test_common_mode_sensitivity -v
 py -3 tools/make_common_mode_figures.py
 ```
 
-The 22 new tests pass, and the repository's full suite (433 tests, one skipped)
-passes at the time of writing. The figures in this paper are generated by
-`tools/make_common_mode_figures.py` from the summary CSV.
+The benchmark writes per-seed, summary and verdict CSVs under
+`output/common-mode/`. The sensitivity mode writes
+`common-mode-sensitivity.csv`, `common-mode-break-even.csv` and a generated
+Markdown table under `docs/paper-tables/`; the paper pastes that table rather
+than retyping numbers. The figures in this paper are generated by
+`tools/make_common_mode_figures.py` from the committed summary, per-seed,
+sensitivity and break-even CSVs. The full-suite count and environment are
+recorded in [`TASKS-STATUS.md`](TASKS-STATUS.md) and the release audit.
 
 ## 5. Results
 
@@ -371,7 +431,7 @@ independent link failure.
 
 **Figure 1.** Availability during the event for the nine architectures and ten
 outage events (30-seed mean). Values are percentages; the color scale is shared.
-Data: `output/common-mode/common_mode_summary.csv`, regenerated by
+Data: `docs/paper-tables/common-mode-summary.csv`, regenerated by
 `tools/make_common_mode_figures.py`.
 
 ### 5.2 H16: tenant isolation is the wrong cut
@@ -493,7 +553,7 @@ cost index is stipulated and is not a price.
 
 ### 5.8 Verdicts
 
-**Table 4. Pre-registered hypotheses (30-seed means).**
+**Table 4. Frozen hypotheses and model checks (30-seed means).**
 
 | Hypothesis and criterion | Value | Threshold | Verdict |
 |:--------------------------|--:|--:|:--|
@@ -505,20 +565,97 @@ cost index is stipulated and is not a price.
 
 Every criterion passes on the 30-seed mean and on every individual seed (pass
 fraction 1.000). The per-seed pass fractions and all twelve sub-criteria are in
-`output/common-mode/common_mode_verdicts.csv`. The all-pass result is a property
+`docs/paper-tables/common-mode-verdicts.csv`. The all-pass result is a property
 of the structural model: the mechanisms are isolated by design, so the margins
 are large. It is not evidence that a production deployment will see the same
 numbers.
+
+### 5.9 Per-seed distributions
+
+Figure 4 shows every paired difference over all 30 seeds, not only the mean. The
+mechanisms that are deterministic in the model are flat: tenant isolation adds
+100 points under the tenant-gateway failure on every seed, SRLG-disjoint
+multipath adds 100 points under the conduit failure, and local reallocation adds
+100 points under the controller-plus-link failure. The fallback comparisons are
+not flat: the tested-minus-untested gap ranges over roughly 25-42 points, and the
+H19 interaction ranges over roughly 42-51 points, because the fallback draw and
+the event window vary by seed. In every one of the 30 seeds each frozen
+criterion passes; the per-seed pass fraction is 1.000. The figure makes the
+variance visible where it exists and shows that the deterministic comparisons
+are exact properties of the model, not lucky draws.
+
+![](../figures/common_mode_seed_distributions.png){width=95%}
+
+**Figure 4.** Per-seed paired differences for six mechanism comparisons over 30
+paired seeds. Boxes show the interquartile range, points are individual seeds,
+the solid line is the mean and the dashed line is the frozen threshold. Data:
+`docs/paper-tables/common-mode-per-seed.csv`; generated by
+`tools/make_common_mode_figures.py`.
+
+### 5.10 Sensitivity and break-even for the stipulated constants
+
+Every number above depends on a stipulated constant, so the interesting question
+is not only whether a check passes at the stipulated value but how far the value
+could move before the check changes. We sweep each constant one at a time over
+25 values, with the other constants, topology, events and 30 seeds fixed, and
+locate the nearest value at which each criterion stops passing. The grid and the
+full per-criterion results are committed in
+`docs/paper-tables/common-mode-sensitivity.csv` and
+`docs/paper-tables/common-mode-break-even.csv`; the table below is pasted from
+the generated Markdown, not retyped.
+
+**Table 5. Break-even values for the stipulated constants.** Grid: 25 values per
+constant, 30 paired seeds, linear interpolation between adjacent grid points. A
+break-even is the value at which the named criterion stops passing; "none in
+range" means it passed at every swept value.
+
+| Constant | Stipulated | Sweep | Primary break-even | Claim that fails there | Margin |
+|---|---:|---|---:|---|---:|
+| one-way local-policy efficiency | 0.9 fraction | 0.5-1 fraction | 0.85 | H18: normal-operation cost of the one-way boundary <= 15 points | -0.05 |
+| tested fallback activation probability | 0.98 fraction | 0-1 fraction | 0.222334 | tested fallback beats untested under the backhaul cut (gap > 0) | -0.757666 |
+| untested fallback activation probability | 0.6 fraction | 0-1 fraction | none in range | criterion survives the whole swept range |  |
+| tested fallback activation delay | 2 s | 0-25 s | 18.166 | tested fallback beats untested under the backhaul cut (gap > 0) | +16.166 |
+| untested fallback activation delay | 8 s | 0-30 s | none in range | criterion survives the whole swept range |  |
+| tested fallback capacity | 0.5 Gbps | 0-1 Gbps | 0.12172 | tested fallback beats untested under the backhaul cut (gap > 0) | -0.37828 |
+| untested fallback capacity | 0.3 Gbps | 0-1 Gbps | none in range | criterion survives the whole swept range |  |
+
+For H18, the binding clause is the normal-operation cost (0.85), not the absolute
+80% level (0.80); the model check fails at the higher of the two values. The
+tested fallback is far from its break-even on probability, delay and capacity:
+the stipulated 0.98 activation probability would have to fall to 0.22, the 2 s
+delay would have to rise to 18.2 s, or the 0.50 Gbps capacity would have to fall
+to 0.122 Gbps before it stopped beating the untested fallback under the backhaul
+cut. The untested fallback would have to improve beyond every value in the swept
+range to erase the 34.5-point gap. That is a robustness statement about the
+model, not a confidence interval about a production deployment.
+
+Capacity is the one two-sided case. H19's interaction term is `A6 - A9` under
+the combined failure: if the tested fallback becomes too capable, A9 alone covers
+more of the event and the interaction term falls below 20. The H19 interaction
+break-even is 0.767 Gbps, while H19's absolute A6 level still fails only below
+0.80 efficiency. The H19 check is a claim about super-additivity, not a claim
+that a stronger fallback is worse; the paper reports both break-evens rather
+than choosing the flattering one.
+
+![](../figures/common_mode_sensitivity.png){width=95%}
+
+**Figure 5.** Sensitivity of the model checks to the stipulated constants. Each
+panel varies one constant; the dotted vertical line is the stipulated value, the
+dashed red line is the nearest break-even, and the horizontal dashed lines are
+the frozen thresholds. The top-right panel varies the tested-fallback activation
+probability; the bottom panels vary its delay and capacity. Data:
+`docs/paper-tables/common-mode-sensitivity.csv` and
+`common-mode-break-even.csv`; generated by `tools/make_common_mode_figures.py`.
 
 ## 6. Discussion
 
 ### 6.1 What the comparison shows
 
-The comparison supports three claims.
+Under the stipulated model, the comparison is consistent with three claims.
 
 First, **current cloud isolation is the wrong cut for common-mode failure.**
 Tenant isolation, confidential computing, regions and provider diversity each
-remove a real failure mode, and the experiment confirms that they do: A4 fixes
+remove a real failure mode, and the model check reproduces that they do: A4 fixes
 the tenant gateway, A3 fixes the conduit, A5 fixes identity. But none of them
 cuts the shared AI/control-plane dependency. The result is not an argument
 against tenant isolation; it is an argument against treating tenant isolation as
@@ -539,7 +676,7 @@ that can centralize it.
 
 ### 6.2 Design implications
 
-The results translate into five design rules.
+The model checks translate into five design rules, conditional on the scenario.
 
 1. **Inventory shared dependencies, then cut the control plane, not only the
    tenant boundary.** A tenant-isolation review that does not include identity,
@@ -573,30 +710,53 @@ failure mix, not on a universal ranking.
 
 ### 6.4 Relation to the motivating outages
 
-The two outages are used as motivating examples, not as evidence. The FAA event
-is reported as a telecommunications capacity failure; the Microsoft event as a
-failed network capacity upgrade that coincided with AI service disruptions. The
-structural comparison does not depend on either root cause. What the testbed adds
-is a controlled demonstration of the mechanism: a shared dependency, a boundary
-that does not cut it, and a path set that does not survive it.
+The 13 November 2026 events are used as motivating examples, not as evidence,
+and they are kept separate. The FAA reported a nationwide ground stop after an
+old telecommunications system carrying air-traffic control communications was
+overloaded; the stop lasted about four hours and twenty minutes, and the FAA and
+the Department of Homeland Security reported no evidence of a cyber or AI attack
+[15,16]. Microsoft reported a Microsoft 365 outage attributed to an issue
+introduced during an earlier network capacity upgrade, affecting Outlook, Teams,
+Copilot and other services, and said a full post-incident report would follow
+[17,18]. ChatGPT and Claude also reported disruption during the same period
+[18], but the public reports do not establish a common cause with the Microsoft
+outage. The 2-3 September 2026 events are a second, separate coincidence:
+Microsoft 365 degradation [19] and elevated errors at ChatGPT, Claude and Grok
+[20,21] on the same day, without a shared root cause in the public reports.
+
+The structural comparison does not depend on either root cause, and the paper
+does not claim that the model explains these events. What the testbed adds is a
+controlled demonstration of the mechanism: a shared dependency, a boundary that
+does not cut it, and a path set that does not survive it. The empirical test is
+the separate postmortem study; the out-of-sample check is to code the eventual
+Microsoft post-incident report and the AI providers' reports with the same
+codebook, without adding them to the analysis set.
 
 ## 7. Threats to Validity
 
 **Construct validity.** Availability is a capacity/dependency calculation, not a
 packet-level measurement. It ignores queueing, congestion control, TCP
 retransmission, reordering and application behaviour. The 0.9 local-policy
-efficiency and the 0.5/0.3 fallback capacities are stipulated. The cost index is
-an accounting device, not a price. The path independence index treats SRLG and
-provider identity as the only independence dimensions; a real deployment may have
-more.
+efficiency, the activation probabilities, the delays and the 0.5/0.3 fallback
+capacities are stipulated. The cost index is an accounting device, not a price.
+The path independence index treats SRLG and provider identity as the only
+independence dimensions; a real deployment may have more.
+
+**Stipulated constants.** Section 5.10 turns each stipulated constant into a
+break-even value. The exercise is one-factor-at-a-time: it holds the remaining
+constants and the topology fixed, so it does not cover interactions between
+constants. The break-even values are linearly interpolated between 25 grid
+points, not solved analytically. They show how far a verdict is from the
+stipulated operating point; they do not give a confidence interval, and a
+combination of changes could cross a boundary that no single change crosses.
 
 **Internal validity.** The model is deterministic given a seed, and the 30 seeds
-vary event timing, demand and fallback draws, not the topology. All five
-hypotheses pass with large margins because the arms isolate the mechanisms by
-design. This is a demonstration under a frozen scenario, not a statistical
-estimate of an effect size. The arms differ only in mechanism and share the same
-draws, which rules out a seed confound; it does not rule out a scenario confound.
-No constant was changed after the freeze.
+vary event timing, demand and fallback draws, not the topology. All five checks
+pass with large margins because the arms isolate the mechanisms by design. This
+is a demonstration under a frozen scenario, not a statistical estimate of an
+effect size. The arms differ only in mechanism and share the same draws, which
+rules out a seed confound; it does not rule out a scenario confound. No constant
+was changed after the freeze.
 
 **External validity.** The scenario has six tenants, three aggregation sites,
 three providers and two clouds. It is not a model of a specific cloud, and the
@@ -604,12 +764,19 @@ current-cloud mapping in Table 1 is a structural analogy. Different SRLG
 groupings, control-plane layouts or demand levels could change the levels. The
 qualitative ordering is the claim; the exact percentages are scenario-specific.
 
+**No empirical calibration.** The model is not fitted to the postmortems. The
+empirical question is tested separately, by the companion postmortem study with
+its own frozen codebook and coders. An agreement between the two would be
+support for the model's relevance, not for its mechanism; a disagreement would
+be a finding about the model, not a reason to retune it.
+
 **Conclusion validity.** The hypotheses were frozen before the simulator existed,
 and the verdict rules are in the benchmark. A refutation would have been
 reported. The all-pass outcome is a limitation as well as a result: the scenario
 was designed to make the mechanisms observable, so it is not a random sample of
-architectures. The real-stack extension is the next fidelity and is not claimed
-here.
+architectures. The checks are proofs about the model, not about the world; the
+paper's claims are conditional on the stipulated scenario. The real-stack
+extension is the next fidelity and is not claimed here.
 
 **Security.** The data diode is modelled as an availability cut, not as a
 cryptographic control. No key management, authentication strength or side-channel
@@ -625,10 +792,10 @@ two independent mitigations. Isolation stops a fault at a boundary; multipath
 keeps service running across independent failure domains. Neither substitutes
 for the other, and a tested fallback is the condition that makes either one real.
 
-The testbed supports the structural claims under its frozen scenario. Tenant
-isolation fixes the tenant gateway but not identity or AI; three paths over one
-conduit fail together; a one-way boundary with a tested fallback holds 90% under
-an AI failure; the isolation-multipath interaction is +44.4 points; and a global
+Under the frozen scenario the five model checks pass. Tenant isolation fixes the
+tenant gateway but not identity or AI; three paths over one conduit fail
+together; a one-way boundary with a tested fallback holds 90% under an AI
+failure; the isolation-multipath interaction is +44.4 points; and a global
 cooperative controller loses 100 points when it fails. The comparison with
 stylized current-cloud architectures shows the gap: current cloud improves along
 one axis at a time, while no current-cloud arm reaches 90% under a combined AI
@@ -637,7 +804,15 @@ tested fallback can match the combined architecture on common-mode events at
 lower cost, so multipath is justified by independent path failures, not by
 common-mode failure alone.
 
-The next step is a real-stack variant on Linux network namespaces: two disjoint
+The sensitivity analysis is part of the result, not an appendix. It says that
+H18 would fail only below 0.85 efficiency, that the tested-fallback gap is far
+from its break-even on probability, delay and capacity, and that H19's
+super-additivity has a two-sided capacity boundary at 0.767 Gbps. Those are
+statements about the model's stipulated operating point. The empirical question
+is separate and is not answered here: the companion postmortem study codes
+provider reports under its own frozen codebook, and the eventual Microsoft and
+AI-provider post-incident reports are the out-of-sample check. The next fidelity
+for the model is a real-stack variant on Linux network namespaces: two disjoint
 paths, ECMP, link-down and `tc` outages, and an nftables control-plane cut,
 compared against this flow-level reference. The structural result is a map of
 which cuts and which paths matter; the real-stack test is how to find out what
@@ -659,12 +834,22 @@ the map costs in packets.
 12. K. Kompella and Y. Rekhter, "Routing Extensions in Support of Generalized Multi-Protocol Label Switching (GMPLS)," RFC 4202, 2005.
 13. M. Nikolic, "Which Rewrites Survive? Pre-registered Tests of a Field-Class Model of Encapsulation, Middleboxes and Decapsulation on Linux," repository paper, 2026. [Online]. Available: [Paper A](paper-layering-testbed.md)
 14. M. Nikolic, "Why Fair-Queueing Beats the Fick Principle," repository paper, 2026. [Online]. Available: [Paper B](paper-bio-control-limits.md)
-15. United Press International, "FAA lifts nationwide ground stop after telecommunications outage," 13 November 2026. [Online]. Available: [UPI](https://www.upi.com/Top_News/US/2026/11/13/faa-grounds-all-flights/9251794604658/)
-16. Texas Public Radio, "Old tech blamed for the ground stop that caused flight chaos: 'It got overloaded'," 13 November 2026. [Online]. Available: [TPR](https://www.tpr.org/news/2026-11-13/old-tech-blamed-for-the-ground-stop-that-caused-flight-chaos-it-got-overloaded)
-17. DigitalToday, "Microsoft massive service outage: no evidence of malicious activity, blamed on a network upgrade error," 14 November 2026, citing TechCrunch. [Online]. Available: [DigitalToday](https://www.digitaltoday.co.kr/cn/view/125685/microsoft-massive-service-outage-cause-still-unclear-no-evidence-of-malicious-activity)
-18. Business Insider Spain, "ChatGPT y Claude caídos: el apagón masivo de Microsoft arrastra en cadena a la IA," November 2026. [Online]. Available: [Business Insider](https://www.businessinsider.es/big-tech/chatgpt-claude-caidos-apagon-microsoft-arrastra-ia_7060706_0.html)
-19. L. A. Barroso, J. Clidaras and U. Hölzle, *The Datacenter as a Computer: Designing Warehouse-Scale Machines*, 3rd ed. Morgan and Claypool, 2018.
-20. National Institute of Standards and Technology, "Hardware-Enabled Security for Server Platforms: Security Architecture and Design," NIST IR 8320, 2021.
+15. Bernama-Anadolu, "Nationwide Ground Stop Issued At US Airports Over 'Communication Issue': Transport Secretary," 14 November 2026. [Online]. Available: [Bernama](https://bernama.com/en/region/news.php?id=2634099)
+16. Yonhap News Agency, "US-wide flight communications failure causes a four-and-a-half-hour all-stop; fallout continues" (in Korean; English title supplied for readability), 14 November 2026. [Online]. Available: [Yonhap](https://www.yna.co.kr/view/AKR20261114010353071)
+17. Cambridge Independent / PA News, "Microsoft 'deeply sorry' for disruption caused by major global outage," 13 November 2026. [Online]. Available: [Cambridge Independent](https://premium.cambridgeindependent.co.uk/national/microsoft-deeply-sorry-for-disruption-caused-by-major-global-outage-174272/)
+18. Kurier, "Ursache von Microsoft-Störung war Netzwerk-Upgrade," 13 November 2026. [Online]. Available: [Kurier](https://kurier.at/wirtschaft/microsoft-stoerung-netzwerk-upgrade-ursache/403205361)
+19. Android Authority, "Is Microsoft Outlook, OneDrive, and more down for you? Here's what's going on (Update)," 2-3 September 2026. [Online]. Available: [Android Authority](https://www.androidauthority.com/microsoft-365-sept-outage-3706312/)
+20. APA, "AI outage hits Claude, ChatGPT and Grok," 3 September 2026. [Online]. Available: [APA](https://en.apa.az/america/ai-outage-hits-claude-chatgpt-and-grok-522768)
+21. GIGAZINE, "ChatGPT, Claude, and Grok all went down at almost the same time," 4 September 2026. [Online]. Available: [GIGAZINE](https://gigazine.net/gsc_news/en/20260904-openai-anthropic-spacexai-down/)
+22. H. S. Gunawi, M. Hao, R. O. Suminto, A. Laksono, A. D. Satria, J. Adityatama and K. J. Eliazar, "Why Does the Cloud Stop Computing? Lessons from Hundreds of Service Outages," in *Proceedings of the ACM Symposium on Cloud Computing (SoCC)*, 2016, DOI 10.1145/2987550.2987583.
+23. S. Talluri, D. Niewenhuis, X. Chu, J. Kyselica, M. Cetin, A. Balgavy and A. Iosup, "Cloud Uptime Archive: Open-Access Availability Data of Web, Cloud, and Gaming Services," arXiv:2504.09476, 2025. [Online]. Available: [arXiv](https://arxiv.org/abs/2504.09476)
+24. P. S. L. Paladugu, "How Configuration and Deployment Changes Trigger Large Cloud and SaaS Outages: An Empirical Study of 70 Public Postmortems," Zenodo preprint, 22 October 2026, DOI 10.5281/zenodo.23585116. [Online]. Available: [Zenodo](https://zenodo.org/records/23585116)
+25. Amazon Web Services, "Post-Event Summaries." [Online]. Available: [AWS](https://aws.amazon.com/premiumsupport/technology/pes/)
+26. Microsoft, "Azure status history: Post Incident Reviews." [Online]. Available: [Azure](https://azure.status.microsoft/en-us/status/history/)
+27. Google Cloud, "Service Health." [Online]. Available: [Google Cloud](https://status.cloud.google.com/)
+28. Cloudflare, "Post Mortem" blog archive. [Online]. Available: [Cloudflare](https://blog.cloudflare.com/tag/post-mortem/)
+29. L. A. Barroso, J. Clidaras and U. Hölzle, *The Datacenter as a Computer: Designing Warehouse-Scale Machines*, 3rd ed. Morgan and Claypool, 2018.
+30. National Institute of Standards and Technology, "Hardware-Enabled Security for Server Platforms: Security Architecture and Design," NIST IR 8320, 2021.
 
 ## Appendix: Artifact Index
 
@@ -674,6 +859,9 @@ the map costs in packets.
 | Results and deviations | [`docs/common-mode-results.md`](common-mode-results.md) |
 | Testbed guide | [`docs/common-mode-testbed.md`](common-mode-testbed.md) |
 | Simulator | [`simulation/common_mode.py`](../simulation/common_mode.py) |
-| Benchmark | [`tools/benchmark_common_mode.py`](../tools/benchmark_common_mode.py) |
+| Benchmark and sensitivity mode | [`tools/benchmark_common_mode.py`](../tools/benchmark_common_mode.py) |
 | Figures | [`tools/make_common_mode_figures.py`](../tools/make_common_mode_figures.py) |
-| Tests | [`tests/test_common_mode.py`](../tests/test_common_mode.py) |
+| Tests | [`tests/test_common_mode.py`](../tests/test_common_mode.py), [`tests/test_common_mode_sensitivity.py`](../tests/test_common_mode_sensitivity.py) |
+| Summary, per-seed and verdict CSVs | [`docs/paper-tables/common-mode-summary.csv`](paper-tables/common-mode-summary.csv), [`common-mode-per-seed.csv`](paper-tables/common-mode-per-seed.csv), [`common-mode-verdicts.csv`](paper-tables/common-mode-verdicts.csv) |
+| Sensitivity grid and break-evens | [`docs/paper-tables/common-mode-sensitivity.csv`](paper-tables/common-mode-sensitivity.csv), [`common-mode-break-even.csv`](paper-tables/common-mode-break-even.csv), [`common-mode-break-even.md`](paper-tables/common-mode-break-even.md) |
+| Seed and sensitivity figures | [`figures/common_mode_seed_distributions.png`](../figures/common_mode_seed_distributions.png), [`figures/common_mode_sensitivity.png`](../figures/common_mode_sensitivity.png) |

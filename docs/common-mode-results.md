@@ -5,7 +5,7 @@ in [`common-mode-predictions.md`](common-mode-predictions.md) at commit
 `1c781f3`, before `simulation/common_mode.py` existed. This document interprets
 the 30-seed run; it does not change the frozen text.
 
-**One-line result:** H16-H20 are all supported under the frozen scenario.
+**One-line result:** under the frozen scenario H16-H20 all pass as model checks.
 Tenant isolation contains a tenant-shared fault (100 % vs 0 %) but not a global
 identity failure (0 % vs 0 %); SRLG-disjoint multipath survives a conduit failure
 (100 % vs 0 %) while shared-fate multipath does not; a one-way boundary with a
@@ -13,9 +13,10 @@ tested fallback holds 90 % under an AI control-plane failure against 0 % without
 it; the isolation-multipath interaction is **+44.38 points**; and a global
 cooperative controller loses **100 points** when it fails with its primary path.
 
-The support is conditional on a stipulated flow-level scenario and on the
-fallback parameters. The scenario is a testbed, not a measurement of a production
-network; §6 states the limits.
+The pass is conditional on a stipulated flow-level scenario and on the fallback
+parameters. The scenario is a testbed, not a measurement of a production
+network; §6 states the limits, and §9 reports the one-factor break-even values
+that show how far each verdict is from its stipulated operating point.
 
 ## 1. Protocol
 
@@ -183,3 +184,30 @@ benchmark is `tools/benchmark_common_mode.py`; the tests are
 | Tests | [`tests/test_common_mode.py`](../tests/test_common_mode.py) |
 | Argument | [`docs/isolation-concentration-multipath.md`](isolation-concentration-multipath.md) |
 | Research note | [`docs/common-mode-resilience.md`](common-mode-resilience.md) |
+| Committed summary/per-seed/verdict CSVs | [`docs/paper-tables/common-mode-summary.csv`](paper-tables/common-mode-summary.csv), [`common-mode-per-seed.csv`](paper-tables/common-mode-per-seed.csv), [`common-mode-verdicts.csv`](paper-tables/common-mode-verdicts.csv) |
+| Sensitivity grid and break-evens | [`docs/paper-tables/common-mode-sensitivity.csv`](paper-tables/common-mode-sensitivity.csv), [`common-mode-break-even.csv`](paper-tables/common-mode-break-even.csv), [`common-mode-break-even.md`](paper-tables/common-mode-break-even.md) |
+
+## 9. Sensitivity and break-even
+
+The stipulated constants are the local-policy efficiency (0.90), the tested and
+untested activation probabilities (0.98 / 0.60), delays (2 s / 8 s) and
+capacities (0.50 / 0.30 Gbps). Section 5.10 of the paper reports a one-factor
+sweep of each: 25 values, 30 paired seeds, everything else frozen. The generated
+table is
+[`docs/paper-tables/common-mode-break-even.md`](paper-tables/common-mode-break-even.md),
+with the full grid in `common-mode-sensitivity.csv` and every criterion in
+`common-mode-break-even.csv`.
+
+The binding results: H18 fails only below 0.85 efficiency because the
+normal-operation cost exceeds 15 points; the tested-fallback gap closes below
+0.222 activation probability, above 18.17 s delay, or below 0.122 Gbps capacity;
+no single improvement of the untested fallback in the swept range erases the
+gap; and H19's interaction term has a two-sided capacity boundary at 0.767 Gbps
+while its absolute A6 level fails only below 0.80 efficiency. These are
+one-factor robustness statements about the model, not confidence intervals and
+not empirical evidence.
+
+```bash
+py -3 tools/benchmark_common_mode.py --sensitivity --seeds 30 --sensitivity-points 25
+py -3 tools/make_common_mode_figures.py
+```
