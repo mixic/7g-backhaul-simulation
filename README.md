@@ -6,7 +6,7 @@ The CDN direction is inspired by Milan Nikolic's University of Bern master's the
 
 ## Publications
 
-The research material is split into **three focused papers** rather than one
+The research material is split into **four focused papers** rather than one
 combined document, so each can be reviewed on its own terms:
 
 - **Paper A — [`Markdown`](docs/paper-layering-testbed.md) · [`PDF`](docs/paper-layering-testbed.pdf)**:
@@ -26,9 +26,20 @@ combined document, so each can be reviewed on its own terms:
   30 paired seeds: 84 % lower peak reconfiguration (1.00 to 0.157) at a 2.4-point
   sustained CDR gap, zero-dimensional H₀ isolation rather than H₁ holes, and
   the burst-duration boundary that separates sustained attacks from flapping.
+- **Paper D — [`Markdown`](docs/paper-common-mode.md) · [`PDF`](docs/paper-common-mode.pdf)**:
+  *Beyond Tenant Isolation: A Flow-Level Testbed for Common-Mode Resilience in
+  Cloud-Dependent Backhaul.* Nine architectures over ten outage events and 30
+  paired seeds (2,700 runs). Tenant isolation contains a tenant gateway fault but
+  not a shared identity or AI failure; SRLG-disjoint multipath survives a conduit
+  failure that a three-path shared-conduit set does not; a one-way boundary with a
+  tested fallback holds 90 % under an AI failure; the isolation-multipath
+  interaction is +44.4 points; and a global cooperative controller is itself a
+  common-mode carrier. The comparison is flow-level and stipulated, not a
+  production measurement.
 
 The PDFs are generated from the sources: A and B from their Markdown with
-pandoc + XeLaTeX, C from its LaTeX source with pdfLaTeX.
+pandoc + XeLaTeX, C from its LaTeX source with pdfLaTeX, and D from its Markdown
+with pandoc + pdfLaTeX.
 
 The long-horizon vision remains in
 [`docs/7g-backhaul-vision-paper.md`](docs/7g-backhaul-vision-paper.md).
@@ -570,6 +581,8 @@ Results: [docs/common-mode-results.md](docs/common-mode-results.md). Frozen
 protocol: [docs/common-mode-predictions.md](docs/common-mode-predictions.md).
 Argument: [docs/isolation-concentration-multipath.md](docs/isolation-concentration-multipath.md).
 Research note: [docs/common-mode-resilience.md](docs/common-mode-resilience.md).
+Paper: [docs/paper-common-mode.md](docs/paper-common-mode.md) ·
+[PDF](docs/paper-common-mode.pdf).
 
 ```bash
 py -3 tools/benchmark_common_mode.py --seeds 30
@@ -824,6 +837,8 @@ The honest verdicts:
 │   ├── paper-bio-control-limits.pdf # Paper B PDF (pandoc + XeLaTeX)
 │   ├── paper-crmr.tex            # Paper C: complex-rotation manifold routing
 │   ├── paper-crmr.pdf            # Paper C PDF (pdfLaTeX)
+│   ├── paper-common-mode.md      # Paper D: isolation/multipath common-mode study
+│   ├── paper-common-mode.pdf     # Paper D PDF (pandoc + pdfLaTeX)
 │   ├── isolation-concentration-multipath.md # Position paper: one risk, two mitigations
 │   ├── common-mode-predictions.md # Frozen H16-H20 protocol and scenario
 │   ├── common-mode-results.md    # H16-H20 30-seed flow-level results

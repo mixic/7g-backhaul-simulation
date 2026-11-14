@@ -176,6 +176,7 @@ benchmark is `tools/benchmark_common_mode.py`; the tests are
 | Artifact | Path |
 |---|---|
 | Frozen protocol | [`docs/common-mode-predictions.md`](common-mode-predictions.md) |
+| Paper | [`docs/paper-common-mode.md`](paper-common-mode.md) and [PDF](paper-common-mode.pdf) |
 | Run/extend guide | [`docs/common-mode-testbed.md`](common-mode-testbed.md) |
 | Simulator | [`simulation/common_mode.py`](../simulation/common_mode.py) |
 | Benchmark | [`tools/benchmark_common_mode.py`](../tools/benchmark_common_mode.py) |
