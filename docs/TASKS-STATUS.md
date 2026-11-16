@@ -82,3 +82,5 @@ Linux host is available to the agent. That is F2, not a result.
 | M8 Study execution | human | — | out of agent scope |
 | M9 Release package | **done** | `eeb2c11` | `.zenodo.json`, CITATION 0.2.0, release notes, review request, venue checklist |
 | M10 Audit | **done** | `5ffc524` | `docs/RELEASE-AUDIT.md`; 511 tests OK; 0 FAIL; lint PASS; no `[unverified]` headline claim |
+| M11 Review fixes | **done** | `7664050` | P17 in Paper A (§6, Table 6b/7b, 34 of 36); Figure 2 redrawn; table provenance corrected; ref 24 DOI opened; Control Plane contamination disclosed; 517 tests OK; `--check` 29/29 PASS; lint PASS; PDF rebuilt (21 pp) |
+| M11b Status | **done** | this commit | M11 hash recorded here -- documentation only |
