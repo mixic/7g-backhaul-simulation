@@ -11,10 +11,11 @@ combined document, so each can be reviewed on its own terms:
 
 - **Paper A — [`Markdown`](docs/paper-layering-testbed.md) · [`PDF`](docs/paper-layering-testbed.pdf)**:
   *Which Rewrites Survive? Pre-registered Tests of a Field-Class Model of
-  Encapsulation, Middleboxes and Decapsulation on Linux.* Three frozen rounds
-  (P1–P16) at three fidelities: six of seven initial predictions confirmed, five
-  real-stack predictions confirmed, and 17 of 18 in the failure-prone round
-  (Brier 0.083), with both refutations explained.
+  Encapsulation, Middleboxes and Decapsulation on Linux.* Four frozen rounds
+  (P1–P17) at three fidelities: six of seven initial predictions confirmed, five
+  real-stack predictions confirmed, 17 of 18 in the failure-prone round
+  (Brier 0.083), and six of six in the replay-window follow-up (Brier 0.054) —
+  34 of 36 scored predictions, with both refutations explained.
 - **Paper B — [`Markdown`](docs/paper-bio-control-limits.md) · [`PDF`](docs/paper-bio-control-limits.pdf)**:
   *Why Fair-Queueing Beats the Fick Principle.* The negative result on
   bio-inspired control (M3–M6).
@@ -860,7 +861,7 @@ The honest verdicts:
 │   ├── kalman-filtering-foundation.md # Kalman correlation (EWMA/ABG/MKB as steady-state)
 │   ├── kalman-filtering-internal-review.md # Internal review of the Kalman foundation doc
 │   ├── break-even-analysis.md    # Stipulated-constant break-even thresholds (M5/M6)
-│   ├── paper-layering-testbed.md # Paper A: pre-registered rewrite tests (P1-P16)
+│   ├── paper-layering-testbed.md # Paper A: pre-registered rewrite tests (P1-P17)
 │   ├── paper-layering-testbed.pdf # Paper A PDF (pandoc + XeLaTeX)
 │   ├── paper-bio-control-limits.md # Paper B: fair-queueing beats the Fick principle
 │   ├── paper-bio-control-limits.pdf # Paper B PDF (pandoc + XeLaTeX)
