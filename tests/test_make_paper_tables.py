@@ -75,11 +75,28 @@ class CommittedDataTests(unittest.TestCase):
         total_n = sum(n for k, (_, n) in counts.items() if k != "total")
         self.assertEqual(counts["total"], (total_c, total_n))
         self.assertEqual(counts["P1-P7"][1], 7)
+        # The round-3 follow-up is scored, so it must be in the headline counts.
+        self.assertEqual(counts["P17"], (6, 6))
+        self.assertEqual(counts["total"], (34, 36))
 
     def test_calibration_parser_and_stats(self) -> None:
         rows = mpt.parse_calibration("| P13a | 0.90 | 1 | 0.0100 |\n| P16d | 0.70 | 0 | 0.4900 |\n| junk |\n")
         self.assertEqual(rows, [("P13a", 0.9, 1), ("P16d", 0.7, 0)])
-        stats = mpt.calibration_stats(mpt.Data(*([[]] * 1 + [{}, None, [], None, [], rows])))
+        empty = mpt.Obs([])
+        stats = mpt.calibration_stats(
+            mpt.Data(
+                layer_verdicts=[],
+                layer={},
+                rs=empty,
+                rs_verdicts=[],
+                r2=empty,
+                r2_verdicts=[],
+                calibration=rows,
+                r3=empty,
+                r3_verdicts=[],
+                calibration3=[],
+            )
+        )
         self.assertAlmostEqual(stats["brier"], (0.01 + 0.49) / 2)
         self.assertAlmostEqual(stats["expected_refutations"], 0.1 + 0.3)
         self.assertEqual(stats["observed_refutations"], 1)
@@ -148,6 +165,25 @@ class TamperTests(unittest.TestCase):
         refuted = [(r["round"], r["prediction"]) for r in matrix if r["verdict"] == "REFUTED"]
         self.assertIn(("P13-P16", "P16d"), refuted)
         self.assertIn(("P1-P7", "P5"), refuted)
+
+    def test_wrong_p17_boundary_count_is_caught(self) -> None:
+        def mutate(row):
+            if row["scenario"] == "P17b" and row["policy"] == "P17b" and row["metric"] == "delivered_datagrams" and row["seed"] == "4":
+                row["value"] = "2"
+        self.data.r3 = self._rebuild(self.data.r3, mutate)
+        self.assertIn("P17: boundary cases deliver the frozen count in every run", _failed(mpt.run_checks(self.data, 20)))
+
+    def test_wrong_p17_mode_recording_is_caught(self) -> None:
+        def mutate(row):
+            if row["scenario"] == "P17d" and row["policy"] == "P17d" and row["metric"] == "anti_replay_esn" and row["seed"] == "2":
+                row["value"] = "0"
+        self.data.r3 = self._rebuild(self.data.r3, mutate)
+        self.assertIn("P17f: recorded anti-replay mode matches the configured window in every run",
+                      _failed(mpt.run_checks(self.data, 20)))
+
+    def test_short_round3_run_is_caught(self) -> None:
+        self.data.r3 = mpt.Obs([r for r in self.data.r3.rows if int(r["seed"]) < 2])
+        self.assertIn("round3: every case has 20 runs", _failed(mpt.run_checks(self.data, 20)))
 
 
 class HelperTests(unittest.TestCase):

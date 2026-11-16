@@ -39,6 +39,25 @@ the design. Those limits are reported with the results.
 - The author who wrote Paper D is also coder C1. This is not blind. Mitigations: a second
   coder who has not seen the predictions (C2), an adjudicator (C3), reliability gates
   (section 5), and publication of the full coding sheet.
+- **A published vendor figure that sits on E2's threshold.** Encountered in a web
+  search on 16 November 2026, before the frame was built and before any coding:
+  Control Plane's *2026 Cloud Outage Report* (vendor blog, 26 October 2026,
+  `https://controlplane.com/blog/post/cloud-outage-report-2026`) attributes 20 of the
+  62 major AWS, Azure, Google Cloud and Cloudflare outages it tracks since 2020 to a
+  "configuration or deployment change" (32 %); adding software bugs and automation
+  gives 34 of 62 (55 %). The report is not peer-reviewed, its incidents are not this
+  study's frame, and it is **not** used as a data source. It is recorded because E2's
+  frozen threshold is a share of 0.30 and this point estimate is about 0.32: close
+  enough that a coder who has seen it could resolve a borderline V1 toward
+  `config_change` and move the estimate across the line. The V10
+  `known_before_freeze` flag cannot neutralise this, because the risk is in the coding
+  rule, not in particular incidents. Mitigations, fixed now: the E2 rule, threshold
+  and credence are unchanged; E2's estimand is broader than the vendor category (it
+  also counts `capacity_or_network_upgrade`); C2 is not shown this file or the vendor
+  figure; the E2 result will be reported with its interval next to the vendor figure;
+  and a verdict that clears 0.30 only by a margin smaller than the `unclear` share of
+  V1 will be reported as "not separated from the published prior", not as a
+  confirmation.
 
 ## 2. Hypotheses and their link to Paper D
 
@@ -210,4 +229,8 @@ safe or the thresholds too loose; if INCONCLUSIVE dominates, the frame was too s
 
 ## 12. Addenda
 
-(none yet)
+- **2026-11-16 — contamination note added, before the freeze.** The Control Plane
+  *2026 Cloud Outage Report* (20 of 62 configuration-or-deployment changes, 32 %) was
+  added to the section 1 disclosure after a reviewer search raised it. No sampling
+  frame, codebook entry, prediction, threshold or credence was changed; the frame has
+  not been built and no incident has been coded.

@@ -175,7 +175,8 @@ Two caveats belong with this table. `replay-window 256` does not create a legacy
 configured identically, so the tunnel still works. And the reference filter uses
 the strict form `max − seq < window`; twenty runs at two windows matched
 exactly, but no packet landed exactly on the boundary, so the inclusive/exclusive
-edge is untested.
+edge is untested. *Both caveats are tested directly in round 3 (P17b-P17f,
+[`layering-real-stack-results-round3.md`](layering-real-stack-results-round3.md)).*
 
 ## Credence scoring and calibration
 
@@ -260,7 +261,8 @@ about the kernel; it depended on a wrong assumption about the *experiment*.
 - Linux netfilter is the only NAT here; nothing is implied about pf, hardware
   CGNAT or consumer routers.
 - The P16 boundary between "inside the window" and "outside it" was never hit
-  exactly, so the strict/inclusive reading of `< window` is untested.
+  exactly, so the strict/inclusive reading of `< window` is untested. Round 3
+  (P17b-P17e) hits it exactly in both legacy and ESN mode.
 
 ## Model consequences (frozen §11)
 

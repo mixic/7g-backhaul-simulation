@@ -24,8 +24,8 @@ three kinds of thing:
 2. Paper A's title/abstract vocabulary (``7G``, ``heterogeneous``) and the old
    rule wording (``survives a rewrite iff``);
 3. numeric claims that must agree with the committed CSVs: the P16d delivered
-   range, the P5 Linux delivery difference, the P15 wire totals, the round-2
-   Brier score, and the headline counts.
+   range, the P5 Linux delivery difference, the P15 wire totals, the round-2 and
+   round-3 Brier scores, and the headline counts (including the P17 follow-up).
 
 The numeric side is computed from the same files as
 ``tools/make_paper_tables.py``.  It is a consistency check, not an independent
@@ -86,6 +86,7 @@ class Facts:
     p5_diff: float
     p15_totals: tuple[int, int]
     brier: float
+    brier3: float
     counts: dict[str, tuple[int, int]]
 
 
@@ -128,12 +129,16 @@ def load_facts(root: Path = ROOT) -> Facts:
     brier = sum(
         (credence - outcome) ** 2 for _, credence, outcome in data.calibration
     ) / len(data.calibration)
+    brier3 = sum(
+        (credence - outcome) ** 2 for _, credence, outcome in data.calibration3
+    ) / len(data.calibration3)
     counts = mpt.headline_counts(mpt.verdict_matrix(data))
     return Facts(
         p16d_range=(min(p16d), max(p16d)),
         p5_diff=p5_diff,
         p15_totals=tuple(sorted(p15)),  # type: ignore[arg-type]
         brier=brier,
+        brier3=brier3,
         counts=counts,
     )
 
@@ -215,10 +220,15 @@ def lint_text(
     if brier_text not in paper_a:
         problems.append(f"{paper_a_name}: Brier score {brier_text} not stated")
 
+    brier3_text = f"{facts.brier3:.4f}"
+    if brier3_text not in paper_a:
+        problems.append(f"{paper_a_name}: round-3 Brier score {brier3_text} not stated")
+
     expected_counts = {
         "P1-P7": (6, 7),
         "P8-P12": (5, 5),
         "P13-P16": (17, 18),
+        "P17": (6, 6),
     }
     for key, expected in expected_counts.items():
         actual = facts.counts.get(key)
@@ -237,6 +247,18 @@ def lint_text(
         problems.append(f"{paper_a_name}: P8-P12 count 'five further predictions' not stated")
     if not re.search(r"(17|seventeen)\s*(of|/)\s*(18|eighteen)", paper_a, re.IGNORECASE):
         problems.append(f"{paper_a_name}: P13-P16 count '17 of 18' not stated")
+    if not re.search(r"(six|6)\s*(of|/)\s*(six|6)\b", paper_a, re.IGNORECASE):
+        problems.append(f"{paper_a_name}: P17 count 'six of six' not stated")
+    total = facts.counts.get("total")
+    if total is not None:
+        if not re.search(
+            rf"{total[0]}\s*(of|/)\s*{total[1]}", paper_a
+        ) and not re.search(
+            r"(thirty-four|thirty four)\s*(of|/)\s*(thirty-six|thirty six)", paper_a, re.IGNORECASE
+        ):
+            problems.append(
+                f"{paper_a_name}: total count '{total[0]} of {total[1]}' not stated"
+            )
 
     for token, why in PAPER_D_NUMBERS:
         if token not in paper_d:
@@ -284,7 +306,8 @@ def main(argv: Iterable[str] | None = None) -> int:
     problems = lint_paths(args.paper_a, args.paper_d, facts)
     if args.verbose:
         print(f"facts: P16d {facts.p16d_range}, P5 {facts.p5_diff:.2f}, "
-              f"P15 {facts.p15_totals}, Brier {facts.brier:.4f}, counts {facts.counts}")
+              f"P15 {facts.p15_totals}, Brier {facts.brier:.4f} / round-3 {facts.brier3:.4f}, "
+              f"counts {facts.counts}")
     if problems:
         for problem in problems:
             print(f"FAIL  {problem}")

@@ -21,6 +21,7 @@ No number in the output is typed by hand.  Every cell is computed from
 * ``validation/layering/results``     P1-P7, three fidelities
 * ``validation/real_stack/results``   P8-P12, Linux kernel stack
 * ``validation/round2/results``       P13-P16 and the credence file
+* ``validation/round3/results``       P17a-P17f, the replay-window follow-up
 
 Static text (case labels, the *frozen predicted* values) lives in the dictionaries
 at the top of this file and is marked as such; it is never presented as a result.
@@ -57,6 +58,7 @@ from validation.real_stack import predictions as pred  # noqa: E402
 LAYER_DIR = ROOT / "validation" / "layering" / "results"
 RS_DIR = ROOT / "validation" / "real_stack" / "results"
 R2_DIR = ROOT / "validation" / "round2" / "results"
+R3_DIR = ROOT / "validation" / "round3" / "results"
 
 INPUTS = {
     "layering verdicts": LAYER_DIR / "verdicts.csv",
@@ -68,6 +70,9 @@ INPUTS = {
     "round2 verdicts": R2_DIR / "verdicts.csv",
     "round2 observations": R2_DIR / "observations.csv",
     "round2 calibration": R2_DIR / "calibration.md",
+    "round3 verdicts": R3_DIR / "verdicts.csv",
+    "round3 observations": R3_DIR / "observations.csv",
+    "round3 calibration": R3_DIR / "calibration.md",
 }
 
 # --- Static text (labels and FROZEN predicted values; never results) -----------------
@@ -123,6 +128,19 @@ R2_REPLAY_LABEL = {
     "P16c": "WireGuard, 100 ms reorder",
     "P16d": "ESP, window 256, 100 ms reorder",
 }
+# Round 3 (P17), frozen in docs/layering-real-stack-predictions-round3.md.
+R3_LABEL = {
+    "P17a": "ESP, ESN window 256, 1 ms pacing, depth gate [64, 200]",
+    "P17b": "ESP, legacy window 32, displacement = window",
+    "P17c": "ESP, legacy window 32, displacement = window - 1",
+    "P17d": "ESP, ESN window 256, displacement = window",
+    "P17e": "ESP, ESN window 256, displacement = window - 1",
+    "P17f": "effective anti-replay mode read from ip xfrm state",
+}
+#: Frozen delivered count for the four reinjection cases (P17a is 600/600).
+P17_EXPECTED_DELIVERED = {"P17b": 1, "P17c": 2, "P17d": 1, "P17e": 2}
+#: Frozen expected mode (1 = ESN) for each P17b-P17e case.
+P17_EXPECTED_ESN = {"P17b": 0, "P17c": 0, "P17d": 1, "P17e": 1}
 # Frozen predictions for P15 (docs/layering-real-stack-predictions-round2.md section 7).
 P15_FROZEN = {"E_to_F_bytes": 2112, "F_to_E_bytes": 2180, "delivery": 0.9025, "tolerance": 0.015}
 CAL_TO_CASES = {
@@ -178,6 +196,9 @@ class Data:
     r2: Obs
     r2_verdicts: list[dict[str, str]]
     calibration: list[tuple[str, float, int]]
+    r3: Obs
+    r3_verdicts: list[dict[str, str]]
+    calibration3: list[tuple[str, float, int]]
 
     @classmethod
     def load(cls) -> "Data":
@@ -193,6 +214,9 @@ class Data:
             r2=Obs(read_csv(INPUTS["round2 observations"])),
             r2_verdicts=read_csv(INPUTS["round2 verdicts"]),
             calibration=parse_calibration(INPUTS["round2 calibration"].read_text(encoding="utf-8")),
+            r3=Obs(read_csv(INPUTS["round3 observations"])),
+            r3_verdicts=read_csv(INPUTS["round3 verdicts"]),
+            calibration3=parse_calibration(INPUTS["round3 calibration"].read_text(encoding="utf-8")),
         )
 
 
@@ -495,6 +519,51 @@ def t_replay(d: Data) -> Table:
                  _replay_notes(d))
 
 
+def t_replay_boundary(d: Data) -> Table:
+    rows = []
+    for case, label in R3_LABEL.items():
+        if case == "P17f":
+            continue
+        mode = "ESN" if all(v == 1 for v in d.r3.vals(case, case, "anti_replay_esn")) else "legacy"
+        if case == "P17a":
+            delivered = d.r3.vals(case, case, "delivered_datagrams")
+            sent = d.r3.vals(case, case, "sent_datagrams")
+            target = f"{frange(delivered)} of {frange(sent)}"
+            reference = "matches" if all(
+                v == 1 for v in d.r3.vals(case, case, "delivery_matches_reference")
+            ) else "differs"
+        else:
+            delivered = d.r3.vals(case, case, "delivered_datagrams")
+            injected = d.r3.vals(case, case, "injected_datagrams")
+            target = f"{frange(delivered)} of {frange(injected)}"
+            reference = frange(d.r3.vals(case, case, "reference_accepted"))
+        rows.append([case, label, target, reference, mode, verdict_of(d.r3_verdicts, "case", case)])
+    depth = frange(d.r3.vals("P17a", "P17a", "reorder_depth"))
+    return Table("replay_boundary", "P17: the replay-window boundary, exactly",
+                 ["Case", "Stack / window / displacement", "Delivered (min–max)", "Reference filter",
+                  "Effective mode", "Verdict"], rows,
+                 [f"P17a observed reorder depth {depth}; five traffic cases x 20 runs, and P17f is scored "
+                  "from the same runs, so the round is 100 runs. P17b-P17e reinject two captured packets "
+                  "at displacement `window` (rejected) and `window - 1` (accepted). P17f, the mode check, is "
+                  f"{verdict_of(d.r3_verdicts, 'case', 'P17f')} and is the 'Effective mode' column."])
+
+
+def calibration_stats3(d: Data) -> dict[str, float]:
+    n = len(d.calibration3)
+    brier = statistics.fmean((c - o) ** 2 for _, c, o in d.calibration3) if n else math.nan
+    return {"n": n, "brier": brier, "expected_refutations": sum(1 - c for _, c, _ in d.calibration3),
+            "observed_refutations": sum(1 for _, _, o in d.calibration3 if o == 0)}
+
+
+def t_calibration_r3(d: Data) -> Table:
+    rows = [[p, f"{c:.2f}", str(o), f"{(c - o) ** 2:.4f}"] for p, c, o in d.calibration3]
+    s = calibration_stats3(d)
+    return Table("calibration_r3", "Round-3 credences and outcomes",
+                 ["Prediction", "Credence", "Outcome (1 = confirmed)", "Brier term"], rows,
+                 [f"Brier score {s['brier']:.4f} over {int(s['n'])} scored predictions; expected refutations "
+                  f"at these credences {s['expected_refutations']:.1f}, observed {int(s['observed_refutations'])}."])
+
+
 def calibration_stats(d: Data) -> dict[str, float]:
     n = len(d.calibration)
     brier = statistics.fmean((c - o) ** 2 for _, c, o in d.calibration) if n else math.nan
@@ -526,6 +595,8 @@ def verdict_matrix(d: Data) -> list[dict[str, str]]:
         cases = CAL_TO_CASES.get(pid, [pid])
         verdicts = [verdict_of(d.r2_verdicts, "case", c) for c in cases]
         out.append({"round": "P13-P16", "prediction": pid, "fidelity": "kernel", "verdict": agg_verdict(verdicts)})
+    for row in d.r3_verdicts:
+        out.append({"round": "P17", "prediction": row["prediction"], "fidelity": "kernel", "verdict": row["verdict"]})
     return out
 
 
@@ -600,7 +671,7 @@ def run_checks(d: Data, expect_runs: int) -> list[tuple[str, bool, str]]:
         results.append((name, ok, detail))
 
     # Frozen protocol: every kernel case has the frozen number of runs.
-    for label, obs in (("real-stack", d.rs), ("round2", d.r2)):
+    for label, obs in (("real-stack", d.rs), ("round2", d.r2), ("round3", d.r3)):
         scenarios = sorted({row["scenario"] for row in obs.rows})
         bad = []
         for sc in scenarios:
@@ -667,6 +738,25 @@ def run_checks(d: Data, expect_runs: int) -> list[tuple[str, bool, str]]:
         ok = all(sent[s] - delivered[s] == errors[s] for s in delivered)
         check(f"P16 ({c}): sequence errors equal sent - delivered", ok)
 
+    # Round 3 (P17): the boundary is exact, the mode is recorded, the depth is gated.
+    depth_bad = [v for v in d.r3.vals("P17a", "P17a", "depth_gate") if v != 1]
+    check("P17a: depth gate [64, 200] passed in every run", not depth_bad, f"values {sorted(set(depth_bad))}")
+    a_delivered = d.r3.by_seed("P17a", "P17a", "delivered_datagrams")
+    a_sent = d.r3.by_seed("P17a", "P17a", "sent_datagrams")
+    check("P17a: every datagram delivered", bool(a_delivered) and a_delivered == a_sent,
+          f"{sorted(a_delivered.values())[:3]} of {sorted(a_sent.values())[:3]}")
+    boundary_bad = [case for case, expected in P17_EXPECTED_DELIVERED.items()
+                    if not d.r3.by_seed(case, case, "delivered_datagrams")
+                    or any(v != expected for v in d.r3.by_seed(case, case, "delivered_datagrams").values())]
+    check("P17: boundary cases deliver the frozen count in every run", not boundary_bad, ", ".join(boundary_bad))
+    mode_bad = [case for case, expected in P17_EXPECTED_ESN.items()
+                if not d.r3.vals(case, case, "anti_replay_esn")
+                or any(v != expected for v in d.r3.vals(case, case, "anti_replay_esn"))]
+    check("P17f: recorded anti-replay mode matches the configured window in every run", not mode_bad, ", ".join(mode_bad))
+    ref3_bad = [case for case in R3_LABEL
+                if case != "P17f" and not all(v == 1 for v in d.r3.vals(case, case, "delivery_matches_reference"))]
+    check("P17: delivery equals the reference replay filter in every run", not ref3_bad, ", ".join(ref3_bad))
+
     # Calibration file against the verdict CSV.
     mismatches = []
     for pid, _, outcome in d.calibration:
@@ -674,6 +764,11 @@ def run_checks(d: Data, expect_runs: int) -> list[tuple[str, bool, str]]:
         if (agg_verdict(verdicts) == "CONFIRMED") != bool(outcome):
             mismatches.append(pid)
     check("calibration.md outcomes agree with verdicts.csv", not mismatches, ", ".join(mismatches))
+    mismatches3 = []
+    for pid, _, outcome in d.calibration3:
+        if (verdict_of(d.r3_verdicts, "case", pid) == "CONFIRMED") != bool(outcome):
+            mismatches3.append(pid)
+    check("round3 calibration.md outcomes agree with verdicts.csv", not mismatches3, ", ".join(mismatches3))
     return results
 
 
@@ -694,7 +789,8 @@ def provenance() -> str:
 
 def build_tables(d: Data, matrix: list[dict[str, str]]) -> list[Table]:
     return [t_r1_verdicts(d), t_r1_quantities(d), t_rs_cases(d), t_rs_p9(d), t_rs_p10(d), t_decap(d), t_decap_matrix(d),
-            t_nat_key(d), t_frag(d), t_replay(d), t_calibration(d), t_counts(matrix)]
+            t_nat_key(d), t_frag(d), t_replay(d), t_replay_boundary(d), t_calibration(d), t_calibration_r3(d),
+            t_counts(matrix)]
 
 
 def main(argv: list[str] | None = None) -> int:

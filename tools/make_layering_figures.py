@@ -18,7 +18,8 @@
 
 Figure 1 is the visibility matrix of the six orderings (data: the P4 table in
 ``docs/layering-results.md``).  Figure 2 is the verdict matrix built from the
-three committed verdict CSVs, so no disposition is transcribed by hand.
+four committed verdict CSVs (P1-P7, P8-P12, P13-P16, P17), so no disposition is
+transcribed by hand.
 
 Run: ``py tools/make_layering_figures.py --output-dir figures``.
 """
@@ -85,8 +86,8 @@ def _group_status(rows: list[dict[str, str]], key: str) -> dict[str, str]:
 
 
 def verdict_matrix(repo: Path) -> tuple[list[str], list[str], list[list[str]]]:
-    rows = [f"P{index}" for index in range(1, 17)]
-    columns = ["Model", "SimPy", "Linux\nP1-P7", "Linux\nP8-P12", "Linux\nP13-P16"]
+    rows = [f"P{index}" for index in range(1, 17)] + ["P17a", "P17b", "P17c", "P17d", "P17e", "P17f"]
+    columns = ["Model", "SimPy", "Linux\nP1-P7", "Linux\nP8-P12", "Linux\nP13-P16", "Linux\nP17"]
 
     layering = _load(repo / "validation/layering/results/verdicts.csv", ("prediction", "fidelity"))
     layering_status = {
@@ -100,6 +101,10 @@ def verdict_matrix(repo: Path) -> tuple[list[str], list[str], list[list[str]]]:
         _load(repo / "validation/round2/results/verdicts.csv", ("prediction", "case")),
         "prediction",
     )
+    round3 = {
+        row["prediction"]: row["verdict"]
+        for row in _load(repo / "validation/round3/results/verdicts.csv", ("prediction", "case"))
+    }
 
     matrix: list[list[str]] = []
     for prediction in rows:
@@ -112,6 +117,8 @@ def verdict_matrix(repo: Path) -> tuple[list[str], list[str], list[list[str]]]:
             row[3] = real[prediction]
         elif prediction in round2:
             row[4] = round2[prediction]
+        elif prediction in round3:
+            row[5] = round3[prediction]
         matrix.append(row)
     return rows, columns, matrix
 
@@ -153,7 +160,7 @@ def draw_visibility(output_dir: Path) -> None:
 
 def draw_verdicts(output_dir: Path) -> None:
     rows, columns, matrix = verdict_matrix(REPO)
-    figure, axis = plt.subplots(figsize=(5.6, 6.4))
+    figure, axis = plt.subplots(figsize=(5.6, 0.29 * len(rows) + 1.5))
     colour_for = {
         "CONFIRMED": GREEN,
         "REFUTED": RED,

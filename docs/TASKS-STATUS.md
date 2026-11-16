@@ -1,7 +1,7 @@
 # TASKS-STATUS — GOAL-release baseline
 
 **Baseline commit:** `e394135` (`Add Paper D: common-mode resilience testbed study`, 14 November 2026).
-**Status date:** 14 November 2026.
+**Status date:** 16 November 2026.
 **Rule:** this file records status, not new claims. A milestone may only be marked
 fixed/closed with a commit hash and a test command.
 
@@ -18,6 +18,7 @@ fixed/closed with a commit hash and a test command.
 | Full suite after M6 | **Ran 477 tests, OK (skipped=1)** in 64.8 s |
 | Full suite after M7 | **Ran 499 tests, OK (skipped=1)** in 65.3 s |
 | Full suite after M4 | **Ran 511 tests, OK (skipped=1)** in 64.4 s |
+| Full suite after M11 | **Ran 517 tests, OK (skipped=1)** in 92.8 s |
 | Git state | `main...origin/main`, clean at `e394135`; no tags |
 
 This is a **one-kernel** environment. The frozen round-2 replication clause asks
@@ -28,9 +29,11 @@ Linux host is available to the agent. That is F2, not a result.
 
 | Quantity | Count | Source |
 |---|---:|---|
-| Unit tests | 511 passed, 1 skipped (after M4) | test run above |
-| Paper A controlled predictions | P1–P7 (7), P8–P12 (12 cases), P13–P16 (18 scored) | `docs/layering-*-predictions*.md` |
+| Unit tests | 517 passed, 1 skipped (after M11) | test run above |
+| Paper A controlled predictions | P1–P7 (7), P8–P12 (12 cases), P13–P16 (18 scored), P17 (6 scored) | `docs/layering-*-predictions*.md` |
 | Paper A round-2 outcome | 17/18 CONFIRMED, 1 REFUTED (P16d), Brier 0.0833 | `docs/layering-real-stack-results-round2.md` |
+| Paper A round-3 outcome | 6/6 CONFIRMED, Brier 0.0542 | `docs/layering-real-stack-results-round3.md` |
+| Paper A scored total | 34/36 | `docs/paper-tables/tables.md` headline counts |
 | Paper D arms / events / seeds | 9 / 10 / 30 | `docs/common-mode-predictions.md` |
 | Paper D runs | 2,700 | 9 × 10 × 30 |
 | Paper D hypotheses | H16–H20, all PASS on the frozen scenario | `docs/common-mode-results.md` |
@@ -50,6 +53,10 @@ Linux host is available to the agent. That is F2, not a result.
 | F8 | Paper D related work lacks empirical outage literature | **FIXED (M6)** — Gunawi 2016, Talluri 2025, Paladugu 2026 preprint, provider corpora | `docs/paper-common-mode.md` §2.5, refs 22-28 |
 | F9 | Postmortem study only a draft predictions file; no frame, no analysis script | **SCAFFOLD FIXED (M7)** — predictions + template committed, frame builder and analyser with synthetic tests, C2 prompt; real frame and coding remain **H (M8)** | `docs/postmortem-study-predictions.md`, `tools/build_postmortem_frame.py`, `tools/analyze_postmortems.py`, `study/README.md` |
 | F10 | No release metadata / review package; README statuses unchecked | **FIXED (M9)** — `.zenodo.json`, CITATION 0.2.0, release notes, review request, venue checklist, README status table | root, `docs/RELEASE-NOTES-0.2.0.md`, `docs/review-request-paperA.md`, `docs/venue-checklist.md` |
+| F11 | Paper A did not mention P17 at all while the review request leans on it; headline counts still said 28 of 30 and Figure 2 stopped at P16 | **FIXED (M11)** — §6 P17 subsection with Table 6b, Table 7b credences, counts 34 of 36, Figure 2 redrawn with P17, generator and lint carry P17 | `docs/paper-layering-testbed.md` §2/§3/§6/§8/§9, `docs/paper-tables/tables.md`, `tools/make_paper_tables.py`, `tools/make_layering_figures.py` |
+| F12 | Paper A's status line credited `make_layering_figures.py` for the tables, which come from `make_paper_tables.py` | **FIXED (M11)** — one sentence now names both tools for what each generates | `docs/paper-layering-testbed.md` status line |
+| F13 | Paladugu 2026 preprint (ref 24) unverified by a reviewer | **VERIFIED 16 Nov 2026** — DOI 10.5281/zenodo.23585116 opened at `zenodo.org/records/23585116`: record present, dated 22 Oct 2026, abstract states the 52/70, 28/52 and 10/11 figures Paper D cites | `docs/RELEASE-AUDIT.md`, `docs/paper-common-mode.md` §2.5 |
+| F14 | E2's 0.30 threshold sits on a published vendor figure (Control Plane 2026: 20 of 62 configuration-or-deployment changes, 32 %), seen before coding | **DISCLOSED (M11)** — contamination bullet in §1 with source, numbers and mitigations; dated addendum; no frame, prediction or threshold changed | `docs/postmortem-study-predictions.md` §1, §12 |
 
 ## What has not been done, and why
 

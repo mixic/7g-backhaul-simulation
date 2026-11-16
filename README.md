@@ -44,7 +44,7 @@ combined document, so each can be reviewed on its own terms:
 
 | Paper | Status | Evidence type |
 |---|---|---|
-| A | ready for external review at the release commit; not submitted | three-fidelity Linux tests, 28/30 scored predictions, Brier 0.0833 |
+| A | ready for external review at the release commit; not submitted | three-fidelity Linux tests, 34/36 scored predictions (P1–P17), Brier 0.0833 (round 2) and 0.0542 (round 3) |
 | B | scoped model-check / negative result; not submitted | flow-level simulation |
 | C | scoped model study; not submitted | flow-level simulation with a real persistent-homology library |
 | D | model-check study with break-even analysis; empirical anchor is the postmortem study, scaffolded but not run; not submitted | stipulated flow-level simulation |
@@ -408,7 +408,7 @@ py tools/benchmark_surgical.py --replicates 30
 py tools/plot_surgical.py
 ```
 
-## Layered-protocol testbed (P1–P16)
+## Layered-protocol testbed (P1–P17)
 
 The repository contains a three-fidelity testbed for encapsulated stacks, run in
 three frozen rounds. P1–P7
@@ -425,9 +425,11 @@ AH/ESP and nftables NAT, and all twelve cases are confirmed. P13–P16
 failure-prone round: 17 of 18 predictions confirmed, P16d refuted by a
 mis-specified reordering depth, Brier 0.083. A round-3 follow-up (P17) adds a
 rate-limited depth band, an exact captured-and-reinjected ESP boundary at
-`window - 1` and `window`, and explicit legacy/ESN mode recording; it is
+`window - 1` and `window`, and explicit legacy/ESN mode recording; all six
+predictions are confirmed (Brier 0.054), so the scored total is 34 of 36. It is
 reported separately in
-[`docs/layering-real-stack-results-round3.md`](docs/layering-real-stack-results-round3.md).
+[`docs/layering-real-stack-results-round3.md`](docs/layering-real-stack-results-round3.md)
+and summarised in the paper.
 The testbed measures size, delivery and authentication acceptance only, and
 makes no cryptographic security claim. Reproduction commands are in
 [REPLICATION.md](REPLICATION.md).

@@ -60,9 +60,12 @@ class LintTests(unittest.TestCase):
         self.assertAlmostEqual(self.facts.p5_diff, 12.35, places=2)
         self.assertEqual(self.facts.p15_totals, (2112, 2180))
         self.assertAlmostEqual(self.facts.brier, 0.0833, places=4)
+        self.assertAlmostEqual(self.facts.brier3, 0.0542, places=4)
         self.assertEqual(self.facts.counts["P1-P7"], (6, 7))
         self.assertEqual(self.facts.counts["P8-P12"], (5, 5))
         self.assertEqual(self.facts.counts["P13-P16"], (17, 18))
+        self.assertEqual(self.facts.counts["P17"], (6, 6))
+        self.assertEqual(self.facts.counts["total"], (34, 36))
 
     def test_each_banned_phrase_is_caught(self) -> None:
         for phrase, _ in lint.BANNED_PHRASES:
@@ -125,6 +128,20 @@ class LintTests(unittest.TestCase):
     def test_brier_fact_change_is_caught(self) -> None:
         facts = dataclasses.replace(self.facts, brier=0.0834)
         self.assertIn("Brier score", self.problems(facts=facts))
+
+    def test_wrong_round3_brier_is_caught(self) -> None:
+        text = self.paper_a.replace("0.0542", "0.0543")
+        self.assertNotEqual(text, self.paper_a)
+        self.assertIn("round-3 Brier score", self.problems(paper_a=text))
+
+    def test_round3_brier_fact_change_is_caught(self) -> None:
+        facts = dataclasses.replace(self.facts, brier3=0.0543)
+        self.assertIn("round-3 Brier score", self.problems(facts=facts))
+
+    def test_stale_total_count_is_caught(self) -> None:
+        text = self.paper_a.replace("34 of 36", "28 of 30")
+        self.assertNotEqual(text, self.paper_a)
+        self.assertIn("total count", self.problems(paper_a=text))
 
     def test_count_change_is_caught(self) -> None:
         counts = dict(self.facts.counts)

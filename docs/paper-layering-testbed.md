@@ -3,10 +3,10 @@
 **Milan Nikolic** · Independent Researcher · <m_nikolic@yahoo.com>
 
 **Status.** Focused measurement paper. Predictions were frozen in version control at
-three commits, each before the corresponding harness code: `96d59f3` (P1–P7),
-`46c7b40` (P8–P12), `1b7e6ac` (P13–P16). Results are reported in the linked
-results files and summarised here. The dispositions in the tables and in Figure 2
-are regenerated from the committed verdict CSVs by
+four commits, each before the corresponding harness code: `96d59f3` (P1–P7),
+`46c7b40` (P8–P12), `1b7e6ac` (P13–P16), `285c8e9` (P17). Results are reported in the
+linked results files and summarised here. Every results table is generated from the
+committed CSVs by `tools/make_paper_tables.py`, and Figure 1 and Figure 2 by
 `tools/make_layering_figures.py`; the numeric results are those recorded in the
 linked results files, with the reproduction commands in §9.
 
@@ -22,23 +22,25 @@ structural. We test it with predictions committed to version control before any
 experiment code, at three fidelities: an executable model, a discrete-event
 simulation, and a Linux namespace testbed that runs kernel WireGuard, IPsec
 AH/ESP, IPIP and nftables NAT in two real-stack rounds. Of seven initial
-predictions, six are confirmed; one is
-refuted at the Linux fidelity because a compressor saw real headers and crossed a
-fragment boundary. Real-stack runs (20 per case) confirm five further predictions
+predictions, six are confirmed; one is refuted at the Linux fidelity because a
+compressor saw real headers and crossed a fragment boundary. Real-stack runs
+(20 per case) confirm five further predictions
 and show that the rule needs two more classes: quantised fields (WireGuard pads to
 16 bytes, so IPIP and WireGuard orderings differ by −4 or +12 bytes) and derived
 fields (an inner UDP checksum depends on the outer address). A final, deliberately
 failure-prone round, with credences recorded in advance (Brier 0.0833), confirms
-17 of 18 predictions, so 28 of 30 scored predictions are confirmed across the
-three rounds, and finds that the same outer ECN mark is fatal under IPIP but
+17 of 18 predictions, and finds that the same outer ECN mark is fatal under IPIP but
 harmless under WireGuard and ESP (decapsulation-coupled), that two ESP clients
 cannot share a NAT (a middlebox lookup-key failure), and that delivery under
 reordering is bounded by the integrity layer's replay window. One prediction is
-refuted by our own mis-specified reordering depth. Evidence is one kernel series
-(two WSL2 builds), veth links and one NAT; security is not evaluated. The frozen
-two-kernel replication clause is **unmet**: both builds are WSL2 kernels of the
-same series, so every result here is a one-kernel result. Predictions, harness
-and raw data are open.
+refuted by our own mis-specified reordering depth. A fourth, smaller round then
+measures the boundary that refutation left open — a gated depth and an exact
+`window` / `window − 1` reinjection in both legacy and ESN mode — and confirms six
+of six (Brier 0.0542), so **34 of 36 scored predictions are confirmed across the
+four rounds**. Evidence is one kernel series (two WSL2 builds), veth links and one
+NAT; security is not evaluated. The frozen two-kernel replication clause is
+**unmet**: both builds are WSL2 kernels of the same series, so every result here
+is a one-kernel result. Predictions, harness and raw data are open.
 
 ## 1. Introduction
 
@@ -105,7 +107,7 @@ The rule has two events, kept separate:
   authenticated (inside an integrity scope) or structural (length- or
   offset-bearing), which a rewrite invalidates.
 
-Table 1 lists the classes the three rounds forced. Each is traceable to a test
+Table 1 lists the classes the rounds forced. Each is traceable to a test
 that found it; none is introduced by definition alone. Figure 1 shows, for the
 six orderings of tunnelling `T`, encryption `E` and sequencing `S`, which of two
 header fields is visible at the wire; visibility is recorded separately and is
@@ -126,7 +128,10 @@ not itself a delivery prediction.
 
 A state parameter accompanies the classes: the **replay window** of the
 integrity layer (P16). With reordering depth at or above the window, valid
-packets are dropped though none was lost on the wire.
+packets are dropped though none was lost on the wire. The edge is strict and was
+measured directly (P17): a packet whose displacement equals the window is
+rejected, one at `window − 1` is accepted, and the same pair of answers holds in
+a legacy 32-packet window and in an ESN 256-packet window.
 
 ![](../figures/layering_visibility.png){width=75%}
 
@@ -136,7 +141,7 @@ is visible unless `S` is applied before `E`. Data: the P4 visibility table in
 
 ## 3. Method
 
-**Pre-registration.** Three prediction files were committed before the code that
+**Pre-registration.** Four prediction files were committed before the code that
 tested them:
 
 | Round | Freeze commit | File |
@@ -144,6 +149,7 @@ tested them:
 | P1–P7 | `96d59f3` | [`layering-predictions.md`](layering-predictions.md) |
 | P8–P12 | `46c7b40` | [`layering-real-stack-predictions.md`](layering-real-stack-predictions.md) |
 | P13–P16 | `1b7e6ac` | [`layering-real-stack-predictions-round2.md`](layering-real-stack-predictions-round2.md) |
+| P17 | `285c8e9` | [`layering-real-stack-predictions-round3.md`](layering-real-stack-predictions-round3.md) |
 
 The files are never edited after the freeze; corrections go to a dated addendum
 of the results document.
@@ -154,7 +160,8 @@ TUN devices and seeded `tc netem` loss. The real-stack rounds run four Linux
 namespaces with kernel WireGuard, IPsec AH/ESP, IPIP and nftables masquerade;
 round 2 adds an ECN mangler, ESP-in-UDP, a second client namespace, fragment / SPI
 / sequence capture and depth gates. The frozen protocol is 20 runs per case
-(round 2: 20 cases, 400 runs, 5,800 observation rows).
+(round 2: 20 cases, 400 runs, 5,800 observation rows; round 3: five traffic cases
+plus a mode check scored from the same runs, 100 runs).
 
 **Gates and dispositions.** A case is scored only when its gates pass: warm-up,
 checksum offload, ECN mutation, SPI, fragment shape and reordering depth. Every
@@ -169,7 +176,7 @@ is to make "the prediction was easy" visible: a cautious set scores well only if
 the cases really were easy.
 
 **Environment.** WSL2 Ubuntu 26.04.1 LTS; kernel `6.18.54.1-microsoft-standard-WSL2`
-for P1–P7 and `6.18.58.1-microsoft-standard-WSL2` for P8–P16; iproute2 6.19.0;
+for P1–P7 and `6.18.58.1-microsoft-standard-WSL2` for P8–P17; iproute2 6.19.0;
 wireguard-tools 1.0.20250521; nftables 1.1.6; `ipip`, `wireguard`, `esp4`,
 `ah4`, `act_pedit`, `act_csum`, `nft_masq` and `sch_netem` present. The Linux
 application payload is normalised to `model_payload − 28` bytes so the codec sees
@@ -215,10 +222,11 @@ network behaves this way. P3, P6 and P7 are the research content of this round.
 
 ![](../figures/layering_verdicts.png){width=70%}
 
-**Figure 2.** All sixteen headline predictions against the fidelity that tested
+**Figure 2.** All twenty-two headline predictions against the fidelity that tested
 them, built from the committed verdict CSVs. `C` = CONFIRMED, `R` = REFUTED,
 `1 R` = one refuted sub-case (P16d), `-` = not tested at that fidelity. P1–P7:
 model, SimPy, Linux. P8–P12: round-1 real stack. P13–P16: round-2 real stack.
+P17a–P17f: the round-3 follow-up.
 
 **P3 (integrity scope).** Three cases: `E→T` with the target inside the AEAD's
 AAD, `E→T` with no AAD, and `T→E` where the target is invisible. Acceptance is
@@ -331,7 +339,7 @@ pseudo-header containing the rewritten outer address, so it fails (0 %); zeroing
 the inner checksum restores delivery (100 %), and the no-NAT control delivers
 100 %.
 
-## 6. Results III: P13–P16
+## 6. Results III: P13–P17
 
 Round 2 is deliberately failure-prone: credences were recorded before the run,
 and the protocol was designed so that some predictions were expected to fail. Of
@@ -446,6 +454,52 @@ the sender actually produced. Two caveats: on this kernel/iproute2
 `replay-window 256` silently turns the SA into an ESN SA, and the strict/inclusive
 boundary of `< window` was never hit exactly, so that edge is untested.
 
+**P17: the boundary itself.** Both caveats were testable, so a fourth prediction
+file was frozen at `285c8e9` before a round-3 harness existed: a rate-limited
+sender whose reordering depth falls inside a pre-registered band, and
+captured-and-reinjected ESP packets placed at an exact displacement, in each
+anti-replay mode. P17 is a follow-up on the replay semantics, not a new field
+class. Table 6b gives the result.
+
+**Table 6b. P17: the replay-window boundary, exactly.** Pasted from
+[`paper-tables/tables.md`](paper-tables/tables.md); computed from
+`validation/round3/results/observations.csv`.
+
+| Case | Stack / window / displacement | Delivered (min–max) | Reference filter | Effective mode | Verdict |
+|---|---|---|---|---|---|
+| P17a | ESP, ESN window 256, 1 ms pacing, depth gate [64, 200] | 600 of 600 | matches | ESN | CONFIRMED |
+| P17b | ESP, legacy window 32, displacement = window | 1 of 2 | 1 | legacy | CONFIRMED |
+| P17c | ESP, legacy window 32, displacement = window - 1 | 2 of 2 | 2 | legacy | CONFIRMED |
+| P17d | ESP, ESN window 256, displacement = window | 1 of 2 | 1 | ESN | CONFIRMED |
+| P17e | ESP, ESN window 256, displacement = window - 1 | 2 of 2 | 2 | ESN | CONFIRMED |
+
+*P17a observed reorder depth 91–92; five traffic cases x 20 runs, and P17f is
+scored from the same runs, so the round is 100 runs. P17b-P17e reinject two
+captured packets at displacement `window` (rejected) and `window - 1` (accepted).
+P17f, the mode check, is CONFIRMED and is the 'Effective mode' column.*
+
+All six predictions are confirmed. P17a paces the sender at 1 ms per datagram and
+records a depth of 91–92, inside the frozen [64, 200] band; the 256-packet window
+is wider than that depth and delivers 600 of 600 datagrams, matching the reference
+filter and the sequence-error count exactly. A large window is therefore not too
+small by itself: what P16d measured was the depth of a 33 kpps burst, not the
+window. P17b–P17e then place two captured packets at exactly displacement `window`
+and `window − 1`: the packet at the window is rejected and the one inside it is
+accepted, in 20/20 runs, in both the legacy 32-packet window and the ESN
+256-packet window, with the strict `< window` reference filter agreeing in every
+run. P17f reads the effective mode from `ip xfrm state` in every reinjection run
+rather than inferring it, which is what licenses labelling the 256-packet results
+ESN at all.
+
+What this settles, and what it does not. It settles both caveats: the boundary is
+strict on this kernel, and the round-2 window-256 case was an ESN SA. It does not
+turn P16d into a confirmation — that prediction stays refuted — and it is still
+one kernel, one ESP implementation, one iproute2 version, a single-packet test at
+one alignment rather than a sweep of window sizes, and a controlled harness
+action on packets the harness itself generated, not a replay attack. The round
+also refuted nothing, which is itself a limitation: cases that isolate a
+mechanism are not a random sample of kernels.
+
 **Credence scoring.** Table 7 gives the 18 scored predictions.
 
 **Table 7. Round-2 credences and outcomes.** Pasted from
@@ -476,6 +530,22 @@ boundary of `< window` was never hit exactly, so that edge is untested.
 *Brier score 0.0833 over 18 scored predictions; expected refutations at these
 credences 3.8, observed 1.*
 
+**Table 7b. Round-3 credences and outcomes.** Pasted from
+[`paper-tables/tables.md`](paper-tables/tables.md); parsed from
+`validation/round3/results/calibration.md`.
+
+| Prediction | Credence | Outcome (1 = confirmed) | Brier term |
+|---|---|---|---|
+| P17a | 0.75 | 1 | 0.0625 |
+| P17b | 0.80 | 1 | 0.0400 |
+| P17c | 0.80 | 1 | 0.0400 |
+| P17d | 0.70 | 1 | 0.0900 |
+| P17e | 0.70 | 1 | 0.0900 |
+| P17f | 0.95 | 1 | 0.0025 |
+
+*Brier score 0.0542 over 6 scored predictions; expected refutations at these
+credences 1.3, observed 0.*
+
 **Table 8. Headline counts.** A prediction is confirmed only if every fidelity
 confirms it. Pasted from [`paper-tables/tables.md`](paper-tables/tables.md).
 
@@ -484,14 +554,18 @@ confirms it. Pasted from [`paper-tables/tables.md`](paper-tables/tables.md).
 | P1-P7 | 6 of 7 |
 | P8-P12 | 5 of 5 |
 | P13-P16 | 17 of 18 |
-| total | 28 of 30 |
+| P17 | 6 of 6 |
+| total | 34 of 36 |
 
-Under the stated credences the expected score was 0.15 with 3.8 expected
-refutations; the observed score is 0.0833 with one refutation. The credences were
-too cautious on the implementation-detail cases (0.6–0.7), all of which came in.
-The one failure is not an implementation detail but a parameter: how deep a burst
-a 100 ms netem queue with a 33 kpps sender makes. The eight frozen assumptions
-about the kernel (A1–A8) all held.
+Under the stated credences round 2's expected score was 0.15 with 3.8 expected
+refutations; the observed score is 0.0833 with one refutation, and the credences
+were too cautious on the implementation-detail cases (0.6–0.7), all of which came
+in. The one failure is not an implementation detail but a parameter: how deep a
+burst a 100 ms netem queue with a 33 kpps sender makes. The eight frozen
+assumptions about the kernel (A1–A8) all held. Round 3 expected 1.3 refutations at
+its own credences and observed none, so its 0.0542 is weaker evidence about
+calibration than round 2's 0.0833: it says the boundary cases were easy, which
+they were designed to be.
 
 ## 7. Related work
 
@@ -528,12 +602,14 @@ property of the header scope and the path, not of the protocol's intent.
 ## 8. Limitations
 
 - **One kernel series.** Two WSL2 builds of Linux 6.18 (`6.18.54.1` for P1–P7,
-  `6.18.58.1` for P8–P16), veth links, nftables masquerade as the only NAT; no
+  `6.18.58.1` for P8–P17), veth links, nftables masquerade as the only NAT; no
   wireless, no congestion, no cross traffic. The frozen round-2 replication
   clause asks for two kernels; P13's per-decapsulator table and P14's conntrack
   behaviour are the results most likely to move on another kernel, and the
-  absence of a second kernel is reported rather than averaged away. The abstract
-  states this shortfall explicitly; it is not a hidden caveat.
+  absence of a second kernel is reported rather than averaged away. Round 3 runs
+  on the round-2 kernel, so it is a follow-up on one kernel and not a second-kernel
+  replication either. The abstract states this shortfall explicitly; it is not a
+  hidden caveat.
 - **Predictions were written by the same people who built the harness**, from
   specifications they knew. Confirmation validates the method; the informative
   results are the cases where the specification leaves behaviour open (P13, P14,
@@ -542,10 +618,13 @@ property of the header scope and the path, not of the protocol's intent.
   starts at P8.
 - **Replay behaviour was measured at one reordering depth** (about 2000), so P16
   does not locate the threshold between window sizes. Reordering was produced by
-  netem delay, not by multipath.
+  netem delay, not by multipath. P17 replaces netem with an exact harness
+  displacement, which locates the boundary but not a production path: it is one
+  alignment, two window sizes, one kernel.
 - **P16d is refuted by our own parameter choice**, not by a failure of the
   replay-window mechanism; the depth × rate estimate was missing from the frozen
-  text.
+  text. P17 separates the two — a gated depth delivers every packet through the
+  same 256-packet window — but the frozen P16d expectation stands as refuted.
 - **The P5 refutation is a reproducibility hazard**: compression is
   implementation-dependent (zlib-ng versus stock zlib), and payload normalisation
   can change a discrete fragment count. Any future cross-fidelity prediction with
@@ -563,9 +642,16 @@ property of the header scope and the path, not of the protocol's intent.
 ## 9. Artifact and reproduction
 
 The repository contains the frozen predictions, the harnesses, the raw
-observations and the verdict CSVs. The three freeze commits are `96d59f3`
-(P1–P7), `46c7b40` (P8–P12) and `1b7e6ac` (P13–P16). Figure 2 is regenerated
-from the verdict CSVs, and Figure 1 from the P4 visibility table, by:
+observations and the verdict CSVs. The four freeze commits are `96d59f3`
+(P1–P7), `46c7b40` (P8–P12), `1b7e6ac` (P13–P16) and `285c8e9` (P17). Every
+results table is regenerated from the CSVs by:
+
+```powershell
+py tools\make_paper_tables.py --check
+```
+
+Figure 2 is regenerated from the verdict CSVs, and Figure 1 from the P4
+visibility table, by:
 
 ```powershell
 py tools\make_layering_figures.py --output-dir figures
@@ -587,6 +673,7 @@ The real-stack rounds run under Linux as root;
 ```bash
 python3 -m validation.real_stack.run   # P8-P12, 20 runs per case
 python3 -m validation.round2.run        # P13-P16, 20 runs per case
+python3 -m validation.round3.run        # P17, 20 runs per case
 ```
 
 The full guide is in [`REPLICATION.md`](../REPLICATION.md). The Linux privileges
@@ -602,8 +689,11 @@ interpretation limits are stated in the results files, not only here.
 - [`layering-real-stack-results.md`](layering-real-stack-results.md) — P8–P12 results.
 - [`layering-real-stack-predictions-round2.md`](layering-real-stack-predictions-round2.md) — P13–P16 predictions (frozen at `1b7e6ac`).
 - [`layering-real-stack-results-round2.md`](layering-real-stack-results-round2.md) — P13–P16 results and calibration.
+- [`layering-real-stack-predictions-round3.md`](layering-real-stack-predictions-round3.md) — P17 predictions (frozen at `285c8e9`).
+- [`layering-real-stack-results-round3.md`](layering-real-stack-results-round3.md) — P17 results and calibration.
 - [`validation/layering/`](../validation/layering/) — model, SimPy and Linux harness for P1–P7.
 - [`validation/real_stack/`](../validation/real_stack/) — round-1 real-stack harness.
 - [`validation/round2/`](../validation/round2/) — round-2 harness.
+- [`validation/round3/`](../validation/round3/) — round-3 P17 harness.
 - [`prior-art-p13-p14.md`](prior-art-p13-p14.md) — search log and source audit
   for the ECN and ESP/NAT behaviour in P13 and P14.

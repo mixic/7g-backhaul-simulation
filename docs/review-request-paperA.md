@@ -16,7 +16,9 @@ structural. The rule is tested with predictions frozen before the harness at
 three fidelities. The paper reports every refutation: P5 at Linux, and P16d
 (the replay window / depth operating point). It adds four classes the rounds
 forced: quantised, derived, lookup-key and decapsulation-coupled, plus the replay
-window as a state parameter.
+window as a state parameter. A fourth round (P17, §6) then measures the boundary
+P16d left open and confirms six of six, so 34 of 36 scored predictions are
+confirmed.
 
 ## What I would like reviewed
 

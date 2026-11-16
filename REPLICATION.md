@@ -103,8 +103,9 @@ table). It also regenerates every Paper A results table under
 abstract contains `7G` or `heterogeneous`, if the old rule wording
 `survives a rewrite iff` returns, or if a key number disagrees with the CSVs:
 the P16d delivered range (673–717), the P5 Linux delivery difference (12.35 pp),
-the P15 wire totals (2112 / 2180 B), the round-2 Brier score (0.0833), or the
-headline counts (6/7, 5/5, 17/18). The tests in
+the P15 wire totals (2112 / 2180 B), the round-2 Brier score (0.0833), the
+round-3 Brier score (0.0542), or the headline counts (6/7, 5/5, 17/18, 6/6,
+total 34/36). The tests in
 `tests/test_make_paper_tables.py` and `tests/test_lint_claims.py` tamper with
 the data and require each gate to fail, so a green run means the check works.
 

@@ -1,6 +1,7 @@
 # Release audit (0.2.0)
 
-**Release candidate:** 14 November 2026.
+**Release candidate:** 14 November 2026. **Re-audited:** 16 November 2026 (M11:
+P17 in Paper A, provenance sentence, reference check, contamination disclosure).
 **Baseline:** `e394135`.
 **Rule:** every headline claim is mapped to a committed file and a row or a
 generated table. A claim that cannot be mapped is either removed or marked
@@ -11,8 +12,8 @@ human tags and submits.
 
 | Check | Command | Result |
 |---|---|---|
-| Full suite | `py -3 -m unittest discover -s tests -q` | **511 passed, 1 skipped** |
-| Paper A invariants | `py -3 tools/make_paper_tables.py --check` | 0 FAIL |
+| Full suite | `py -3 -m unittest discover -s tests -q` | **517 passed, 1 skipped** (was 511; 6 new M11 tamper tests) |
+| Paper A invariants | `py -3 tools/make_paper_tables.py --check` | 0 FAIL (29 checks, incl. round 3) |
 | Claims lint | `py -3 tools/lint_claims.py` | PASS |
 | Round-3 tests | `py -3 -m unittest tests.test_round3 -q` | 7 OK |
 | Postmortem scaffold tests | `py -3 -m unittest tests.test_postmortems tests.test_build_postmortem_frame -q` | 22 OK |
@@ -29,6 +30,8 @@ human tags and submits.
 | P15: 2112 / 2180 B, delivery 0.9003 / 0.9041 | `validation/round2/results/observations.csv` | P15 wire and delivery rows | reported |
 | P16d: 673-717 delivered, REFUTED | `validation/round2/results/observations.csv` | P16d delivered rows; lint fact 673-717 | reported as mis-specified depth |
 | Brier 0.0833 over 18 | `validation/round2/results/calibration.md` | calibration table; lint fact | reported |
+| P17: 6 of 6; total 34 of 36 | `validation/round3/results/verdicts.csv`; `docs/paper-tables/tables.md` | P17 table, headline counts; lint facts | reported (round-3 follow-up) |
+| Round-3 Brier 0.0542 over 6 | `validation/round3/results/calibration.md` | round-3 calibration table; lint fact | reported |
 | One-kernel shortfall | `docs/layering-real-stack-results-round2.md` Environment; `docs/paper-layering-testbed.md` abstract/limits | explicit statement | carried as limit |
 | P13/P14 are prior art, not discoveries | `docs/prior-art-p13-p14.md` | RFC 6040/3715/3948, WireGuard thread, strongSwan, Linux source | disposition recorded |
 
@@ -48,7 +51,7 @@ human tags and submits.
 | H19 capacity boundary 0.767 | `common-mode-break-even.csv` | H19_interaction row | model check |
 | Per-seed pass fraction 1.000 | `common-mode-verdicts.csv`; `common-mode-per-seed.csv` | verdict rows | reported |
 | 3 Sep and 13 Nov events separate, verified | `docs/paper-common-mode.md` refs 15-21 | URLs fetched 14 Nov 2026 | reported |
-| Empirical outage literature | refs 22-28 | gunawi 2016, Talluri 2025, Paladugu 2026, provider corpora | reported; preprint labelled |
+| Empirical outage literature | refs 22-28 | gunawi 2016, Talluri 2025, Paladugu 2026, provider corpora | reported; preprint labelled; Paladugu DOI opened 16 Nov 2026 |
 
 ## Round 3 (P17)
 
@@ -69,6 +72,7 @@ human tags and submits.
 | Frame builder and analyser exist | `tools/build_postmortem_frame.py`, `tools/analyze_postmortems.py` | 22 synthetic tests | scaffold only |
 | No real coding by the agent | `study/README.md`; this audit | M8 is human | **NOT RUN (H)** |
 | C2 prompt committed | `docs/postmortem-coder-prompt.md` | model/version fields to fill | prepared, not used |
+| Contamination disclosure includes a vendor figure at E2's threshold | `docs/postmortem-study-predictions.md` sections 1 and 12 | Control Plane 2026 report: 20 of 62 configuration-or-deployment changes (32 %) | disclosed pre-freeze |
 
 ## Release package
 
@@ -86,9 +90,14 @@ human tags and submits.
 
 None in the claims above. The 2026 event sources (refs 15-21) were fetched on
 14 November 2026; the pre-2026 references 1-14 were not re-fetched for this
-release but no new claim depends on a changed version of them. If a reviewer
-finds a source that cannot be fetched, add it here and mark the claim
-`[unverified]`; do not silently drop it.
+release but no new claim depends on a changed version of them. The Paladugu 2026
+preprint (ref 24, DOI [10.5281/zenodo.23585116](https://doi.org/10.5281/zenodo.23585116))
+was opened on 16 November 2026 via its Zenodo record
+(`https://zenodo.org/records/23585116`): the record exists, is dated 22 October
+2026, is typed as a preprint, and its abstract states the 52/70, 28/52 and 10/11
+figures that Paper D cites, so that reference is verified rather than unverified.
+If a reviewer finds a source that cannot be fetched, add it here and mark the
+claim `[unverified]`; do not silently drop it.
 
 ## Not run, and why
 
