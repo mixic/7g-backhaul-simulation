@@ -17,8 +17,10 @@ one path with extra steps. We present a continuous-time Monte Carlo simulation o
 nine architectures under ten incident classes: 2,000 replications per cell
 (180,000 arm-runs) and 500 thirty-day campaigns, with common random numbers and
 with the hypotheses, thresholds, stochastic processes and decision rule frozen in
-version control before the engine existed. Every quantity is a simulated sample
-mean with a 95 % interval, not a stipulated arithmetic identity.
+version control before the engine existed. Every reported number is a simulated
+sample mean with a 95 % interval rather than a stipulated arithmetic identity;
+where the model defines a contrast exactly, the interval is zero and the paper
+says so.
 
 Under the frozen model the five checks hold, nominal and Bonferroni. Tenant
 isolation contains a tenant-shared gateway fault (99.20 points, interval
