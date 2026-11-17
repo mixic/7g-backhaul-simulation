@@ -160,7 +160,7 @@ are structural analogues, not reconstructions of a particular provider. The mode
 is flow-level: it computes capacity, congestion and dependency conjunction, not
 packets, queues, TCP behaviour or hardware. The failure rates and durations are
 stipulated priors consistent with the order of magnitude of the cited corpora,
-not fits to an operator; Section 5.11 and Section 7 say what that costs. Eight of
+not fits to an operator; Section 5.11 and Section 7 say what that costs. Four of
 the twelve criteria are deterministic contrasts in the model and therefore have
 zero-width intervals; the simulation cannot add variance to a quantity the model
 defines exactly. Security is not evaluated. The motivating outages are reported

@@ -264,9 +264,11 @@ verdict; it was made before any reported number was produced.
   with the order of magnitude of the cited corpora, not fits to an operator. The
   break-even and Sobol analyses describe the sensitivity to them; they do not
   remove it.
-- **Deterministic contrasts.** Eight of the twelve criteria are exact membership
-  tests in the structural model, so their intervals have zero width. The
-  simulation adds timing, duration, demand, capacity and fallback variability to
+- **Deterministic contrasts.** Four of the twelve criteria (H16b, H18a, H18b,
+  H19c) are exact membership tests in the structural model, so their intervals
+  have zero width; four more are deterministic unless a background failure
+  coincides with the window. The simulation adds timing, duration, demand,
+  capacity and fallback variability to
   the levels, the recovery behaviour, the campaign and the sensitivity; it cannot
   add variability to a contrast the model defines exactly.
 - **Flow-level.** No packet-level queueing, congestion control or TCP behaviour.
