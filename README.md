@@ -28,17 +28,20 @@ combined document, so each can be reviewed on its own terms:
   sustained CDR gap, zero-dimensional H₀ isolation rather than H₁ holes, and
   the burst-duration boundary that separates sustained attacks from flapping.
 - **Paper D — [`Markdown`](docs/paper-common-mode.md) · [`PDF`](docs/paper-common-mode.pdf) · [`short position`](docs/paper-common-mode-short.md) · [`short PDF`](docs/paper-common-mode-short.pdf)**:
-  *Beyond Tenant Isolation: A Flow-Level Testbed for Common-Mode Resilience in
-  Cloud-Dependent Backhaul.* Nine architectures over ten outage events and 30
-  paired seeds (2,700 runs). Tenant isolation contains a tenant gateway fault but
-  not a shared identity or AI failure; SRLG-disjoint multipath survives a conduit
+  *Beyond Tenant Isolation: A Monte Carlo Study of Common-Mode Resilience in
+  Cloud-Dependent Backhaul.* Nine architectures over ten incident classes, 2,000
+  paired replications per cell (180,000 arm-runs) and 500 thirty-day campaigns,
+  with the stochastic model, thresholds and decision rule frozen before the engine
+  existed. Tenant isolation contains a tenant gateway fault (99.20 %) but not a
+  shared identity or AI failure; SRLG-disjoint multipath survives a conduit
   failure that a three-path shared-conduit set does not; a one-way boundary with a
   tested fallback holds 90 % under an AI failure; the isolation-multipath
-  interaction is +44.4 points; and a global cooperative controller is itself a
-  common-mode carrier. The comparison is flow-level and stipulated, not a
-  production measurement. A one-factor sensitivity analysis reports break-even
-  values for every stipulated constant (e.g. H18 fails below 0.85 local-policy
-  efficiency); the paper says explicitly that these are model checks, not
+  interaction is +41.51 points; and a global cooperative controller is itself a
+  common-mode carrier. Over 30 days the shared control plane accounts for 61–98 %
+  of dependency-driven unavailability for the arms that require it. The
+  comparison is simulated, not a production measurement; a break-even analysis and
+  a Sobol decomposition report how far each conclusion is from its stipulated
+  operating point, and the paper says explicitly that these are model checks, not
   empirical support.
 
 ### Paper status at 0.2.0
@@ -581,42 +584,56 @@ per-seed CSVs are in `figures/crmr_*`; the frozen protocol is
 [`simulation/crmr.py`](simulation/crmr.py) and
 [`simulation/crmr_scenario.py`](simulation/crmr_scenario.py).
 
-## Isolation and multipath under common-mode failure (H16–H20)
+## Isolation and multipath under common-mode failure (MC-H16–MC-H20)
 
-A flow-level testbed for the two resilience axes: nine arms (concentration,
-shared-fate multipath, SRLG-disjoint multipath, tenant isolation, independent
-control, one-way boundary with tested or untested fallback, global cooperative
-controller, and an isolation-only fallback arm) over ten outage events — link,
-conduit SRLG, full backhaul cut, provider control plane, identity, AI endpoint,
-tenant gateway, controller plus link, and AI plus link. 30 paired seeds, 2,700
-runs.
+A continuous-time Monte Carlo simulation for the two resilience axes: nine arms
+(concentration, shared-fate multipath, SRLG-disjoint multipath, tenant isolation,
+independent control, one-way boundary with tested or untested fallback, global
+cooperative controller, and an isolation-only fallback arm) over ten incident
+classes — link, conduit SRLG, full backhaul cut, provider control plane, identity,
+AI endpoint, tenant gateway, controller plus link, and AI plus link. 2,000 paired
+replications per cell (180,000 arm-runs) plus 500 thirty-day campaigns; every
+dependency fails and recovers as a stochastic process, demand and capacity are
+stochastic processes, and the decision rule is a pre-registered 95 % interval.
 
-All five hypotheses are supported under the frozen scenario:
+All five hypotheses pass under the frozen model, nominal and Bonferroni:
 
 - **H16** — tenant isolation turns a tenant-shared gateway failure from 0 % to
-  **100 %**, but does nothing for an identity failure (0 % vs 0 %).
+  **99.20 %** [98.82, 99.54], but does nothing for an identity failure (0 % vs 0 %).
 - **H17** — three paths over one conduit fail together (A2: **0 %** under the
-  conduit failure), while three SRLG-disjoint paths survive (**100 %**); under an
-  independent link failure multipath is 100 % and the single path is 0 %.
-- **H18** — a one-way boundary with a tested fallback holds **90 %** under an AI
-  control-plane failure against 0 % without it, at a 10-point normal-operation
+  conduit failure), while three SRLG-disjoint paths survive (**99.08 %**); under an
+  independent link failure multipath is 99.04 % and the single path is 0 %.
+- **H18** — a one-way boundary with a tested fallback holds **90.00 %** under an AI
+  control-plane failure against 0 % without it, at a 9.81-point normal-operation
   cost.
-- **H19** — the isolation-by-multipath interaction is **+44.38 points** under the
-  combined AI + link failure (A6 90 %, A9 45.6 %, A3 0 %, A1 0 %).
+- **H19** — the isolation-by-multipath interaction is **+41.51 points**
+  [41.27, 41.75] under the combined AI + link failure (A6 89.98 %, A9 48.48 %,
+  A3 0 %, A1 0 %).
 - **H20** — the global cooperative controller is a new common-mode carrier: A5
-  (local) is 100 % and A8 (global) is 0 % under controller + primary-link
+  (local) is 99.64 % and A8 (global) is 0 % under controller + primary-link
   failure.
 
-Results: [docs/common-mode-results.md](docs/common-mode-results.md). Frozen
-protocol: [docs/common-mode-predictions.md](docs/common-mode-predictions.md).
+Over a 30-day campaign the shared control plane accounts for 61–98 % of
+dependency-driven unavailability for the arms that require it and 0 % for the
+one-way arms; congestion accounts for most of the remaining loss on the
+single-path arms.
+
+Results: [docs/common-mode-mc-results.md](docs/common-mode-mc-results.md). Frozen
+Monte Carlo protocol: [docs/common-mode-mc-predictions.md](docs/common-mode-mc-predictions.md).
+Deterministic reference results: [docs/common-mode-results.md](docs/common-mode-results.md);
+reference protocol: [docs/common-mode-predictions.md](docs/common-mode-predictions.md).
 Argument: [docs/isolation-concentration-multipath.md](docs/isolation-concentration-multipath.md).
 Research note: [docs/common-mode-resilience.md](docs/common-mode-resilience.md).
 Paper: [docs/paper-common-mode.md](docs/paper-common-mode.md) ·
 [PDF](docs/paper-common-mode.pdf).
 
 ```bash
-py -3 tools/benchmark_common_mode.py --seeds 30
-py -3 -m unittest tests.test_common_mode -v
+py -3 tools/benchmark_common_mode_mc.py --replications 2000
+py -3 tools/benchmark_common_mode_mc.py --sensitivity --sensitivity-points 25 --sensitivity-replications 500
+py -3 tools/benchmark_common_mode_mc.py --sobol
+py -3 tools/benchmark_common_mode_mc.py --two-factor
+py -3 tools/make_common_mode_mc_figures.py
+py -3 -m unittest tests.test_common_mode_mc -v
 ```
 
 The simulator is [`simulation/common_mode.py`](simulation/common_mode.py), the
@@ -868,10 +885,12 @@ The honest verdicts:
 │   ├── paper-crmr.tex            # Paper C: complex-rotation manifold routing
 │   ├── paper-crmr.pdf            # Paper C PDF (pdfLaTeX)
 │   ├── paper-common-mode.md      # Paper D: isolation/multipath common-mode study
-│   ├── paper-common-mode.pdf     # Paper D PDF (pandoc + pdfLaTeX)
+│   ├── paper-common-mode.pdf     # Paper D PDF (pandoc + XeLaTeX)
 │   ├── isolation-concentration-multipath.md # Position paper: one risk, two mitigations
-│   ├── common-mode-predictions.md # Frozen H16-H20 protocol and scenario
-│   ├── common-mode-results.md    # H16-H20 30-seed flow-level results
+│   ├── common-mode-mc-predictions.md # Frozen Monte Carlo protocol (MC-H16-MC-H20)
+│   ├── common-mode-mc-results.md # Monte Carlo results, campaign and sensitivity
+│   ├── common-mode-predictions.md # Frozen H16-H20 protocol and scenario (reference model)
+│   ├── common-mode-results.md    # H16-H20 30-seed flow-level reference results
 │   ├── common-mode-testbed.md    # Run and extend the isolation/multipath testbed
 │   ├── common-mode-resilience.md # Research note: isolation and multipath axes
 │   ├── kinematic-fabric.md       # Role-fluid kinematic fabric in ns-3

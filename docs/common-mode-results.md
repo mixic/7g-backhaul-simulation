@@ -5,6 +5,13 @@ in [`common-mode-predictions.md`](common-mode-predictions.md) at commit
 `1c781f3`, before `simulation/common_mode.py` existed. This document interprets
 the 30-seed run; it does not change the frozen text.
 
+> **This is the reference-model study.** The primary study is now the
+> continuous-time Monte Carlo simulation in
+> [`common-mode-mc-results.md`](common-mode-mc-results.md) (protocol frozen at
+> commit `6c8d320`). The deterministic results below are the zero-variance limit
+> of that engine and are reported alongside it in Section 5.9 of Paper D; they are
+> not superseded as a record.
+
 **One-line result:** under the frozen scenario H16-H20 all pass as model checks.
 Tenant isolation contains a tenant-shared fault (100 % vs 0 %) but not a global
 identity failure (0 % vs 0 %); SRLG-disjoint multipath survives a conduit failure

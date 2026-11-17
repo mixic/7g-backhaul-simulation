@@ -68,13 +68,14 @@ OLD_RULE_WORDING = "survives a rewrite iff"
 
 # Paper-D headline numbers that must survive a rewrite.  These are not computed
 # from a CSV in this lint because the common-mode summary is a run artifact; the
-# values are fixed by the frozen 9 x 10 x 30 protocol and the deterministic
-# scenario.  M6 re-derives and re-checks them against the committed sensitivity
-# table; this gate catches a stale abstract.
+# values are fixed by the frozen Monte Carlo protocol (9 arms x 10 events x 2,000
+# replications) and by the frozen scenario.  The totals and intervals are checked
+# against the committed verdict table by hand at each release; this gate catches a
+# stale abstract.
 PAPER_D_NUMBERS: tuple[tuple[str, str], ...] = (
-    ("2,700 runs", "the frozen protocol is 9 arms x 10 events x 30 seeds"),
-    ("44.38", "H19 interaction under the frozen scenario"),
-    ("34.5", "tested minus untested fallback under the backhaul cut"),
+    ("180,000", "the frozen protocol is 9 arms x 10 events x 2,000 replications"),
+    ("41.51", "H19 interaction under the frozen scenario"),
+    ("30.52", "tested minus untested fallback under the backhaul cut"),
 )
 
 

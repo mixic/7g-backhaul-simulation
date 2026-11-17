@@ -1,0 +1,43 @@
+parameter,current_value,unit,criterion,criterion_label,threshold,comparator,current_metric,current_pass,direction,break_even_value,break_even_metric,distance
+one_way_efficiency,0.9,fraction,H18_normal_cost,H18: normal-operation cost of the one-way boundary <= 15 points,15.0,le,9.7775,True,decreasing,0.847775,15.0,0.052225
+one_way_efficiency,0.9,fraction,H18_ai_level,H18: A6 level under the AI failure >= 80 %,80.0,ge,90.0,True,decreasing,0.8,80.0,0.1
+one_way_efficiency,0.9,fraction,H18_ai_gain,H18: A6 - A5 under the AI failure >= 50 points,50.0,ge,90.0,True,none in range,,,
+one_way_efficiency,0.9,fraction,H19_interaction,H19: (A6 - A3) - (A9 - A1) under AI + link >= 20 points,20.0,ge,41.1975,True,decreasing,0.688011,20.0,0.211989
+one_way_efficiency,0.9,fraction,H19_a6_level,H19: A6 level under AI + link >= 80 %,80.0,ge,89.9941,True,decreasing,0.800052,80.0,0.099948
+one_way_efficiency,0.9,fraction,fallback_gap,tested fallback beats untested under the backhaul cut (gap > 0),0.0,ge,30.7542,True,none in range,,,
+fallback_tested_probability,0.98,fraction,H18_normal_cost,H18: normal-operation cost of the one-way boundary <= 15 points,15.0,le,9.7775,True,none in range,,,
+fallback_tested_probability,0.98,fraction,H18_ai_level,H18: A6 level under the AI failure >= 80 %,80.0,ge,90.0,True,none in range,,,
+fallback_tested_probability,0.98,fraction,H18_ai_gain,H18: A6 - A5 under the AI failure >= 50 points,50.0,ge,90.0,True,none in range,,,
+fallback_tested_probability,0.98,fraction,H19_interaction,H19: (A6 - A3) - (A9 - A1) under AI + link >= 20 points,20.0,ge,41.1975,True,none in range,,,
+fallback_tested_probability,0.98,fraction,H19_a6_level,H19: A6 level under AI + link >= 80 %,80.0,ge,89.9941,True,none in range,,,
+fallback_tested_probability,0.98,fraction,fallback_gap,tested fallback beats untested under the backhaul cut (gap > 0),0.0,ge,30.7542,True,decreasing,0.367502,0.0,0.612498
+fallback_untested_probability,0.6,fraction,H18_normal_cost,H18: normal-operation cost of the one-way boundary <= 15 points,15.0,le,9.7775,True,none in range,,,
+fallback_untested_probability,0.6,fraction,H18_ai_level,H18: A6 level under the AI failure >= 80 %,80.0,ge,90.0,True,none in range,,,
+fallback_untested_probability,0.6,fraction,H18_ai_gain,H18: A6 - A5 under the AI failure >= 50 points,50.0,ge,90.0,True,none in range,,,
+fallback_untested_probability,0.6,fraction,H19_interaction,H19: (A6 - A3) - (A9 - A1) under AI + link >= 20 points,20.0,ge,41.1975,True,none in range,,,
+fallback_untested_probability,0.6,fraction,H19_a6_level,H19: A6 level under AI + link >= 80 %,80.0,ge,89.9941,True,none in range,,,
+fallback_untested_probability,0.6,fraction,fallback_gap,tested fallback beats untested under the backhaul cut (gap > 0),0.0,ge,30.7542,True,none in range,,,
+fallback_tested_delay_s,2.0,s,H18_normal_cost,H18: normal-operation cost of the one-way boundary <= 15 points,15.0,le,9.7775,True,none in range,,,
+fallback_tested_delay_s,2.0,s,H18_ai_level,H18: A6 level under the AI failure >= 80 %,80.0,ge,90.0,True,none in range,,,
+fallback_tested_delay_s,2.0,s,H18_ai_gain,H18: A6 - A5 under the AI failure >= 50 points,50.0,ge,90.0,True,none in range,,,
+fallback_tested_delay_s,2.0,s,H19_interaction,H19: (A6 - A3) - (A9 - A1) under AI + link >= 20 points,20.0,ge,41.1975,True,none in range,,,
+fallback_tested_delay_s,2.0,s,H19_a6_level,H19: A6 level under AI + link >= 80 %,80.0,ge,89.9941,True,none in range,,,
+fallback_tested_delay_s,2.0,s,fallback_gap,tested fallback beats untested under the backhaul cut (gap > 0),0.0,ge,30.7542,True,none in range,,,
+fallback_untested_delay_s,8.0,s,H18_normal_cost,H18: normal-operation cost of the one-way boundary <= 15 points,15.0,le,9.7775,True,none in range,,,
+fallback_untested_delay_s,8.0,s,H18_ai_level,H18: A6 level under the AI failure >= 80 %,80.0,ge,90.0,True,none in range,,,
+fallback_untested_delay_s,8.0,s,H18_ai_gain,H18: A6 - A5 under the AI failure >= 50 points,50.0,ge,90.0,True,none in range,,,
+fallback_untested_delay_s,8.0,s,H19_interaction,H19: (A6 - A3) - (A9 - A1) under AI + link >= 20 points,20.0,ge,41.1975,True,none in range,,,
+fallback_untested_delay_s,8.0,s,H19_a6_level,H19: A6 level under AI + link >= 80 %,80.0,ge,89.9941,True,none in range,,,
+fallback_untested_delay_s,8.0,s,fallback_gap,tested fallback beats untested under the backhaul cut (gap > 0),0.0,ge,30.7542,True,none in range,,,
+fallback_tested_capacity_gbps,0.5,Gbps,H18_normal_cost,H18: normal-operation cost of the one-way boundary <= 15 points,15.0,le,9.7775,True,none in range,,,
+fallback_tested_capacity_gbps,0.5,Gbps,H18_ai_level,H18: A6 level under the AI failure >= 80 %,80.0,ge,90.0,True,none in range,,,
+fallback_tested_capacity_gbps,0.5,Gbps,H18_ai_gain,H18: A6 - A5 under the AI failure >= 50 points,50.0,ge,90.0,True,none in range,,,
+fallback_tested_capacity_gbps,0.5,Gbps,H19_interaction,H19: (A6 - A3) - (A9 - A1) under AI + link >= 20 points,20.0,ge,41.1975,True,increasing,0.718615,20.0,0.218615
+fallback_tested_capacity_gbps,0.5,Gbps,H19_a6_level,H19: A6 level under AI + link >= 80 %,80.0,ge,89.9941,True,none in range,,,
+fallback_tested_capacity_gbps,0.5,Gbps,fallback_gap,tested fallback beats untested under the backhaul cut (gap > 0),0.0,ge,30.7542,True,decreasing,0.185568,0.0,0.314432
+fallback_untested_capacity_gbps,0.3,Gbps,H18_normal_cost,H18: normal-operation cost of the one-way boundary <= 15 points,15.0,le,9.7775,True,none in range,,,
+fallback_untested_capacity_gbps,0.3,Gbps,H18_ai_level,H18: A6 level under the AI failure >= 80 %,80.0,ge,90.0,True,none in range,,,
+fallback_untested_capacity_gbps,0.3,Gbps,H18_ai_gain,H18: A6 - A5 under the AI failure >= 50 points,50.0,ge,90.0,True,none in range,,,
+fallback_untested_capacity_gbps,0.3,Gbps,H19_interaction,H19: (A6 - A3) - (A9 - A1) under AI + link >= 20 points,20.0,ge,41.1975,True,none in range,,,
+fallback_untested_capacity_gbps,0.3,Gbps,H19_a6_level,H19: A6 level under AI + link >= 80 %,80.0,ge,89.9941,True,none in range,,,
+fallback_untested_capacity_gbps,0.3,Gbps,fallback_gap,tested fallback beats untested under the backhaul cut (gap > 0),0.0,ge,30.7542,True,increasing,0.833202,0.0,0.533202

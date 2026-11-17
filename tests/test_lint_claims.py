@@ -150,9 +150,9 @@ class LintTests(unittest.TestCase):
         self.assertIn("source count P13-P16", self.problems(facts=facts))
 
     def test_missing_paper_d_number_is_caught(self) -> None:
-        text = self.paper_d.replace("44.38", "44.4")
+        text = self.paper_d.replace("41.51", "41.5")
         self.assertNotEqual(text, self.paper_d)
-        self.assertIn("expected number '44.38'", self.problems(paper_d=text))
+        self.assertIn("expected number '41.51'", self.problems(paper_d=text))
 
 
 if __name__ == "__main__":

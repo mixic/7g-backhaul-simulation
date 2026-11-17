@@ -7,6 +7,16 @@ date: "14 November 2026"
 
 ## Abstract
 
+> **Provenance note (17 November 2026).** This position piece summarises the
+> deterministic flow-level reference study, frozen at commit `1c781f3`. The
+> primary study is now the continuous-time Monte Carlo simulation in
+> [`paper-common-mode.md`](paper-common-mode.md), frozen at commit `6c8d320` and
+> reported in [`common-mode-mc-results.md`](common-mode-mc-results.md). The
+> numbers below are the reference model's zero-variance values; the simulated
+> estimates and their intervals differ in the levels and in the A9/A6 trade (see
+> Section 5.9 of the Monte Carlo paper). The argument and the five model checks
+> are unchanged.
+
 Cloud isolation cuts tenant-to-tenant, workload-to-host and region-to-region. It
 does not cut a provider control plane, identity service or AI endpoint that every
 deployment behind it shares. This short paper states the resulting position,

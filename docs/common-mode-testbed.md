@@ -1,13 +1,17 @@
 # Common-mode testbed guide
 
-**Status: implemented.** The flow-level testbed is in
-[`simulation/common_mode.py`](../simulation/common_mode.py); the frozen protocol
-is [`common-mode-predictions.md`](common-mode-predictions.md) and the 30-seed
-results are in [`common-mode-results.md`](common-mode-results.md).
+**Status: implemented.** The primary study is the continuous-time Monte Carlo
+engine in [`simulation/common_mode_mc.py`](../simulation/common_mode_mc.py), frozen
+in [`common-mode-mc-predictions.md`](common-mode-mc-predictions.md) and reported in
+[`common-mode-mc-results.md`](common-mode-mc-results.md). The deterministic
+flow-level reference model is in [`simulation/common_mode.py`](../simulation/common_mode.py),
+frozen in [`common-mode-predictions.md`](common-mode-predictions.md) and reported in
+[`common-mode-results.md`](common-mode-results.md). Sections 1-7 below describe the
+reference model; Section 8 describes the Monte Carlo engine.
 
 This guide is for running and extending the testbed. The scenario constants are
-frozen for the reported experiment; changing them requires a new prediction file
-and a new results section, not an edit to the frozen one.
+frozen for the reported experiments; changing them requires a new prediction file
+and a new results section, not an edit to a frozen one.
 
 ## 1. What is in the testbed
 
@@ -145,3 +149,57 @@ listed as the next step in
 - Use `build_seed_inputs()`; never give arms different seeds or events.
 - Report refutations and deviations, not only passes.
 - Do not describe the flow-level result as a measurement of a production network.
+
+## 8. The Monte Carlo engine
+
+The primary study samples the failure processes instead of evaluating them. The
+engine is [`simulation/common_mode_mc.py`](../simulation/common_mode_mc.py); the
+frozen protocol is
+[`common-mode-mc-predictions.md`](common-mode-mc-predictions.md) at commit
+`6c8d320`; the benchmark is
+[`tools/benchmark_common_mode_mc.py`](../tools/benchmark_common_mode_mc.py). The
+structural scenario --- topology, arms, path selection, incident targets, cost
+index --- is imported from `simulation/common_mode.py`, so the two engines cannot
+drift apart.
+
+| Piece | Role |
+|---|---|
+| `build_units()` | the 35 failure processes: 3 shared control, gateway, controller, 3 provider control planes, 3 provider nodes, 18 edge links, 3 conduits, 3 provider-cloud links |
+| `sample_replication()` | one replication's dependency timeline and injected incident |
+| `sample_processes()` | demand, edge-link modulation and fallback draws on the interval grid |
+| `incident_runs()` | E1: samples each replication once and runs every arm on it |
+| `campaign_runs()` | E2: 30-day campaigns with the availability decomposition |
+| `tools/benchmark_common_mode_mc.py` | E1-E5 and the CSVs |
+| `tools/mc_stats.py` | percentile bootstrap intervals and sign-flip permutation tests |
+| `tools/make_common_mode_mc_figures.py` | the paper figures, drawn from the committed tables |
+
+Run the reported study:
+
+```bash
+py -3 tools/benchmark_common_mode_mc.py --replications 2000
+py -3 tools/benchmark_common_mode_mc.py --sensitivity --sensitivity-points 25 --sensitivity-replications 500
+py -3 tools/benchmark_common_mode_mc.py --sobol
+py -3 tools/benchmark_common_mode_mc.py --two-factor
+py -3 tools/make_common_mode_mc_figures.py
+py -3 -m unittest tests.test_common_mode_mc -v
+```
+
+A `--quick` run writes a small smoke result to
+`output/common-mode-mc-smoke/` without touching the committed tables. The full
+run takes a few minutes: E1 dominates (180,000 arm-runs), E3 takes the longest
+because it re-runs 175 grid points at 500 replications each.
+
+The stochastic constants live in `simulation.common_mode_mc.MCParams`; a
+sensitivity run passes a modified instance with `dataclasses.replace`, so the
+frozen defaults are never mutated. The failure-process table is
+`process_specs()`, the incident durations are `INCIDENT_MEDIAN_S`, and the
+fallback profiles are `fallback_profile()`. To add an arm, event class or
+mechanism, add it to the reference model first (Section 3 and Section 4 above),
+then to the engine, then freeze a new Monte Carlo protocol before running it; the
+existing commitments do not cover a new arm or event.
+
+Two properties are worth preserving when extending the engine. Sampling must stay
+arm-independent --- all random inputs are drawn per replication and shared by every
+arm --- or the paired differences stop being paired. And the availability integral
+must stay time-weighted over the same interval grid for every arm, or the campaign
+decomposition stops summing to the total.

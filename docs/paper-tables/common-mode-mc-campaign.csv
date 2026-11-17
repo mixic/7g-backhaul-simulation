@@ -1,0 +1,10 @@
+arm,label,availability_ss_mean_pct,availability_ss_ci95_pct,availability_ss_sd_pct,policy_loss_pct,congestion_loss_pct,dependency_loss_pct,shared_attrib,slo_breach_days,shared_incidents,replications
+A1,Concentration,94.2629,0.117,1.3349,0.0,4.6981,1.039,0.6111,21.472,4.262,500
+A2,"Multipath, shared fate",99.1599,0.0455,0.5196,0.0,0.0,0.8401,0.8123,4.58,4.262,500
+A3,"Multipath, SRLG-disjoint",99.1816,0.0453,0.517,0.0,0.0,0.8184,0.8452,4.426,4.262,500
+A4,A3 + tenant isolation,99.2855,0.0434,0.495,0.0,0.0,0.7145,0.9839,3.67,4.262,500
+A5,A4 + independent control,99.7505,0.0254,0.2903,0.0,0.0,0.2495,0.7539,1.308,4.262,500
+A6,A5 + one-way boundary + tested fallback,89.9999,0.0001,0.0006,9.8435,0.0,0.1566,0.0,30.0,4.262,500
+A7,A6 with untested fallback,89.9999,0.0001,0.0006,9.8435,0.0,0.1566,0.0,30.0,4.262,500
+A8,A5 + global cooperative controller,99.7454,0.0254,0.2903,0.0,0.0,0.2546,0.7312,1.3277,4.262,500
+A9,A1 + isolation + tested fallback,85.6351,0.098,1.1184,9.8435,4.2283,0.293,0.0,30.0,4.262,500

@@ -1,0 +1,18 @@
+key,hypothesis,criterion,event,arm,reference_arm,comparator,threshold,estimate_pct,value_pct,ci95_low_pct,ci95_high_pct,bonferroni_low_pct,bonferroni_high_pct,p_value,pass_fraction,verdict,verdict_bonferroni,replications
+H16a,H16,tenant isolation contains a tenant-shared fault,tenant_gw,A4,A3,ge,50.0,99.2001,99.2001,98.8184,99.5362,98.6454,99.6646,0.0,0.991,PASS,PASS,2000
+H16b,H16,tenant isolation does not contain a shared control-plane fault,idp,A4,A3,abs_le,5.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,PASS,PASS,2000
+H17a,H17,SRLG-disjoint multipath under a conduit failure,srlg,A3,A2,ge,20.0,99.0802,99.0802,98.6712,99.4445,98.4679,99.5867,0.0,0.993,PASS,PASS,2000
+H17b,H17,multipath under an independent link failure,link,A2,A1,ge,50.0,99.0413,99.0413,98.6178,99.4111,98.4369,99.5563,0.0,0.99,PASS,PASS,2000
+H18a,H18,one-way boundary survives an AI control-plane failure,ai,A6,A5,ge,50.0,90.0,90.0,90.0,90.0,90.0,90.0,0.0,1.0,PASS,PASS,2000
+H18b,H18,fallback restores at least 80 % under an AI failure,ai,A6,,ge,80.0,90.0,90.0,90.0,90.0,90.0,90.0,0.0,1.0,PASS,PASS,2000
+H18c,H18,normal-operation cost of isolation is at most 15 points,none,A5,A6,le,15.0,9.8089,9.8089,9.7528,9.859,9.7233,9.8799,0.0,1.0,PASS,PASS,2000
+H19a,H19,super-additive interaction under AI + link failure,ai_link,A6,,ge,20.0,41.5058,41.5058,41.2721,41.7487,41.1512,41.849,0.0,1.0,PASS,PASS,2000
+H19b,H19,combined arm level under AI + link failure,ai_link,A6,,ge,80.0,89.9829,89.9829,89.9679,89.9947,89.9599,89.9978,0.0,1.0,PASS,PASS,2000
+H19c,H19,isolation-only arm level under AI + link failure,ai_link,A3,,le,20.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,PASS,PASS,2000
+H20a,H20,global controller failure erases the multipath gain,controller_link,A5,A8,ge,50.0,99.6389,99.6389,99.3783,99.8563,99.2354,99.9348,0.0,0.9965,PASS,PASS,2000
+H20b,H20,global controller does not change normal operation,none,A5,A8,abs_le,5.0,0.0061,0.0061,0.0035,0.009,0.0027,0.0108,0.0,1.0,PASS,PASS,2000
+H16,H16,all criteria of the hypothesis,"idp, tenant_gw","A4, A4",,all,,,,,,,,,0.991,PASS,PASS,2000
+H17,H17,all criteria of the hypothesis,"link, srlg","A3, A2",,all,,,,,,,,,0.99,PASS,PASS,2000
+H18,H18,all criteria of the hypothesis,"ai, none","A6, A6, A5",,all,,,,,,,,,1.0,PASS,PASS,2000
+H19,H19,all criteria of the hypothesis,ai_link,"A6, A6, A3",,all,,,,,,,,,1.0,PASS,PASS,2000
+H20,H20,all criteria of the hypothesis,"controller_link, none","A5, A5",,all,,,,,,,,,0.9965,PASS,PASS,2000
