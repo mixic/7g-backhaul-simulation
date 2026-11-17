@@ -102,8 +102,13 @@ def _float(row: dict[str, str], key: str) -> float:
 
 def _save(figure: plt.Figure, name: str, output_dir: Path) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
+    # The PDF metadata timestamp would make the artifact change on every run
+    # even when the data did not; drop it so the figures are reproducible.
     figure.savefig(output_dir / f"{name}.png")
-    figure.savefig(output_dir / f"{name}.pdf")
+    figure.savefig(
+        output_dir / f"{name}.pdf",
+        metadata={"CreationDate": None, "ModDate": None},
+    )
     plt.close(figure)
     print(f"wrote {output_dir / (name + '.png')}")
 
@@ -190,10 +195,7 @@ def figure_campaign(table_dir: Path, output_dir: Path) -> None:
     policy = [_float(rows[arm], "policy_loss_pct") for arm in arms]
     congestion = [_float(rows[arm], "congestion_loss_pct") for arm in arms]
     dependency = [_float(rows[arm], "dependency_loss_pct") for arm in arms]
-    availability = [_float(rows[arm], "availability_ss_mean_pct") for arm in arms]
-    half = [_float(rows[arm], "availability_ss_ci95_pct") for arm in arms]
     attribution = [_float(rows[arm], "shared_attrib") for arm in arms]
-
     figure, (left, right) = plt.subplots(1, 2, figsize=(12.6, 4.4), gridspec_kw={"width_ratios": [3, 2]})
     positions = np.arange(len(arms))
     left.bar(positions, policy, 0.62, label="policy efficiency (one-way 0.9)", color="#d9a441")
@@ -206,8 +208,8 @@ def figure_campaign(table_dir: Path, output_dir: Path) -> None:
         label="dependency failures",
         color="#b22222",
     )
-    for position, total, value, error in zip(
-        positions, np.array(policy) + congestion + dependency, availability, half
+    for position, total in zip(
+        positions, np.array(policy) + congestion + dependency
     ):
         left.text(
             position,
@@ -218,12 +220,9 @@ def figure_campaign(table_dir: Path, output_dir: Path) -> None:
             fontsize=7.5,
         )
     left.set_xticks(positions)
-    left.set_xticklabels(
-        [f"{arm}\n{value:.1f}\u00b1{error:.1f}" for arm, value, error in zip(arms, availability, half)],
-        fontsize=8,
-    )
+    left.set_xticklabels(arms, fontsize=8)
     left.set_ylabel("percent of the 30-day campaign lost")
-    left.set_title("Unavailability and its decomposition (tick labels: availability, %)")
+    left.set_title("Unavailability decomposition (availability in the caption)")
     left.legend(loc="upper left", ncol=2)
     left.grid(axis="y", alpha=0.25)
     left.set_ylim(0, max(np.array(policy) + congestion + dependency) * 1.35)

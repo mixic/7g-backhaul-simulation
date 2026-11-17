@@ -725,7 +725,7 @@ isolation-only control.
 during the incident, %, 2,000 replications).**
 
 | Arm | Normal | Tenant gw. | Identity | AI | AI + link | Cut | Cost |
-|---|---:|---:|---:|---:|---:|---:|---:|
+|:--|------:|--------:|--------:|----:|-------:|---:|------:|
 | A1 | 92.58 | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | 0.50 |
 | A2 | 99.24 | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | 1.50 |
 | A3 | 99.25 | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | 1.50 |
@@ -764,20 +764,24 @@ a price.
 
 **Table 4. Frozen hypotheses and model checks (2,000 paired replications).**
 
-| Criterion | Quantity | Estimate | 95 % interval | p | Pass fraction | Verdict | Bonferroni |
-|---|---|---:|---|---:|---:|---|---|
-| H16a | A4 − A3, `tenant_gw` | 99.20 | [98.82, 99.54] | < 0.0001 | 0.991 | PASS | PASS |
-| H16b | abs(A4 − A3), `idp` | 0.00 | [0.00, 0.00] | < 0.0001 | 1.000 | PASS | PASS |
-| H17a | A3 − A2, `srlg` | 99.08 | [98.67, 99.44] | < 0.0001 | 0.993 | PASS | PASS |
-| H17b | A2 − A1, `link` | 99.04 | [98.62, 99.41] | < 0.0001 | 0.990 | PASS | PASS |
-| H18a | A6 − A5, `ai` | 90.00 | [90.00, 90.00] | < 0.0001 | 1.000 | PASS | PASS |
-| H18b | A6 level, `ai` | 90.00 | [90.00, 90.00] | < 0.0001 | 1.000 | PASS | PASS |
-| H18c | A5 − A6, `none` | 9.81 | [9.75, 9.86] | < 0.0001 | 1.000 | PASS | PASS |
-| H19a | interaction, `ai_link` | 41.51 | [41.27, 41.75] | < 0.0001 | 1.000 | PASS | PASS |
-| H19b | A6 level, `ai_link` | 89.98 | [89.97, 89.99] | < 0.0001 | 1.000 | PASS | PASS |
-| H19c | A3 level, `ai_link` | 0.00 | [0.00, 0.00] | < 0.0001 | 1.000 | PASS | PASS |
-| H20a | A5 − A8, `controller_link` | 99.64 | [99.38, 99.86] | < 0.0001 | 0.997 | PASS | PASS |
-| H20b | abs(A5 − A8), `none` | 0.01 | [0.00, 0.01] | < 0.0001 | 1.000 | PASS | PASS |
+| Crit. | Quantity | Estimate | 95 % interval | Pass | Verdict |
+|:------|:--------------------------|--------:|:-----------------|-----:|:--------|
+| H16a | A4−A3, `tenant_gw` | 99.20 | [98.82, 99.54] | 0.991 | PASS |
+| H16b | abs(A4−A3), `idp` | 0.00 | [0.00, 0.00] | 1.000 | PASS |
+| H17a | A3−A2, `srlg` | 99.08 | [98.67, 99.44] | 0.993 | PASS |
+| H17b | A2−A1, `link` | 99.04 | [98.62, 99.41] | 0.990 | PASS |
+| H18a | A6−A5, `ai` | 90.00 | [90.00, 90.00] | 1.000 | PASS |
+| H18b | A6 level, `ai` | 90.00 | [90.00, 90.00] | 1.000 | PASS |
+| H18c | A5−A6, `none` | 9.81 | [9.75, 9.86] | 1.000 | PASS |
+| H19a | interaction, `ai_link` | 41.51 | [41.27, 41.75] | 1.000 | PASS |
+| H19b | A6 level, `ai_link` | 89.98 | [89.97, 89.99] | 1.000 | PASS |
+| H19c | A3 level, `ai_link` | 0.00 | [0.00, 0.00] | 1.000 | PASS |
+| H20a | A5−A8, `controller_link` | 99.64 | [99.38, 99.86] | 0.997 | PASS |
+| H20b | abs(A5−A8), `none` | 0.01 | [0.00, 0.01] | 1.000 | PASS |
+
+The two-sided permutation p-value is below 0.0001 for every criterion, and every
+verdict is unchanged at the Bonferroni level `0.05/12`; the full table, with both
+interval levels, is in `docs/paper-tables/common-mode-mc-verdicts.csv`.
 
 H16, H17, H18, H19 and H20 all pass, and the verdicts do not depend on the
 multiplicity adjustment. The pass fractions are 0.990-1.000; the criteria below
@@ -798,19 +802,21 @@ side for the quantities a reader is most likely to compare.
 
 **Table 5. The deterministic reference and the Monte Carlo simulation.**
 
-| Quantity | Reference | Simulation | Difference | Cause |
-|---|---:|---:|---:|---|
-| A1 normal availability | 100.00 | 92.58 | −7.42 | diurnal peak exceeds one path's usable capacity |
+| Quantity | Ref. | MC | Diff. | Cause |
+|:-------------------------|------:|-----:|------:|:--------------------------------|
+| A1 normal availability | 100.00 | 92.58 | −7.42 | diurnal peak exceeds one path |
 | A2 normal availability | 100.00 | 99.24 | −0.76 | background shared-control failures |
 | A5 normal availability | 100.00 | 99.81 | −0.19 | background AI/identity failures |
 | A6 normal availability | 90.00 | 90.00 | 0.00 | three paths are capacity-abundant |
-| A9 normal availability | 90.00 | 84.05 | −5.95 | one path is capacity-limited before the 0.9 boundary |
+| A9 normal availability | 90.00 | 84.05 | −5.95 | one path limited before the 0.9 boundary |
 | A3 under `srlg` | 100.00 | 99.08 | −0.92 | background failures in the window |
-| A6 under `ai` | 90.00 | 90.00 | 0.00 | the one-way boundary is the binding mechanism |
-| A6 under `backhaul_cut` | 45.62 | 48.59 | +2.96 | the reference averaged the 2 s delay over the window; the simulation weights the fallback by demand |
-| A7 under `backhaul_cut` | 11.11 | 18.07 | +6.96 | same, and the demand-weighted fallback fraction is not the activation-rate product |
+| A6 under `ai` | 90.00 | 90.00 | 0.00 | the boundary is the binding mechanism |
+| A6 under `backhaul_cut` | 45.62 | 48.59 | +2.96 | reference averaged the delay over the window |
+| A7 under `backhaul_cut` | 11.11 | 18.07 | +6.96 | same, plus the demand-weighted fraction |
 | H19 interaction | 44.38 | 41.51 | −2.87 | A9's level rises from 45.62 to 48.48 |
 | tested − untested gap | 34.51 | 30.52 | −3.99 | A7's level rises more than A6's |
+
+`Ref.` is the deterministic reference model and `MC` is the simulation.
 
 The differences are not noise. They are four structural effects that the
 deterministic model could not represent:
@@ -833,7 +839,7 @@ deterministic model could not represent:
 4. **Coincident background failures.** The reference had a single event per seed.
    The simulation has a background process, so an incident window sometimes
    contains a second failure. That is why several cells sit slightly below their
-   ceiling and why two criteria have non-zero intervals.
+   ceiling and why almost every criterion has a small but non-zero interval.
 
 The qualitative readings survive all four. The mechanism comparisons keep their
 signs and orderings, the five hypotheses keep their verdicts, and the interaction
@@ -849,7 +855,7 @@ plane, and the number of tenant-days below 99 %.
 **Table 6. Steady-state availability over a 30-day campaign (500 replications).**
 
 | Arm | Availability (%) | Policy | Congestion | Dependency | Shared share | Days < 99 % |
-|---|---:|---:|---:|---:|---:|---:|
+|:--|:-------------|------:|----------:|----------:|------------:|-----------:|
 | A1 | 94.26 [94.14, 94.38] | 0.00 | 4.70 | 1.04 | 0.61 | 21.5 |
 | A2 | 99.16 [99.11, 99.21] | 0.00 | 0.00 | 0.84 | 0.81 | 4.6 |
 | A3 | 99.18 [99.13, 99.23] | 0.00 | 0.00 | 0.82 | 0.85 | 4.4 |
@@ -890,9 +896,10 @@ control plane breach between 1.3 and 21.5 days out of 30.
 ![](../figures/common_mode_mc_campaign.png){width=95%}
 
 **Figure 4.** The 30-day campaign. Left: the lost campaign time decomposed into
-policy, congestion and dependency terms; tick labels give availability and its
-95 % half-width. Right: the share of dependency loss attributable to the shared
-control plane. Data: `docs/paper-tables/common-mode-mc-campaign.csv`.
+policy, congestion and dependency terms, with the total loss above each bar (the
+availability and its interval are in Table 6). Right: the share of dependency loss
+attributable to the shared control plane. Data:
+`docs/paper-tables/common-mode-mc-campaign.csv`.
 
 ### 5.11 Sensitivity, break-even and global sensitivity
 
@@ -907,14 +914,14 @@ nearest break-even is located by linear interpolation. The full grid is in
 **Table 7. Break-even values under the Monte Carlo engine.**
 
 | Constant | Stipulated | Sweep | Primary break-even | Claim that fails there |
-|---|---:|---|---:|---|
+|:------------------------------|----------:|:----------|------------------:|:--------------------------|
 | one-way local-policy efficiency | 0.90 | 0.50-1.00 | 0.848 | H18: normal cost ≤ 15 points |
-| tested fallback activation probability | 0.98 | 0-1 | 0.368 | tested beats untested under the cut |
+| tested fallback activation probability | 0.98 | 0-1 | 0.368 | tested beats untested |
 | untested fallback activation probability | 0.60 | 0-1 | none in range | survives the whole range |
 | tested fallback activation delay | 2 s | 0-25 s | none in range | survives the whole range |
 | untested fallback activation delay | 8 s | 0-30 s | none in range | survives the whole range |
-| tested fallback capacity | 0.50 Gbps | 0-1 | 0.186 | tested beats untested under the cut |
-| untested fallback capacity | 0.30 Gbps | 0-1 | 0.833 | tested beats untested under the cut |
+| tested fallback capacity | 0.50 Gbps | 0-1 | 0.186 | tested beats untested |
+| untested fallback capacity | 0.30 Gbps | 0-1 | 0.833 | tested beats untested |
 
 For H18 the binding clause is the normal-operation cost (0.848), not the absolute
 80 % level (0.800); the model check fails at the higher of the two values, as in
