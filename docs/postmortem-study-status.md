@@ -86,7 +86,11 @@ selective. The author can overrule any row through `study/eligibility.csv`.
 Both passes covered all 88 frame incidents. The packet the coders saw is archived
 in [`study/c2-packet/`](../study/c2-packet/) with a manifest; no coder session was
 given the predictions file, the hypotheses, the other pass's codes, or the
-repository.
+repository. Isolation was enforced by the packet living outside the repository
+and by instructing every session to read exactly three files and nothing else --
+**not** by a filesystem sandbox. A session that ignored the instruction could have
+read the repository; nothing in the raw rows suggests that any did, and each pass
+was assembled from the report metadata it was given.
 
 Assembly and validation are mechanical: `tools/assemble_coded_rows.py` checks
 field order, the frozen allowed values, the frame metadata and the report hash
