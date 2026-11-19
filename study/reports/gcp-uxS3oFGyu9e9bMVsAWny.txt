@@ -1,0 +1,46 @@
+# Google Cloud Console customers might experience Cloud Billing data delays
+
+URL: https://status.cloud.google.com/incidents/uxS3oFGyu9e9bMVsAWny
+Published: 2023-02-16
+
+Date
+Time
+Description
+16 Feb 2023
+12:33 PST
+The issue with Cloud Billing, Google Cloud Console has been resolved for all affected users as of Thursday, 2023-02-16 12:33 US/Pacific.
+We thank you for your patience while we worked on resolving the issue.
+16 Feb 2023
+10:30 PST
+Summary: Google Cloud Console customers might experience Cloud Billing data delays
+Description: Mitigation work is currently underway by our engineering team.
+We do not have an ETA for mitigation at this point.
+We will provide more information by Thursday, 2023-02-16 13:30 US/Pacific.
+Diagnosis: Customers may be experiencing a delay with the reporting of their Cloud Billing data.
+Workaround: None at this time.
+16 Feb 2023
+09:46 PST
+Summary: Google Cloud Console customers might experience delay in two days worth of Cloud Billing data.
+Description: Mitigation work is currently underway by our engineering team.
+We do not have an ETA for mitigation at this point.
+We will provide more information by Thursday, 2023-02-16 11:14 US/Pacific.
+Diagnosis: None at this time.
+Workaround: None at this time.
+16 Feb 2023
+09:40 PST
+Summary: Google Cloud Console customers might experience delay in two days worth of Cloud Billing data.
+Description: We are experiencing an issue with Google Cloud Console.
+Our engineering team continues to investigate the issue.
+We will provide an update by Thursday, 2023-02-16 10:05 US/Pacific with current details.
+We apologize to all who are affected by the disruption.
+Diagnosis: None at this time.
+Workaround: None at this time.
+16 Feb 2023
+09:35 PST
+Summary: Global : Google Cloud Console customers may experience missing data for the past 2 days.
+Description: We are experiencing an issue with Google Cloud Console.
+Our engineering team continues to investigate the issue.
+We will provide an update by Thursday, 2023-02-16 10:05 US/Pacific with current details.
+We apologize to all who are affected by the disruption.
+Diagnosis: None at this time.
+Workaround: None at this time.

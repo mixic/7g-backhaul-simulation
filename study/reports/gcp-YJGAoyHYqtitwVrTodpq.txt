@@ -1,0 +1,28 @@
+# [Chronicle Security] Detection page may not be loading
+
+URL: https://status.cloud.google.com/incidents/YJGAoyHYqtitwVrTodpq
+Published: 2024-07-16
+
+Date
+Time
+Description
+16 Jul 2024
+05:36 PDT
+The issue with Chronicle Security has been resolved for all affected projects as of Tuesday, 2024-07-16 05:36 US/Pacific.
+We thank you for your patience while we worked on resolving the issue.
+16 Jul 2024
+04:41 PDT
+Summary: [Chronicle Security] Detection page may not be loading
+Description: Mitigation work is currently underway by our engineering team.
+The mitigation is expected to complete by Tuesday, 2024-07-16 06:00 US/Pacific.
+We will provide more information by Tuesday, 2024-07-16 06:00 US/Pacific.
+Diagnosis: Detection page may not be loading
+Workaround: None at this time.
+16 Jul 2024
+04:30 PDT
+Summary: [Chronicle Security] Detection page may not be loading
+Description: We are experiencing an issue with Chronicle Security.
+Our engineering team continues to investigate the issue.
+We will provide an update by Tuesday, 2024-07-16 06:00 US/Pacific with current details.
+Diagnosis: Detection page may not be loading .
+Workaround: None at this time.

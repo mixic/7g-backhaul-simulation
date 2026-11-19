@@ -1,0 +1,49 @@
+Post Incident Review (PIR) – Entra Privileged Identity Management – Customers experiencing API failures
+
+Post Incident Review (PIR) – Entra Privileged Identity Management – Customers experiencing API failures
+
+Tracking ID: FV31-PQG
+
+Watch our 'Azure Incident Retrospective' video about this incident: https://aka.ms/air/FV31-PQG
+What happened?
+Between 08:05 UTC and 18:30 UTC on 22 December 2025, the Microsoft Entra Privileged Identity Management (PIM) service experienced issues that impacted role activations for a subset of customers. Some requests returned server errors (5xx) and, for a portion of customers, some requests returned unexpected client errors (4xx). This issue manifested as API failures, elevated latency, and various activation errors.
+Impacted actions could have included:
+Reading eligible or active role assignments
+Eligible or Active Role assignment management
+PIM Policy and PIM Alerts management
+Activation of Eligible or Active Role assignments
+Deactivation of role assignments initiated by customer (deactivations triggered by the expiration of previous activation were not impacted)
+Approval of role assignment activation or extension
+Customer initiated PIM operations from various Microsoft management portals, mobile app, and API calls were likely impacted. During this incident period, operations that were retried may have succeeded.
+What went wrong and why?
+Under normal conditions, Privileged Identity Management processes requests—such as role activations—by coordinating activity across its front-end APIs, traffic routing layer, and the backend databases that store role activation information. These components work together to route requests to healthy endpoints, complete required checks, and process activations without delay. To support this flow, the system maintains a pool of active connections for responsiveness and automatically retries brief interruptions to keep error rates low, helping ensure customers experience reliable access when reading, managing, or activating role assignments.
+As part of ongoing work to improve how the PIM service stores and manages data, configuration changes which manage the backend databases were deployed incrementally using safe deployment practices. The rollout progressed successfully through multiple rings, with no detected errors and all monitored signals remaining within healthy thresholds.
+When the deployment reached a ring operating under higher workload, the additional per-request processing increased demand on the underlying infrastructure that hosts the API which manages connections to the backend databases. Although the service includes throttling mechanisms designed to protect against spikes in API traffic, this scenario led to elevated CPU utilization without exceeding request-count thresholds, so throttling did not engage. Over time, the sustained load caused available database connections to be exhausted, and the service became unable to process new requests efficiently. This resulted in delays, timeouts, and errors for customers attempting to view or activate privileged roles.
+How did we respond?
+21:36 UTC on 15 December 2025 – The configuration change deployment was initiated.
+22:08 UTC on 19 December 2025 – The configuration change was progressed to the ring with the heavy workload.
+08:05 UTC on 22 December 2025 – Initial customer impact began.
+08:26 UTC on 22 December 2025 – Automated alerts received for intermittent, low volume of errors prompting us to start investigating.
+10:30 UTC on 22 December 2025 – We attempted isolated restarts on impacted database instances in an effort to mitigate low-level impact.
+13:03 UTC on 22 December 2025 – Automated monitoring alerted us to elevated error rates and a full incident response was initiated.
+13:22 UTC on 22 December 2025 – We identified that calls to the database were intermittently timing out. Traffic volume appeared to be normal with no significant surge detected however we observed the spike in CPU utilization.
+13:54 UTC on 22 December 2025 – Mitigation efforts began, including beginning to scale out the impacted environments.
+15:05 UTC on 22 December 2025 – Scale out efforts were observed as decreasing error rates but not completely eliminating failures. Further instance restarts provided temporary relief.
+15:25 UTC on 22 December 2025 – Scaling efforts continued. We engaged our database engineering team to help investigate.
+16:37 UTC on 22 December 2025 – While we did not correlate the deployment to this incident, we initiated a rollback of the configuration change.
+17:20 UTC on 22 December 2025 – Scale-out efforts completed.
+17:45 UTC on 22 December 2025 – Service availability telemetry was showing improvements. Some customers began to report recovery.
+18:30 UTC on 22 December 2025 – Customer impact confirmed as mitigated, after rollback of configuration change had completed and error rates had returned to normal levels.
+How are we making incidents like this less likely or less impactful?
+We have rolled back the problematic configuration change across all regions. (Completed)
+For outages that manifest later as a result of configuration updates, we are developing a mechanism to help engineers correlate these signals more quickly. (Estimated completion: January 2026)
+We are working to ensure this configuration change will not inadvertently introduce excessive load before we redeploy this again. (Estimated completion: January 2026)
+We are working on updating our auto-scale configuration to be more responsive to changes in CPU usage. (Estimated completion: January 2026)
+We are enabling monitoring and runbooks for available database connections to respond to emerging issues sooner. (Estimated completion: February 2026)
+How can customers make incidents like this less impactful?
+Consider retrying critical operations directly through the API, for example, when requesting just in time access: https://learn.microsoft.com/entra/id-governance/privileged-identity-management/pim-apis#iteration-3-current--pim-for-microsoft-entra-roles-groups-in-microsoft-graph-api-and-for-azure-resources-in-azure-resource-manager-api
+More generally, consider evaluating the reliability of your applications using guidance from the Azure Well-Architected Framework and its interactive Well-Architected Review: https://aka.ms/AzPIR/WAF
+The impact times above represent the full incident duration, so are not specific to any individual customer. Actual impact to service availability varied between customers and resources – for guidance on implementing monitoring to understand granular impact: https://aka.ms/AzPIR/Monitoring
+Finally, consider ensuring that the right people in your organization will be notified about any future service issues – by configuring Azure Service Health alerts. These can trigger emails, SMS, push notifications, webhooks, and more: https://aka.ms/AzPIR/Alerts
+How can we make our incident communications more useful?
+You can rate this PIR and provide any feedback using our quick 3-question survey: https://aka.ms/AzPIR/FV31-PQG

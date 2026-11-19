@@ -1,0 +1,28 @@
+# We are experiencing an issue with Google Cloud Networking
+
+URL: https://status.cloud.google.com/incidents/1KVTS7o4is3eGqudTckN
+Published: 2023-07-05
+
+Date
+Time
+Description
+5 Jul 2023
+19:08 PDT
+The issue with Google Cloud Networking has been resolved for all affected users as of Wednesday, 2023-07-05 19:07 US/Pacific.
+We thank you for your patience while we worked on resolving the issue.
+5 Jul 2023
+18:49 PDT
+Summary: We are experiencing an issue with Google Cloud Networking
+Description: Mitigation work is currently underway by our engineering team.
+A rollback is in progress, we do not have an ETA for mitigation at this point however we will continue to provide progress updates and any changes in status.
+We will provide more information by Wednesday, 2023-07-05 19:30 US/Pacific.
+Diagnosis: Customers using serverless advanced request routing path are experiencing intermittent 500 errors.
+Workaround: None at this time.
+5 Jul 2023
+18:07 PDT
+Summary: We are experiencing an issue with Google Cloud Networking
+Description: Mitigation work is currently underway by our engineering team.
+A rollback is in progress, we do not have an ETA for mitigation at this point however we will continue to provide progress updates and any changes in status.
+We will provide more information by Wednesday, 2023-07-05 19:00 US/Pacific.
+Diagnosis: Customers using serverless advanced request routing path are experiencing intermittent 500 errors.
+Workaround: None at this time.

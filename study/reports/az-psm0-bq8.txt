@@ -1,0 +1,39 @@
+Post Incident Review (PIR) – Azure Storage – Unreachable Blob and Data Lake storage accounts in multiple regions
+
+Post Incident Review (PIR) – Azure Storage – Unreachable Blob and Data Lake storage accounts in multiple regions
+
+Tracking ID: PSM0-BQ8
+
+Join one of our upcoming 'Azure Incident Retrospective' livestreams about this incident, or watch on demand: https://aka.ms/AIR/PSM0-BQ8
+What happened?
+Between 00:50 UTC and 12:30 UTC on 13 November 2024, a subset of Azure Blob Storage and Azure Data Lake Storage accounts experienced connectivity errors. The issue manifested as loss of access to Blob and Data Lake storage endpoints of the affected storage accounts, and subsequent unavailability of downstream services that depended on these storage accounts. Since many of the impacted storage accounts were used by other Azure services and major software vendor solutions, the customer impact was widespread. Although unavailable to access, the data stored in these storage accounts was not impacted during this incident. Impacted downstream services included:
+Azure Storage : Impacted customers may have experienced name (DNS) resolution failures when interacting with impacted storage accounts in Australia East, Australia Southeast, Brazil South, Brazil Southeast, Canada Central, Canada East, Central India, Central US, East Asia, East US, East US 2, East US 2 EUAP, France Central, Germany West Central, Japan East, Japan West, North Central US, North Europe, Norway East, South Africa North, South Central US, South India, Sweden Central, Switzerland North, UAE North, UK South, UK West, West Central US, West US, West US 2, West US 3.
+Azure Container Registry : Impacted customers using the East US region may have experienced intermittent 5xx errors while trying to pull images from the registry.
+Azure Databricks : Impacted customers may have experienced failures with launching clusters and serverless compute resources in Australia East, Canada Central, Canada East, Central US, East US, East US 2, Japan East, South Central US, UAE North, West US, and/or West US 2.
+Azure Log Analytics : Impacted customers using the West Europe, Southeast Asia, and/or Korea Central regions may have experienced delays and/or stale data when viewing Microsoft Graph activity logs.
+What went wrong and why?
+Azure Traffic Manager manages and routes blob and data lake storage API requests. The incident was caused by an unintentional deletion of Traffic Manager profiles for the impacted storage accounts. These Traffic Manager profiles were originally part of an Azure subscription pool which belonged to the Azure Storage service. This original service was bifurcated to become two separate services, with one service that would eventually be deprecated. Ownership of the subscriptions containing the Traffic Manager profiles for storage accounts should have been assigned to the service that was continuing operation, which was missed. As such, the decommissioning process inadvertently deleted the Traffic Manager profiles under the subscription, leading to loss of access to the affected storage accounts. To learn more about Azure Traffic Manager profiles, see: https://learn.microsoft.com/azure/traffic-manager/traffic-manager-manage-profiles .
+How did we respond?
+After receiving customer reports of issues, our team immediately engaged to investigate. Once we understood what had triggered the problem, our team initiated started to restore Traffic Manager profiles of the affected storage accounts. The recovery took an extended period of time since it required care reconstructing the Traffic Manager profiles while avoiding further customer impact. We started multiple workstreams in parallel, to drive both manual recovery and create automated steps to speed up recovery. Recovery was carried out in phases, with the majority of affected accounts restored by 06:24 UTC - and the last set of storage accounts recovered and fully operational by 12:30 UTC. Timeline of key events:
+13 November 2024 @ 00:50 UTC – First customer impact, triggered by the deletion of a Traffic Manager profile.
+13 November 2024 @ 01:24 UTC – First customer report of issues, on-call engineering team began to investigate.
+13 November 2024 @ 01:40 UTC – We identified that the issues were triggered by the deletion of Traffic Manager profiles.
+13 November 2024 @ 02:16 UTC – Impacted Traffic Manager profiles identified, and recovery planning started.
+13 November 2024 @ 02:25 UTC – Recovery workstreams started.
+13 November 2024 @ 03:51 UTC – First batch of storage accounts recovered and validated.
+13 November 2024 @ 06:00 UTC – Automation to perform regional recovery in place.
+13 November 2024 @ 06:24 UTC – Majority of recovery completed; most impacted accounts were accessible by this time.
+13 November 2024 @ 12:30 UTC – Recovery and validation 100% complete, incident mitigated.
+How are we making incidents like this less likely or less impactful?
+We completed an audit of all the production service artifacts used by the Azure Storage resource provider. (Completed)
+We created a new highly restrictive deployment approval process, as an additional measure to prevent unintended mutations like deletions. (Completed)
+We are improving the process used to clean-up production service artifacts with built-in safety to prevent impact. (Estimated completion: December 2024)
+We are enhancing our monitoring of outside-in storage traffic by making it more sensitive to smaller impacts and to validate connectivity and reachability for all endpoints of storage accounts. (Some services completed, all service will complete in December 2024)
+We are expanding and completing the process of securing platform resources with resource locks, as an additional safety automation to prevent deletes. (Estimated completion: January 2025)
+We will accelerate recovery times by refining restore points and optimizing the recovery process for production service artifacts. (Estimated completion: January 2025)
+We will reduce the blast radius with service architectural improvements to improve the resiliency against issues related to traffic manager, and other upstream dependencies’, unavailability. (Estimated completion: March 2025)
+How can customers make incidents like this less impactful?
+Consider ensuring that the right people in your organization will be notified about any future service issues – by configuring Azure Service Health alerts. These can trigger emails, SMS, push notifications, webhooks, and more: https://aka.ms/AzPIR/Alerts
+The impact times above represent the full incident duration, so are not specific to any individual customer. Actual impact to service availability varied between customers and resources – for guidance on implementing monitoring to understand granular impact: https://aka.ms/AzPIR/Monitoring
+How can we make our incident communications more useful?
+You can rate this PIR and provide any feedback using our quick 3-question survey: https://aka.ms/AzPIR/PSM0-BQ8

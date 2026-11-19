@@ -1,0 +1,54 @@
+# Cloud Source Repositories repo administration operations (SourceRepo API) are unavailable
+
+URL: https://status.cloud.google.com/incidents/d36j7unm1PYkiKYBsLj6
+Published: 2024-04-24
+
+Date
+Time
+Description
+24 Apr 2024
+14:43 PDT
+The issue with Cloud Source Repositories has been resolved for all affected users as of Wednesday, 2024-04-24 14:34 US/Pacific.
+We thank you for your patience while we worked on resolving the issue.
+24 Apr 2024
+13:12 PDT
+Summary: Cloud Source Repositories repo administration operations (SourceRepo API) are unavailable
+Description: Mitigation work is currently underway by our engineering team and they are working on pushing out a fix to production.
+The mitigation is expected to complete by Wednesday, 2024-04-24 15:00 US/Pacific.
+We will provide more information by Wednesday, 2024-04-24 15:30 US/Pacific.
+Diagnosis: Cloud Source Repository users who use the SourceRepo API are unable to make changes to repository metadata (create/update/delete).
+Workaround: None at this time.
+24 Apr 2024
+11:51 PDT
+Summary: Cloud Source Repositories repo administration operations (SourceRepo API) are unavailable
+Description: Mitigation work is currently underway by our engineering team.
+We do not have an ETA for mitigation at this point.
+We will provide more information by Wednesday, 2024-04-24 13:00 US/Pacific.
+Diagnosis: Cloud Source Repository users who use the SourceRepo API are unable to make changes to repository metadata (create/update/delete).
+Workaround: None at this time.
+24 Apr 2024
+11:24 PDT
+Summary: Cloud Source Repositories repo administration operations (SourceRepo API) are unavailable
+Description: We are experiencing an issue with Cloud Source Repositories.
+Our engineering team continues to investigate the issue to determine a mitigation strategy.
+We will provide more information by Wednesday, 2024-04-24 12:00 US/Pacific.
+Diagnosis: Cloud Source Repository users who use the SourceRepo API are unable to make changes to repository metadata (create/update/delete).
+Workaround: None at this time.
+24 Apr 2024
+11:06 PDT
+Summary: Cloud Source Repository (SourceRepo API) is unavailable
+Description: We are experiencing an issue with Cloud Source Repositories.
+Our engineering team is investigating the issue to determine a mitigation
+strategy.
+We will provide more information by Wednesday, 2024-04-24 11:45 US/Pacific.
+Diagnosis: Cloud Source Repository users who use the SourceRepo API/RepositoryControlService are unable to make changes to metadata including (create/update/delete).
+Workaround: None at this time.
+24 Apr 2024
+10:46 PDT
+Summary: Cloud Source Repository (SourceRepo API) is unavailable
+Description: We are experiencing an issue with Cloud Source Repositories API.
+Our engineering team continues to investigate the issue.
+We will provide an update by Wednesday, 2024-04-24 11:20 US/Pacific with current details.
+We apologize to all who are affected by the disruption.
+Diagnosis: Cloud Source Repository users who use the SourceRepo API/RepsoitoryControlService are unable to make changes to metadata including (create/update/delete).
+Workaround: None at this time.

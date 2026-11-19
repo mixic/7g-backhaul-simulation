@@ -1,0 +1,24 @@
+Post Incident Review (PIR) – Azure OpenAI – GPT-5.2 availability degradation in 7 regions
+
+Post Incident Review (PIR) – Azure OpenAI – GPT-5.2 availability degradation in 7 regions
+
+Tracking ID: 8GCS-858
+
+What happened?
+Between 23:20 UTC on 09 March 2026 and 19:32 UTC on 10 March 2026, a platform issue resulted in impact to the Azure OpenAI Service and dependent services in the Australia East, Sweden Central, Central US, East US 2, Korea Central, Norway East, and UK South regions. Impacted customers experienced degraded request processing, intermittent request failures like 'HTTP 400', or reduced availability. Additionally, some customers may have experienced 'HTTP 429' errors for Azure OpenAI Service 5.2 models.
+What do we know so far?
+We determined that the service experienced unexpected resource exhaustion and the service was unable to recover adequately. This led to resulting degraded request processing, intermittent request failures, and unavailability for customers. We are further investigating why the service did not recover faster.
+How did we respond?
+23:20 UTC on 09 March 2026 – Customer impact began.
+00:19 UTC on 10 March 2026 – We detected the issue via our automatic service monitoring. This prompted us to begin an investigation.
+03:18 UTC on 10 March 2026 – We started a rollback for different models and recovery actions in stages across all impacted regions to attempt mitigation.
+12:40 UTC on 10 March 2026 – We investigated further into resource constraints that our investigation identified.
+18:00 UTC on 10 March 2026 – Rollback actions completed across all remaining affected regions.
+19:30 UTC on 10 March 2026 – Re-routing of request traffic was completed as another mitigation action.
+19:32 UTC on 10 March 2026 – Once monitoring confirmed stable recovery, we determined the service was fully restored and closed the mitigation phase.
+What happens next?
+Our team will be completing an internal retrospective to understand the incident in more detail. Once that is completed, generally within 14 days, we will publish a Post Incident Review (PIR) to all impacted customers.
+To get notified when that happens, and/or to stay informed about future Azure service issues, make sure that you configure and maintain Azure Service Health alerts – these can trigger emails, SMS, push notifications, webhooks, and more: https://aka.ms/ash-alerts
+For more information on Post Incident Reviews, refer to https://aka.ms/AzurePIRs
+The impact times above represent the full incident duration, so are not specific to any individual customer. Actual impact to service availability may vary between customers and resources – for guidance on implementing monitoring to understand granular impact: https://aka.ms/AzPIR/Monitoring
+Finally, for broader guidance on preparing for cloud incidents, refer to https://aka.ms/incidentreadiness

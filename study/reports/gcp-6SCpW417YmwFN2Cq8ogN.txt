@@ -1,0 +1,53 @@
+# Elevated latency within Cloud Storage for Firebase in europe-west
+
+URL: https://status.cloud.google.com/incidents/6SCpW417YmwFN2Cq8ogN
+Published: 2024-07-10
+
+Date
+Time
+Description
+12 Jul 2024
+07:39 PDT
+The issue with Cloud Storage for Firebase has been resolved for all affected users as of Friday, 2024-07-12 07:07 US/Pacific.
+We thank you for your patience while we worked on resolving the issue.
+11 Jul 2024
+16:48 PDT
+Summary: Elevated latency within Cloud Storage for Firebase in europe-west
+Description: We believe the latency issue with Cloud Storage for Firebase is partially resolved.
+Our engineers are diligently working towards full resolution. We do not have an ETA for full resolution at this point.
+We will provide an update by Friday, 2024-07-12 10:00 US/Pacific with current details.
+Diagnosis: Impacted customers may experience elevated latency while working with Cloud Storage as part of their Firebase operations.
+Workaround: None at this time.
+11 Jul 2024
+12:52 PDT
+Summary: Elevated latency within Cloud Storage for Firebase in europe-west
+Description: We believe the latency issue with Cloud Storage for Firebase is partially resolved.
+Our engineers are diligently working towards full resolution. We do not have an ETA for full resolution at this point.
+We will provide an update by Thursday, 2024-07-11 17:00 US/Pacific with current details.
+Diagnosis: Impacted customers may experience elevated latency while working with Cloud Storage as part of their Firebase operations.
+Workaround: None at this time.
+11 Jul 2024
+09:39 PDT
+Summary: Elevated latency within Cloud Storage for Firebase in europe-west
+Description: We believe the latency issue with Cloud Storage for Firebase is partially resolved.
+We do not have an ETA for full resolution at this point.
+We will provide an update by Thursday, 2024-07-11 13:00 US/Pacific with current details.
+Diagnosis: Impacted customers may experience elevated latency while working with Cloud Storage as part of their Firebase operations.
+Workaround: None at this time.
+10 Jul 2024
+15:36 PDT
+Summary: Elevated latency within Cloud Storage for Firebase in europe-west
+Description: Our engineering team is diligently working to identify the root cause of the issue and determine the most effective mitigation strategy.
+We do not have an ETA for mitigation at this point.
+We will provide more information by Thursday, 2024-07-11 10:00 US/Pacific.
+Diagnosis: Impacted customers may experience elevated latency while working with Cloud Storage as part of their Firebase operations.
+Workaround: None at this time.
+10 Jul 2024
+15:20 PDT
+Summary: Elevated latency within Cloud Storage for Firebase in europe-west
+Description: We are experiencing an issue with Cloud Storage for Firebase beginning on Tuesday, 2024-07-09 12:20 US/Pacific in Western Europe.
+Our engineering team is engaged and is investigating the issue at hand.
+We will provide an update by Wednesday, 2024-07-10 16:00 US/Pacific with current details.
+We apologize to all who are affected by the disruption.
+Diagnosis: Impacted customers may experience elevated latency while working with Cloud Storage as part of their Firebase operations.
+Workaround: None at this time.

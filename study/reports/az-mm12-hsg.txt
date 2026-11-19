@@ -1,0 +1,15 @@
+Services impacted after power issue - West Europe
+
+Services impacted after power issue - West Europe
+
+Tracking ID: MM12-HSG
+
+What happened?
+Starting at 07:31 UTC on 20 October 2023, we have determined that a power issue impacted infrastructure in a single Availability Zone in the West Europe region. Customers using Azure services such as Virtual Machines, Storage, App Service, SQL DB or Cosmos DB in the affected Availability Zone may have experienced impact.
+What went wrong and why?
+Due to an upstream utility disturbance, we moved to generator power for a section of one datacenter at approximately 07:31 UTC. A subset of those generators supporting that section failed to take over as expected during the switch over from utility power, resulting in the impact.
+We restored power at approximately 08:00 UTC, and we started to safely bring affected infrastructure back online. Once networking and storage infrastructure had recovered, compute scale units were brought back into service, in turn restoring service to the vast majority of Azure services by 09:15 UTC.
+A small amount of storage nodes needs to be recovered manually, leading to delays in recovery for some services and customers. We are working to recover these nodes and will continue to communicate to these impacted customers directly via the Service Health blade in the Azure Portal.
+Next steps:
+We will follow up in 3 days with a preliminary Post Incident Report (PIR), which will cover the initial root cause and repair items. We'll follow that up 14 days later with a final PIR where we will share a deep dive into the incident.
+You can stay informed about Azure service issues, maintenance events, or advisories by creating custom service health alerts ( https://aka.ms/ash-videos for video tutorials and https://aka.ms/ash-alerts for how-to documentation) and you will be notified via your preferred communication channel(s).

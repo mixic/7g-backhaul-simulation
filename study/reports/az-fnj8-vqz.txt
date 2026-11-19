@@ -1,0 +1,60 @@
+Post Incident Review (PIR) – Virtual Machines, Managed identities for Azure resources, and dependent services – Service management issues in multiple regions
+
+Post Incident Review (PIR) – Virtual Machines, Managed identities for Azure resources, and dependent services – Service management issues in multiple regions
+
+Tracking ID: FNJ8-VQZ
+
+Join either of our upcoming 'Azure Incident Retrospective' livestreams discussing this incident (to hear from our engineering leaders, and to get any questions answered by our experts) or watch a recording of the livestream (available the following week, on YouTube):
+Option #1 - 17:30 to 18:00 UTC on 5 March 2026 - https://aka.ms/air/FNJ8-VQZ/1
+Option #2 - 04:30 to 05:00 UTC on 6 March 2026 - https://aka.ms/air/FNJ8-VQZ/2
+What happened?
+Between 18:03 UTC on 02 February 2026 and approximately 00:30 UTC on 03 February 2026, a platform issue caused some customers to experience degraded performance and control plane failures, for multiple Azure services across multiple regions. Impacted services included:
+Azure Virtual Machines (VMs) – Customers may have experienced failures when deploying or scaling virtual machines, including errors during provisioning and lifecycle operations.
+Azure Virtual Machine Scale Sets (VMSS) – Customers may have experienced failures when scaling instances or applying configuration changes.
+Azure Kubernetes Service (AKS) – Customers may have experienced failures in node provisioning and extension installation.
+Azure DevOps (ADO) and GitHub Actions – Customers may have experienced pipeline failures when tasks required VM extensions or related packages. Actions jobs queued and timed out while waiting to acquire a hosted runner. Other GitHub features that leverage this compute infrastructure were similarly impacted, including Copilot Coding Agent, Copilot Code Review, CodeQL, Dependabot, GitHub Enterprise Importer, and Pages. All regions and runner types were impacted.
+Other dependent services – Customers may have experienced degraded performance or failures in operations that required downloading extension packages from Microsoft-managed storage accounts, including Azure Arc enabled servers, and Azure Database for PostgreSQL.
+As part of our recovery, between 00:08 UTC and 06:05 UTC on 03 February 2026, customers using the ' Managed identities for Azure resources ' service (formerly Managed Service Identity) may have experienced failures when attempting to create, update, or delete Azure resources, or acquire Managed Identity tokens – in the East US and West US regions. Originally communicated on incident tracking ID _M5B-9RZ, this impacted the creation and management of Azure resources with assigned managed identities – including but not limited to Azure AI Video Indexer, Azure Chaos Studio, Azure Container Apps, Azure Database for PostgreSQL Flexible Servers, Azure Databricks, Azure Kubernetes Service, Azure Stream Analytics, Azure Synapse Analytics, and Microsoft Copilot Studio. Newly created resources of these types may have also failed to authenticate using managed identity.
+What went wrong, and why?
+On 02 February 2026, a remediation workflow executed based on a resource policy, intended to disable anonymous access on Microsoft-managed storage accounts. The purpose of this policy is to reduce unintended exposure by ensuring that anonymous access is not enabled unless explicitly required.
+Due to a data synchronization problem in the targeting logic, the policy was incorrectly applied to a subset of storage accounts that are intentionally configured to allow anonymous read access for platform functionality. These storage accounts form part of the VM extension package storage layer. VM extensions are small applications used during provisioning and lifecycle operations to configure, secure, and manage VMs. Extension artifacts are retrieved directly from storage accounts, during early-stage provisioning and scaling workflows.
+When anonymous access was disabled across these storage accounts, VMs and dependent services were unable to retrieve required extension artifacts. This resulted in control plane failures and degraded performance across affected services.
+Although the policy process followed safe deployment practices and was initially rolled out region by region, the health assessment defect caused the incorrect targeting state to propagate broadly across public cloud regions in a short time window. This accelerated the impact beyond the intended blast radius.
+Once identified, the policy job was immediately disabled to prevent further changes. Rollback procedures to restore anonymous access were validated in a test region and then executed region by region across affected storage accounts. As access was restored, control plane operations gradually recovered and service management queues began to clear.
+As storage access was restored, a secondary issue emerged. The re-enablement of the VM extension package storage layer allowed multiple previously blocked workflows to resume concurrently, across infrastructure orchestration systems and dependent services.
+The resulting surge in resource management operations generated a significant and sudden increase in requests to the backend service supporting Managed Identities for Azure resources. As a result, starting at 00:08 UTC on 03 February 2026, customers in East US and West US experienced failures when attempting to create, update, or delete Azure resources that use managed identities, as well as when acquiring Managed Identity tokens.
+Automatic retry behaviors in upstream components, designed to provide resiliency under transient failure conditions, amplified traffic against the managed identity backend. The cumulative effect exceeded service limits in East US. Resilient routing mechanisms subsequently directed retry traffic to West US, resulting in similar saturation.
+Although the managed identity infrastructure was scaled out, additional capacity alone did not immediately mitigate impact – because retry amplification continued to generate load at a rate that exceeded recovery capacity. Active load shedding and controlled reintroduction of traffic were required to stabilize the service and allow backlog processing while maintaining normal operations, with full recovery by 06:05 UTC.
+How did we respond?
+18:03 UTC on 02 February 2026 – Customer impact began, triggered by the periodic remediation workflow starting.
+18:29 UTC on 02 February 2026 – Internal service monitoring detected a subset of regions having an increasing number of control plane failures.
+19:46 UTC on 02 February 2026 – Correlated issues across multiple regions.
+19:55 UTC on 02 February 2026 – Service monitoring detected failure rates exceeding failure limit thresholds.
+20:10 UTC on 02 February 2026 – We began collaborating to devise a mitigation solution and investigate the underlying factors.
+21:15 UTC on 02 February 2026 – We applied a primary proposed mitigation and validated that it was successful on a test instance.
+21:18 UTC on 02 February 2026 – We identified and disabled the remediation workflow and stopped any ongoing activity, so it would not impact additional storage accounts.
+21:50 UTC on 02 February 2026 – Began broader mitigation to impacted storage accounts. Customers saw improvements as work progressed.
+00:07 UTC on 03 February 2026 – Storage accounts for a few high volume VM extensions that utilize managed identity finished their re-enablement in East US.
+00:08 UTC on 03 February 2026 – Unexpectedly, customer impact increased first in East US and cascaded to West US with retries, as a critical managed identity service degraded under recovery load.
+00:14 UTC on 03 February 2026 – Automated alerting identified availability impact to Managed Identity services in East US. Engineers quickly recognized that the service was overloaded and began to scale out.
+00:30 UTC on 03 February 2026 – All extension hosting storage accounts had been reenabled, mitigating this impact in all regions other than East US and West US.
+00:50 UTC on 03 February 2026 – Initial scale outs of managed identity service infrastructure scale out completed, but the new resources were still unable to handle the traffic volume due to the increasing backlog of retried requests.
+02:00 UTC on 03 February 2026 – A second, larger set of managed identity service scale outs completed. Once again, the capacity was unable to handle the volume of backlogs and retries.
+02:15 UTC on 03 February 2026 – Reviewed additional data and monitored downstream services to ensure that all mitigations were in place for all impacted storage accounts.
+03:55 UTC on 03 February 2026 – To recover infrastructure capacity for the managed identity service, we began rolling out a change to remove all traffic so that the infrastructure could be repaired without load.
+04:25 UTC on 03 February 2026 – After infrastructure nodes recovered, we began gradually ramping traffic to them, allowing backlogged identity operations to begin to process safely.
+06:05 UTC on 03 February 2026 – Backlogged operations completed, and services returned to normal operating levels. We concluded our monitoring and confirmed that all customer impact had been mitigated.
+How are we making incidents like this less likely or less impactful?
+We are strengthening traffic controls and throttling so that unexpected load spikes or retry storms are contained early, and cannot overwhelm the managed identity service or impact other customers. (Estimated completion: February 2026)
+We are working to fix the data synchronization problem, by addressing detection gaps and code defects with validation coverage, to protect from similar scenarios. (Estimated completion: March 2026)
+We will exercise and optimize the rollback of the remediation workflow, including automation where appropriate, to mitigate issues more quickly. (Estimated completion: April 2026)
+We are increasing capacity headroom and tightening scaling safeguards, to ensure sufficient resources remain available during recovery events and sudden demand. (Estimated completion: April 2026)
+We will improve orchestration of the remediation workflow to be more in line with our Safe Deployment Practices, integrated with service health indicators, to reduce multi-region failure risk. (Estimated completion: May 2026)
+We are improving retry behavior and internal efficiency, so the service degrades more gracefully under stress. (Estimated completion: June 2026)
+We are improving regional isolation and failover behavior, to prevent issues in one region from cascading into paired regions during failures or recovery. (Estimated completion: July 2026)
+How can customers make incidents like this less impactful?
+There was nothing that customers could have done to avoid or minimize impact from this specific service incident.
+Note that the impact times above represent the full incident duration, so are not specific to any individual customer. Actual impact to service availability varied between customers and resources – for guidance on implementing monitoring to understand granular impact: https://aka.ms/AzPIR/Monitoring
+Finally, consider ensuring that the right people in your organization will be notified about any future service issues – by configuring Azure Service Health alerts. These can trigger emails, SMS, push notifications, webhooks, and more: https://aka.ms/AzPIR/Alerts
+How can we make our incident communications more useful?
+You can rate this PIR and provide any feedback using our quick 3-question survey: https://aka.ms/AzPIR/FNJ8-VQZ

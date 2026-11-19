@@ -1,0 +1,60 @@
+# Document AI training fails on UI
+
+URL: https://status.cloud.google.com/incidents/Mqgi3ZvBPdfMeQ5CduK2
+Published: 2024-01-17
+
+Date
+Time
+Description
+17 Jan 2024
+14:26 PST
+Mini Incident Report
+We apologize for the inconvenience this service disruption/outage may have caused. We would like to provide some information about this incident below. Please note, this information is based on our best knowledge at the time of posting and is subject to change as our investigation continues. If you have experienced impact outside of what is listed below, please reach out to Google Cloud Support using https://cloud.google.com/support
+(All Times US/Pacific)
+Incident Start: 17 January 2024 07:43
+Incident End: 17 Januar, 2024 09:52
+Duration: 2 hours, 9 minutes
+Affected Services and Features:
+Document AI
+Regions/Zones:
+Mumbai (asia-south1)
+Singapore (asia-southeast1)
+Sydney (australia-southeast1)
+Multi-region: euLondon (europe-west2)
+Frankfurt (europe-west3)
+Montréal (northamerica-northeast1)
+Multi-region: us
+Description:
+Document AI custom extractor experienced failing with "Internal error encountered" in multiple regions for a duration of 2 hours and 9 minutes. During the incident there was a workaround provided; customers were able to use “call the API” to do training instead of doing it on UI.
+From preliminary analysis the root cause of the issue was a rollout misalignment. This was fixed by speeding up the rollout, which was then completed successfully, resolving impact.
+Customer Impact:
+During the incident customers may have experienced:
+Failed training requests on Document AI custom extractor with an error "Internal error encountered" on UI.
+Direct API calls were not affected.
+17 Jan 2024
+09:58 PST
+The issue with Document AI has been resolved for all affected users as of Wednesday, 2024-01-17 09:57 US/Pacific.
+We thank you for your patience while we worked on resolving the issue.
+17 Jan 2024
+09:21 PST
+Summary: Document AI training fails on UI
+Description: Mitigation work is currently underway by our engineering team.
+We will provide more information by Wednesday, 2024-01-17 11:30 US/Pacific.
+Diagnosis: All training requests on Document AI custom extractor are currently failing with "Internal error encountered" on UI. Direct API call is not affected.
+Workaround: Customer could use call the API to do training instead of doing it on UI
+17 Jan 2024
+08:28 PST
+Summary: Document AI training fails on UI
+Description: We are experiencing an issue with Document AI beginning on Wednesday, 2024-01-17 04:25 US/Pacific.
+Our engineering team continues to investigate the issue.
+We will provide an update by Wednesday, 2024-01-17 09:30 US/Pacific with current details.
+Diagnosis: All training requests on Document AI custom extractor are currently failing with "Internal error encountered" on UI. Direct API call is not affected.
+Workaround: Customer could use call the API to do training instead of doing it on UI
+17 Jan 2024
+08:22 PST
+Summary: Document AI training fails on UI
+Description: We are experiencing an issue with Document AI beginning on Wednesday, 2024-01-17 04:25 US/Pacific.
+Our engineering team continues to investigate the issue.
+We will provide an update by Wednesday, 2024-01-17 09:30 US/Pacific with current details.
+Diagnosis: All training requests on Document AI custom extractor are currently failing with "Internal error encountered" on UI. Direct API call is not affected.
+Workaround: None at this time.

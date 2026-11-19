@@ -1,0 +1,10 @@
+Virtual Machines / Azure Databricks / Azure Database for PostgreSQL- Flexible server / Azure Database for MySQL- Flexible server - East US 2 - Mitigated
+
+Virtual Machines / Azure Databricks / Azure Database for PostgreSQL- Flexible server / Azure Database for MySQL- Flexible server - East US 2 - Mitigated
+
+Tracking ID: BS81-390
+
+Summary of Impact: Between 07:01 UTC on 31 Jan 2023 and 1:00 UTC on 01 Feb 2023, customers using Virtual Machines in East US 2 may have received error notifications when performing service management operations - such as create, delete, update, scaling, start, stop - for resources hosted in this region. The impact was limited to single availability zone.
+Preliminary Root Cause: We determined that due a configuration issue, two partitions of the backend service became unhealthy in a single availability zone. Due to dependencies between services, this manifested in failures when performing service management operations for a subset of Virtual Machines within the availability zone.
+Mitigation : We applied a manual configuration change to mitigate the issue.
+Next steps: We will continue to investigate to establish the full root cause and prevent future occurrences. Stay informed about Azure service issues by creating custom service health alerts: https://aka.ms/ash-videos for video tutorials and https://aka.ms/ash-alerts for how-to documentation.

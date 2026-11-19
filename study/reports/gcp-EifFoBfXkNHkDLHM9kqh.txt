@@ -1,0 +1,36 @@
+# Some Chronicle Customers are unable to update their Chronicle configuration or setup GCP log ingestion.
+
+URL: https://status.cloud.google.com/incidents/EifFoBfXkNHkDLHM9kqh
+Published: 2023-06-28
+
+Date
+Time
+Description
+28 Jun 2023
+20:59 PDT
+The issue with Chronicle Security has been resolved for all affected users as of Wednesday, 2023-06-28 20:50 US/Pacific.
+We thank you for your patience while we worked on resolving the issue.
+28 Jun 2023
+19:43 PDT
+Summary: Some Chronicle Customers are unable to update their Chronicle configuration or setup GCP log ingestion.
+Description: Mitigation work is currently underway by our engineering team.
+We do not have an ETA for mitigation at this point.
+We will provide more information by Thursday, 2023-06-29 00:00 US/Pacific.
+Diagnosis: Affected Customers in europe-west2 are unable to update their Chronicle configuration. Affected customers globally will not be able to setup GCP log injection.
+Workaround: None at this time.
+28 Jun 2023
+18:50 PDT
+Summary: Some Chronicle Customers are unable to update their Chronicle configuration or setup GCP log ingestion.
+Description: Mitigation work is currently underway by our engineering team.
+We do not have an ETA for mitigation at this point.
+We will provide more information by Wednesday, 2023-06-28 20:00 US/Pacific.
+Diagnosis: Affected Customers in europe-west2 are unable to update their Chronicle configuration. Affected customers globally will not be able to setup GCP log injection.
+Workaround: None at this time.
+28 Jun 2023
+18:26 PDT
+Summary: Some Chronicle Customers are unable to update their Chronicle configuration or setup GCP log ingestion.
+Description: We are experiencing an issue with Chronicle Security.
+Our engineering team continues to investigate the issue.
+We will provide an update by Wednesday, 2023-06-28 19:18 US/Pacific with current details.
+Diagnosis: Affected Customers in europe-west2 are unable to update their Chronicle configuration. Affected customers globally will not be able to setup GCP log injection.
+Workaround: None at this time.

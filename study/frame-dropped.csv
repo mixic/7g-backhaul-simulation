@@ -1,0 +1,2 @@
+incident_id,provider,report_url,title,publication_date,duration_minutes,source,eligible,duplicate_of,notes
+cloudflare-5-december-2025-outage,Cloudflare,https://blog.cloudflare.com/5-december-2025-outage/,"Cloudflare outage on December 5, 2025",2025-12-05,25,cloudflare-tag,no,,impact duration not verifiable from index or text; flagged for review; post-fetch impact 25 min (claim: '25 minutes'); dropped: stated impact < 30 min

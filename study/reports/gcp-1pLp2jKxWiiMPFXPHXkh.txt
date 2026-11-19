@@ -1,0 +1,70 @@
+# Customers with Cloud products in asia-south2 or Cloud Interconnects in Delhi can face partial packet loss.
+
+URL: https://status.cloud.google.com/incidents/1pLp2jKxWiiMPFXPHXkh
+Published: 2023-07-27
+
+Date
+Time
+Description
+28 Jul 2023
+12:34 PDT
+Mini Incident Report
+We apologize for the inconvenience this service disruption/outage may have caused. We would like to provide some information about this incident below. Please note, this information is based on our best knowledge at the time of posting and is subject to change as our investigation continues. If you have experienced impact outside of what is listed below, please reach out to Google Cloud Support using https://cloud.google.com/support or to Google Workspace Support using help article https://support.google.com/a/answer/1047213 .
+(All Times US/Pacific)
+Incident Start: 27 June 2023 at 07:04
+Incident End: 27 June 2023 at 10:33
+Duration: 3 hours, 29 minutes
+Affected Services and Features:
+Google Cloud Networking - Cloud Interconnect
+Regions/Zones: asia-south2
+Description:
+Cloud Interconnect experienced partial packet loss for large maximum transfer unit (MTU) packets for zone 1 and 2 interconnects in asia-south2 for a duration of up to 3 hours, 29 minutes. From preliminary analysis, the root cause of the issue was link flapping on two network devices which triggered a latent MTU bug.
+Engineers mitigated the issue by redirecting traffic away from the affected devices. Impact to zone 1 interconnects was mitigated by 09:42 US/Pacific. Impact to zone 2 interconnects was mitigated by 10:33 US/Pacific.
+Customer Impact:
+Customers with Cloud Interconnects in asia-south2 (Delhi) would have experienced partial packet loss. The packet loss was limited to large MTU packets in zone 1 and 2 Interconnects or HA1 Interconnect attachments in asia-south2.
+27 Jul 2023
+11:00 PDT
+The issue with Google Cloud Networking, Hybrid Connectivity has been resolved for all affected users as of Thursday, 2023-07-27 10:40 US/Pacific.
+We thank you for your patience while we worked on resolving the issue.
+27 Jul 2023
+10:17 PDT
+Summary: Customers with Cloud products in asia-south2 or Cloud Interconnects in Delhi can face partial packet loss.
+Description: Our engineering team is continuing to work on mitigating the issue by re-directing traffic away from the impacted network components.
+The packet loss is resolved at 09:41 US/Pacific for zone1 Interconnects or HA0 Interconnect attachments .
+We do not have an ETA for mitigation at this point.
+We will provide more information by Thursday, 2023-07-27 11:30 US/Pacific.
+Diagnosis: Customers with Cloud products in asia-south2 or Cloud Interconnects in Delhi can experience partial packet loss.
+The current packet loss is limited to large MTU packets in zone2 Interconnects in [Delhi] ( https://cloud.google.com/network-connectivity/docs/interconnect/concepts/choosing-colocation-facilities#locations-table ) or HA1 Interconnect attachments in asia-south2.
+Workaround: Affected customers should failover to zone1 Interconnects or HA0 Interconnect attachments.
+27 Jul 2023
+09:22 PDT
+Summary: Customers with Cloud products in asia-south2 can face partial packet loss
+Description: Our engineering team is continuing to work on mitigating the issue by re-directing traffic away from the impacted network components.
+We do not have an ETA for mitigation at this point.
+We will provide more information by Thursday, 2023-07-27 10:00 US/Pacific.
+Diagnosis: Customers with Cloud products in asia-south2 region can experience partial packet loss
+Workaround: Affected customers should failover to Interconnect and attachments in other regions if possible.
+27 Jul 2023
+08:54 PDT
+Summary: Customers with Cloud products in asia-south2 can face partial packet loss
+Description: Mitigation work is currently underway by our engineering team.
+We do not have an ETA for mitigation at this point.
+We will provide more information by Thursday, 2023-07-27 09:30 US/Pacific.
+Diagnosis: Customers with Cloud products in asia-south2 region can experience partial packet loss
+Workaround: Affected customers should failover to Interconnect and attachments in other regions if possible.
+27 Jul 2023
+08:18 PDT
+Summary: We've received a report of an issue with Hybrid Connectivity.
+Description: We are experiencing an issue with Hybrid Connectivity beginning at Thursday, 2023-07-27 07:04 US/Pacific.
+Our engineering team continues to investigate the issue.
+We will provide an update by Thursday, 2023-07-27 08:50 US/Pacific with current details.
+Diagnosis: None at this time.
+Workaround: None at this time.
+27 Jul 2023
+08:09 PDT
+Summary: We've received a report of an issue with Hybrid Connectivity.
+Description: We are experiencing an issue with Hybrid Connectivity beginning at Thursday, 2023-07-27 07:04 US/Pacific.
+Our engineering team continues to investigate the issue.
+We will provide an update by Thursday, 2023-07-27 08:30 US/Pacific with current details.
+Diagnosis: None at this time.
+Workaround: None at this time.

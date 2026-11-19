@@ -1,0 +1,21 @@
+# Cloud Marketplace customers may experience API Library products are not being displayed
+
+URL: https://status.cloud.google.com/incidents/nENSDNHguEm2BQbVjiWV
+Published: 2023-02-23
+
+Date
+Time
+Description
+23 Feb 2023
+11:50 PST
+The issue with Google Cloud Marketplace has been resolved for all affected users as of Thursday, 2023-02-23 11:42 US/Pacific.
+We thank you for your patience while we worked on resolving the issue.
+23 Feb 2023
+11:19 PST
+Summary: Cloud Marketplace customers may experience API Library products are not being displayed
+Description: We are experiencing an issue with Google Cloud Marketplace.
+Our engineering team continues to investigate the issue.
+We will provide an update by Thursday, 2023-02-23 12:35 US/Pacific with current details.
+We apologize to all who are affected by the disruption.
+Diagnosis: None at this time.
+Workaround: None at this time.

@@ -1,0 +1,53 @@
+# Global: GetComplianceStats and ListWorkload returning errors
+
+URL: https://status.cloud.google.com/incidents/qNkjeU849eNkxgkT4FP4
+Published: 2023-07-10
+
+Date
+Time
+Description
+11 Jul 2023
+09:15 PDT
+Mini Incident Report
+We apologize for the inconvenience this service disruption/outage may have caused. We would like to provide some information about this incident below. Please note, this information is based on our best knowledge at the time of posting and is subject to change as our investigation continues. If you have experienced impact outside of what is listed below, please reach out to Google Cloud Support using https://cloud.google.com/support .
+(All Times US/Pacific)
+Incident Start: 10 July 2023 at 09:19
+Incident End: 10 July 2023 at 13:29
+Duration: 4 hours, 10 minutes
+Affected Services and Features:
+Assured Workloads
+Regions/Zones: Global
+Description:
+Assured Workloads experienced issues accessing APIslisted in https://cloud.google.com/assured-workloads/docs/reference/rest#service-endpoint for a duration of 4 hours, 10 minutes. From preliminary analysis, the root cause of the issue is a configuration change to our internal access management system. The issue was mitigated by rolling back the configuration changes.
+Customer Impact:
+Affected customers were unable to access APIs listed in https://cloud.google.com/assured-workloads/docs/reference/rest#service-endpoint , including Create, List, Update and Delete Workload.
+10 Jul 2023
+13:32 PDT
+The issue with Assured Workloads has been resolved for all affected users as of Monday, 2023-07-10 13:29 US/Pacific.
+We thank you for your patience while we worked on resolving the issue.
+10 Jul 2023
+12:44 PDT
+Summary: Global: GetComplianceStats and ListWorkload returning errors
+Description: Mitigation work is currently underway by our engineering team.
+The mitigation is expected to complete by Monday, 2023-07-10 15:00 US/Pacific.
+We will provide more information by Monday, 2023-07-10 15:30 US/Pacific.
+Diagnosis: Customers are unable to access endpoints GetComplianceStats and ListWorkloads.
+Workaround: None at this time.
+10 Jul 2023
+12:23 PDT
+Summary: We are experiencing an issue with Assured Workloads.
+Description: We are experiencing an issue with Assured Workloads beginning at Monday 2023-07-10 09:19 US/Pacific.
+Our engineering team continues to investigate the issue.
+We will provide an update by Monday, 2023-07-10 12:50 US/Pacific with current details.
+We apologize to all who are affected by the disruption.
+Diagnosis: Customers are unable to access endpoints GetComplianceStats and ListWorkloads.
+Workaround: None at this time.
+10 Jul 2023
+12:21 PDT
+Summary: We are experiencing an issue with Assured Workloads.
+Description: We are experiencing an issue with Assured Workloads beginning at Monday, 2023-07-10 09:19 US/Pacific.
+Our engineering team continues to investigate the issue.
+We will provide an update by Monday, 2023-07-10 12:50 US/Pacific with current details.
+We apologize to all who are affected by the disruption.
+Diagnosis: Customers are unable to access endpoints GetComplianceStats and ListWorkloads.
+Workaround: None at this time.

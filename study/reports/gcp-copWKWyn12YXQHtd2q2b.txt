@@ -1,0 +1,21 @@
+# Cluster creation and update operations may fail in Google Distributed Cloud Edge
+
+URL: https://status.cloud.google.com/incidents/copWKWyn12YXQHtd2q2b
+Published: 2024-08-15
+
+Date
+Time
+Description
+15 Aug 2024
+17:51 PDT
+The issue with Google Distributed Cloud Edge has been resolved for all affected users as of Thursday, 2024-08-15 17:46 US/Pacific.
+We thank you for your patience while we worked on resolving the issue.
+15 Aug 2024
+17:01 PDT
+Summary: Cluster creation and update operations may fail in Google Distributed Cloud Edge
+Description: We are experiencing an issue with Google Distributed Cloud Edge beginning at Thursday, 2024-08-15 10:45 US/Pacific.
+Our engineering team continues to investigate the issue.
+We will provide an update by Thursday, 2024-08-15 18:00 US/Pacific with current details.
+We apologize to all who are affected by the disruption.
+Diagnosis: Customers will be unable to perform any cluster mutation operations like (cluster creation, upgrade, nodepool creation, cluster deletion, etc)
+Workaround: None at this time.

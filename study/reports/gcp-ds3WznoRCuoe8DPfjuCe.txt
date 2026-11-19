@@ -1,0 +1,20 @@
+# us-east1 - AlloyDB backups are failing for some customers
+
+URL: https://status.cloud.google.com/incidents/ds3WznoRCuoe8DPfjuCe
+Published: 2023-06-27
+
+Date
+Time
+Description
+27 Jun 2023
+17:24 PDT
+The issue with AlloyDB for PostgreSQL has been resolved for all affected projects as of Tuesday, 2023-06-27 17:15 US/Pacific.
+We thank you for your patience while we worked on resolving the issue.
+27 Jun 2023
+16:34 PDT
+Summary: us-east1 - AlloyDB backups are failing for some customers
+Description: Mitigation work is currently underway by our engineering team.
+We do not have an ETA for mitigation at this point.
+We will provide more information by Tuesday, 2023-06-27 17:35 US/Pacific.
+Diagnosis: Affected customer may not be able to complete AlloyDB backups.
+Workaround: None at this time.

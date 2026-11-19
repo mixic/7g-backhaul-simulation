@@ -1,0 +1,116 @@
+# Persistent Disk (PD) is experiencing issues with disk delete and update operations in turn affecting other disk related operations globally.
+
+URL: https://status.cloud.google.com/incidents/ueutwY19MFNTod5YVR9D
+Published: 2024-07-26
+
+Date
+Time
+Description
+31 Jul 2024
+15:58 PDT
+Incident Report
+Summary
+On July 26, 2024, Persistent Disk (PD) experienced issues with disk delete and instance delete operations for a duration of 8 hours and 14 minutes, potentially affecting customers globally. During this period, these operations were stuck in a pending state. To our PD customers whose businesses were impacted during this disruption, we sincerely apologize.
+Google is committed to quickly and continually improving our technology and operations to prevent service disruptions. We appreciate your patience and apologize again for the impact to your organization. We thank you for your business.
+Root Cause
+Due to a coordination error, an internal capacity reclamation process was triggered prematurely without having the necessary internal software in place. As a result, user-initiated disk deletes and related operations were blocked and remained in a pending state for an extended period. It affected approximately 85% of scopes.
+Once the issue was resolved, the blocked operations were automatically unblocked and completed successfully.
+Remediation and Prevention
+Google engineers were alerted to the outage via monitoring alert on July 26 at 9:57 US/Pacific and promptly began an investigation. Upon understanding the issue, engineers swiftly initiated a clean-up of blocked operations, to prevent the issue from affecting more disks.
+To fully resolve the issue, engineers accelerated the deployment of the software update across remaining scopes. This allowed the stalled operations to complete gracefully, unblocking customer-initiated operations.
+Google is committed to preventing a recurrence of this issue and is taking the following actions:
+Enforce a rigorous review process: All future internal cleanup operations will undergo a thorough review and validation process to identify and mitigate potential conflicts with other ongoing processes.
+Make error-handling more robust: Improve the system's ability to detect and gracefully handle stuck operations, preventing them from blocking customer-initiated actions.
+Address tooling gaps for phased rollout: All future internal internal capacity reclamation processes will be conducted in phases to minimize the impact if any unexpected issues arise.
+Detailed Description of Impact
+On Friday, July 26, 2024, from 9:57 to 18:11 US/Pacific, PD customers globally experienced issues with disk delete and update operations. This also affected other disk-related actions.
+Specifically, impacted customers encountered extended delays or failures with the following operations:
+Disk deletions
+Virtual Machine (VM) deletions (due to pending disk deletions)
+Managed Instance Group scale-down operations
+29 Jul 2024
+08:07 PDT
+Mini Incident Report
+We apologize for the inconvenience this service disruption/outage may have caused. We would like to provide some information about this incident below. Please note, this information is based on our best knowledge at the time of posting and is subject to change as our investigation continues. If you have experienced impact outside of what is listed below, please reach out to Google Cloud Support using https://cloud.google.com/support .
+(All Times US/Pacific)
+Incident Start: 26 July, 2024 09:57
+Incident End: 26 July, 2024 18:11
+Duration: 8 hours, 14 mins
+Affected Services and Features: Persistent Disk
+Regions/Zones: Global
+Description:
+Persistent Disk experienced issues with disk delete and update operations for a period of 8 hours and 14 minutes, potentially affecting our customers in all regions. Based on our preliminary analysis, the root cause of the issue was miscoordination of internal software updates.
+Google will complete a full IR in the following days that will provide a full root cause.
+Customer Impact:
+Impacted customers may have experienced issues where the following operations remained in a pending state for an extended period of time:
+Disk deletions
+Disk update operations; such as resize
+VM deletions
+Managed Instance Groups scale-down operations
+Additional details:
+Miscoordination of internal software updates caused blocking of disk deletion and update operations as well as other related operations. This caused these operations to remain in pending state for an extended period of time. Once the issue was resolved the operations were unblocked and resumed to completion.
+26 Jul 2024
+18:17 PDT
+The issue with Persistent Disk has been resolved for all affected users as of Friday, 2024-07-26 18:11 US/Pacific.
+We thank you for your patience while we worked on resolving the issue.
+26 Jul 2024
+17:05 PDT
+Summary: Persistent Disk (PD) is experiencing issues with disk delete and update operations in turn affecting other disk related operations globally.
+Description: As a majority of the backlogs have now cleared, our engineers are working on executing measures targeted towards clearing any remaining tasks that require intervention.
+We will provide an update by Friday, 2024-07-26 18:30 US/Pacific with current details.
+Diagnosis: Impacted customers may experience issues where the following operations remain in pending state for an extended period of time:
+Disk deletions
+Disk update operations such as resizes
+VM deletions are also affected due to issues with disk deletions.
+Managed Instance Groups scale down operations
+Workaround: None at this time.
+26 Jul 2024
+15:17 PDT
+Summary: Persistent Disk (PD) is experiencing issues with disk delete and update operations in turn affecting other disk related operations globally.
+Description: Our engineers identified the root cause of the issue and executed measures to mitigate the same.
+A majority of the backlogs have now cleared at a steady rate, while our engineers continue to closely monitor the remainder of the operations.
+We will provide an update by Friday, 2024-07-26 17:00 US/Pacific with current details.
+Diagnosis: Impacted customers may experience issues where the following operations remain in pending state for an extended period of time:
+Disk deletions
+Disk update operations such as resizes
+VM deletions are also affected due to issues with disk deletions.
+Managed Instance Groups scale down operations
+Workaround: None at this time.
+26 Jul 2024
+14:17 PDT
+Summary: Persistent Disk (PD) is experiencing issues with disk delete and update operations in turn affecting other disk related operations globally.
+Description: Our engineers identified the root cause of the issue and have executed measures to mitigate the same. We are currently monitoring the rate of progress for the backlogs being cleared, while working on addressing any anomalies that may be encountered during this process.
+We do not have an ETA for mitigation at this time.
+We will provide an update by Friday, 2024-07-26 15:30 US/Pacific with current details.
+Diagnosis: Impacted customers may experience issues where the following operations remain in pending state for an extended period of time:
+Disk deletions
+Disk update operations such as resizes
+VM deletions are also affected due to issues with disk deletions.
+Managed Instance Groups scale down operations
+Workaround: None at this time.
+26 Jul 2024
+13:15 PDT
+Summary: Persistent Disk (PD) is experiencing issues with disk delete and update operations in turn affecting other disk related operations globally.
+Description: Our engineers identified the root cause of the issue and are rolling out a mitigation. Once the roll out completes, the backlog will be processed.
+We do not have an ETA for mitigation at this time.
+We will provide an update by Friday, 2024-07-26 14:30 US/Pacific with current details.
+Diagnosis: Impacted customers may experience issues where the following operations remain in pending state for an extended period of time:
+Disk deletions
+Disk update operations such as resizes
+VM deletions are also affected due to issues with disk deletions.
+Managed Instance Groups scale down operations
+Workaround: None at this time.
+26 Jul 2024
+12:24 PDT
+Summary: Persistent Disk (PD) is experiencing issues with disk delete and update operations in turn affecting other disk related operations globally.
+Description: We are experiencing an issue with Persistent Disk beginning at Friday, 2024-07-26 10:00 US/Pacific.
+Our engineering team is working on a potential mitigation for the issue.
+We do not have an ETA for mitigation at this time.
+We will provide an update by Friday, 2024-07-26 13:30 US/Pacific with current details.
+We apologize to all who are affected by the disruption.
+Diagnosis: Impacted customers may experience issues where the following operations remain in pending state for an extended period of time:
+Disk deletions
+Disk update operations such as resizes
+VM deletions are also affected due to issues with disk deletions.
+Managed Instance Groups scale down operations
+Workaround: None at this time.

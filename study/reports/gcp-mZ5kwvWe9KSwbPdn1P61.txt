@@ -1,0 +1,30 @@
+# Data Ingestion feeds errors while using SecOps
+
+URL: https://status.cloud.google.com/incidents/mZ5kwvWe9KSwbPdn1P61
+Published: 2025-01-09
+
+Date
+Time
+Description
+10 Jan 2025
+00:46 PST
+The issue with Chronicle Security has been resolved for all affected users as of Friday, 2025-01-10 00:30 US/Pacific.
+We thank you for your patience while we worked on resolving the issue.
+10 Jan 2025
+00:27 PST
+Summary: Data Ingestion feeds errors while using SecOps
+Description: Customers ingesting data via feeds will experience errors and delays while using SecOps beginning at Thursday, 2025-01-09 16:20 US/Pacific.
+Our engineering team continues to investigate the issue.
+We will provide an update by Friday, 2025-01-10 01:30 US/Pacific with current details.
+We apologize to all who are affected by the disruption.
+Diagnosis: Customers impacted by this issue may observe DNS errors and delay in ingestion of their data.
+Workaround: None at this time.
+9 Jan 2025
+23:49 PST
+Summary: Data Ingestion feeds errors while using SecOps
+Description: Customers ingesting data via feeds will experience errors and delays while using SecOps beginning at Thursday, 2025-01-09 16:20 US/Pacific.
+Our engineering team continues to investigate the issue.
+We will provide an update by Friday, 2025-01-10 00:30 US/Pacific with current details.
+We apologize to all who are affected by the disruption.
+Diagnosis: Customers impacted by this issue may observe DNS errors and delay in ingestion of their data.
+Workaround: None at this time.

@@ -1,0 +1,45 @@
+# Google Compute Engine and Google Kubernetes Engine are experiencing issues with some instance, node, cluster operations
+
+URL: https://status.cloud.google.com/incidents/rptJFcEcHEEvsdRTHGnG
+Published: 2023-06-08
+
+Date
+Time
+Description
+8 Jun 2023
+17:57 PDT
+The issue with Google Compute Engine, Google Kubernetes Engine has been resolved for all affected projects as of Thursday, 2023-06-08 17:57 US/Pacific.
+We thank you for your patience while we worked on resolving the issue.
+8 Jun 2023
+17:39 PDT
+Summary: Google Compute Engine and Google Kubernetes Engine are experiencing issues with some instance, node, cluster operations
+Description: Mitigation work is currently underway by our engineering team.
+We do not have an ETA for mitigation at this point.
+We will provide more information by Thursday, 2023-06-08 18:30 US/Pacific.
+Diagnosis: Google Compute Engine (GCE):
+Affected GCE customers will see instance create, delete, suspend, and resume operations operations failing with "INTERNAL_ERROR".
+Running GCE instances are not affected.
+Google Kubernetes Engine (GKE):
+GKE operations such as Cluster creation, Nodepool creation, upgrades that require a new instance creation in us-west4-b are impacted.
+Workaround: Customers can use other zones and regions where feasible
+8 Jun 2023
+17:29 PDT
+Summary: Google Compute Engine is experiencing issues with instance create, delete, suspend, and resume operations in us-west4-b
+Description: Mitigation work is currently underway by our engineering team.
+We do not have an ETA for mitigation at this point.
+We will provide more information by Thursday, 2023-06-08 18:30 US/Pacific.
+Diagnosis:
+Affected customers will see instance create, delete, suspend, and resume operations operations failing with "INTERNAL_ERROR".
+Running instances are not affected.
+Workaround: Customers can use other zones and regions where feasible
+8 Jun 2023
+17:00 PDT
+Summary: Google Compute Engine is experiencing issues with instance create, delete, suspend, and resume operations in us-west4-b
+Description: We are experiencing an issue with Google Compute Engine beginning at Thursday, 2023-06-08 16:22 US/Pacific.
+Our engineering team continues to investigate the issue.
+We will provide an update by Thursday, 2023-06-08 17:45 US/Pacific with current details.
+We apologize to all who are affected by the disruption.
+Diagnosis:
+Affected customers will see instance create, delete, suspend, and resume operations operations failing with "INTERNAL_ERROR".
+Running instances are not affected.
+Workaround: Customers can use other zones and regions where feasible

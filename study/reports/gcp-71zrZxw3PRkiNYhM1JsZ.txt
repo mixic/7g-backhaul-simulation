@@ -1,0 +1,186 @@
+# Multiple services for Google Cloud Platform are impacted in us-central1-a
+
+URL: https://status.cloud.google.com/incidents/71zrZxw3PRkiNYhM1JsZ
+Published: 2023-09-12
+
+Date
+Time
+Description
+19 Sep 2023
+16:04 PDT
+Incident Report
+Summary
+On Tuesday, 12 September 2023, multiple Google Cloud products experienced elevated error rates and request failures mostly in the us-central1-a zone. The total duration of this incident was 3 hours and 46 minutes.
+To our Google Cloud customers whose businesses were impacted during this outage, we sincerely apologize. This is not the level of quality and reliability we strive to offer you, and we are taking immediate steps to improve the platform’s performance and availability.
+Root Cause
+Google’s data centers rely on a distributed strongly-consistent file distribution system to perform operations such as name resolution in the data plane, and consist of servers that are used for distributing widely-used data.
+The root cause of the issue was a significant increase in traffic due to internal changes that generated more tasks than expected. This caused the file distribution system to begin crashing.
+Remediation and Prevention
+Google engineers were alerted to the issue via internal monitoring on 12 September 2023 at 23:46 US/Pacific and immediately started an investigation. Once the nature and scope of the issue became clear, Google engineers began redirecting traffic away from the affected servers, and added more memory resources. This procedure took a few hours because it is a manual process requiring extra care, due to the criticality of the service and it being foundational to data center operations. During this time, some services saw recovery before others, and impact was fully mitigated for all services on 13 September 2023 at 03:32 US/Pacific.
+Google is committed preventing a repeat of this issue in the future and is completing the following actions:
+Reviewing our procedures to increase coordination of high-volume internal changes.
+Investigating ways to minimize recovery time for similar classes of problems in the future.
+Further improving the resilience of critical data center infrastructure in the face of large load spikes.
+We apologize for the impact this incident had on our customers and their businesses in the us-central1 region. We are taking immediate steps to prevent a recurrence in the future.
+Detailed Description of Impact
+On Tuesday, 12 September 2023 from 23:46 to Wednesday, 13 September 2023 at 03:32 US/Pacific, multiple Google Cloud products experienced elevated error rates and request failures in us-central1 which are detailed below:
+Google Compute Engine :
+Customers may have experienced errors or elevated latencies for API requests compute.instances.insert and compute.instances.start in us-central1, as well as requests to aggregatedList globally.
+Failed HTTP requests: 24% of projects were impacted
+Failed VM start and creation: 31% of projects were impacted
+Impact began on Wednesday, 13 September 2023 at 00:05 and was mitigated at 02:40 US/Pacific. Total duration of impact was 2 hours, 35 minutes.
+Persistent Disk:
+Persistent Disk I/O operations for newly created VMs and newly attached disks may have experienced timeouts in us-central1-a. Approximately 0.5% of PD devices were impacted during the incident.
+Some PD snapshot creation and restore requests were delayed or failed in us-central1-a.
+Impact began on Wednesday, 13 September 2023 at 00:28 and was mitigated at 02:53 US/Pacific. Total duration of impact was 3 hours, 5 minutes.
+Google Kubernetes Engine:
+Customers may have experienced failed Cluster Creation requests. Up to 4% of such requests failed in us-central1-a (zonal) and us-central1 (regional) during the incident. Additionally, 0.01% of clusters in these locations may have experienced unavailability in their cluster control plane as a result of a cluster upgrade during the incident (zonal clusters only).
+Impact began on Wednesday, 13 September 2023 at 00:55 and was mitigated at 04:00 US/Pacific. Total duration of impact was 3 hours, 5 minutes.
+Google Cloud Bigtable:
+Affected Cloud Bigtable clusters had elevated latency and error rates in us-central1 for requests to the data api ‘bigtable.googleapis.com ’ in us-central1.
+Approximately 23.7% of projects experienced over 0.5% error rate during the outage.
+Impact began on Tuesday, 12 September 2023 at 23:57. The first symptoms were detected on Wednesday, 13 September 2023 at 01:00, and the incident was mitigated at 02:20 US/Pacific. Total duration of impact was 2 hours, 23 minutes.
+Google Cloud Dataflow:
+Less than 1% of new Dataflow Batch and Streaming jobs were unable to initialize in us-central1. Approximately 35% of Dataflow Batch and <1% of Streaming jobs that were running in us-central1 during the incident had performance regressions.
+Impact began on Wednesday, 13 September 2023 at 00:07 and was mitigated at 01:15 US/Pacific. Total duration of impact was 1 hour, 8 minutes.
+Google Cloud App Engine:
+Google App Engine Flexible deployments, version updates, and deletes failed with DEADLINE_EXCEEDED and INTERNAL errors in us-central1-a.
+At the peak, 100% of deployments failed during the incident, and on average, 50% of deployments failed.
+Impact began on Wednesday, 13 September 2023 at 00:15 and was mitigated at 00:56 US/Pacific. Total duration of impact was 41 minutes.
+Google Cloud SQL:
+Google Cloud SQL experienced elevated latency and error rates for instance creations and upgrades in us-central1.
+At the peak, about 10% of such requests failed or experienced higher latencies.
+Impact began on Wednesday, 13 September 2023 at 00:11 and was mitigated at 00:45 US/Pacific. Total duration of impact was 34 minutes.
+13 Sep 2023
+12:16 PDT
+Mini Incident Report
+We apologize for the inconvenience this service disruption/outage may have caused. We would like to provide some information about this incident below. Please note, this information is based on our best knowledge at the time of posting and is subject to change as our investigation continues. If you have experienced impact outside of what is listed below, please reach out to Google Cloud Support using https://cloud.google.com/support .
+(All Times US/Pacific)
+Incident Start: 12 September 2023 23:46
+Incident End: 13 September 2023 03:32
+Duration: 3 hours, 46 minutes
+Affected Services and Features:
+Google Compute Engine (GCE)
+Persistent Disk
+Google Kubernetes Engine (GKE)
+Google Cloud Bigtable
+Google Cloud Dataflow
+Google Cloud App Engine
+Google Cloud SQL
+Regions/Zones: us-central1
+Description:
+Multiple Google Cloud products experienced elevated error rates and request failures in us-central1 for a duration of 3 hours, 46 minutes. From preliminary analysis, the root cause of the issue is task failures in the caching proxy of Google's distributed lock service in us-central1-a due to high memory usage.
+Our engineers mitigated the issue by redirecting the traffic away from the affected servers and by adding more memory resources. While the mitigation activities were ongoing, some products saw service recovery before others.
+Google will complete a full Incident Report in the following days that will provide a full root cause.
+Customer Impact:
+Google Compute Engine :
+Customers might have experienced errors or elevated latencies for API requests compute.instances.insert and compute.instances.start in us-central1, as well as requests to aggregatedList globally
+Persistent Disk:
+Persistent Disk I/O operations for newly created VMs and newly attached disks may have experienced timeouts in us-central1-a.
+Some PD snapshot creation and restore requests were delayed or failed in us-central1-a.
+Google Kubernetes Engine:
+Cluster creation and upgrade operations failed in us-central1-a and us-central1
+Google Cloud Bigtable:
+Affected Cloud Bigtable clusters had elevated latency and elevated error rates in us-central1
+Google Cloud Dataflow:
+New Dataflow Batch and Streaming jobs were unable to initialize in us-central1-a. Batch and Streaming Dataflow jobs that were running in us-central1-a during the incident had performance regressions.
+Google Cloud App Engine:
+Google App Engine Flexible deployments, version updates, and deletes failed with DEADLINE_EXCEEDED and INTERNAL errors in us-central1-a.
+Google Cloud SQL:
+Google Cloud SQL experienced elevated latency and elevated error rates for instance creations and upgrades in us-central1
+13 Sep 2023
+04:03 PDT
+The issue with Google App Engine, Google Cloud Bigtable, Google Cloud Dataflow, Google Cloud SQL, Google Kubernetes Engine, Persistent Disk has been resolved for all affected projects as of Wednesday, 2023-09-13 04:01 US/Pacific.
+Google Compute Engine
+The issue for GCE has been resolved on Wednesday, 2023-09-13 01:13 US/Pacific.
+Persistent Disk
+The issue for Persistent Disk has been resolved on Wednesday, 2023-09-13 03:07 US/Pacific.
+Google App Engine
+The issue for Google App Engine has been resolved on Wednesday, 2023-09-13 03:40 US/Pacific.
+Cloud Dataflow
+The issue for Cloud Dataflow has been resolved on Wednesday, 2023-09-13 03:14 US/Pacific.
+Google Kubernetes Engine
+The issue for Google Kubernetes Engine has been resolved on Wednesday, 2023-09-13 04:01 US/Pacific.
+Cloud Bigtable
+Cloud Bigtable had elevated latency and elevated error rates us-central1 but was mitigated on Wednesday, 2023-09-13 02:57 US/Pacific.
+Google Cloud SQL
+Google Cloud SQL had elevated latency and elevated error rates for instance creations and upgrades in us-central1 and was mitigated on Wednesday, 2023-09-13 00:45 US/Pacific.
+We thank you for your patience while we worked on resolving the issue.
+13 Sep 2023
+03:47 PDT
+Summary: Multiple services for Google Cloud Platform are impacted in us-central1-a
+Description: Mitigation work is currently underway by our engineering team.
+The mitigation is expected to complete by Wednesday, 2023-09-13 04:30 US/Pacific.
+We will provide more information by Wednesday, 2023-09-13 04:30 US/Pacific.
+Diagnosis:
+Google Compute Engine
+The issue for GCE has been resolved on Wednesday, 2023-09-13 01:13 US/Pacific.
+Persistent Disk
+The issue for Persistent Disk has been resolved on Wednesday, 2023-09-13 03:07 US/Pacific.
+Google App Engine
+The issue for Google App Engine has been resolved on Wednesday, 2023-09-13 03:40 US/Pacific.
+Cloud Dataflow
+The issue for Cloud Dataflow has been resolved on Wednesday, 2023-09-13 03:14 US/Pacific.
+Google Kubernetes Engine
+Cluster creation and upgrade operations are failing in us-central1-a.
+Cloud Bigtable
+Cloud Bigtable had elevated latency and elevated error rates us-central1 but was mitigated on Wednesday, 2023-09-13 02:57 US/Pacific.
+Workaround: None at this time.
+13 Sep 2023
+03:05 PDT
+Summary: Multiple services for Google Cloud Platform are impacted in us-central1-a
+Description: Mitigation work is currently underway by our engineering team.
+The mitigation is expected to complete by Wednesday, 2023-09-13 04:00 US/Pacific.
+We will provide more information by Wednesday, 2023-09-13 04:00 US/Pacific.
+Diagnosis:
+Google Compute Engine
+The issue for GCE has been resolved on Wednesday, 2023-09-13 01:13 US/Pacific.
+Persistent Disk
+Input Output operation from Virtual Machine to Persistent Disk is not completing and is stuck in us-central1-a
+Google App Engine
+Google App Engine Flexible deployments and version updates and deletes are failing in us-central1-a since 2023-09-13 00:15 PT. Users see DEADLINE_EXCEEDED and INTERNAL errors.
+Cloud Dataflow
+Unable to start and run Dataflow jobs in us-central1-a
+Google Kubernetes Engine
+Cluster creation and upgrade operations are failing in us-central1-a.
+Cloud Bigtable
+Cloud Bigtable had elevated latency and elevated error rates us-central1 but was mitigated on Wednesday, 2023-09-13 02:57 US/Pacific.
+Workaround: None at this time.
+13 Sep 2023
+02:32 PDT
+Summary: Multiple services for Google Cloud Platform are impacted in us-central1-a
+Description: Mitigation work is currently underway by our engineering team.
+The regional impact has been mitigated on Wednesday, 2023-09-13 01:05 US/Pacific but the impact in us-central1-a is still ongoing.
+We do not have an ETA for mitigation at this point.
+We will provide more information by Wednesday, 2023-09-13 03:30 US/Pacific.
+Diagnosis:
+Google Compute Engine
+An issue that is preventing VM creation in us-central1 clusters. Also, HTTP requests to GCE API in us-central1-a are failing intermittently.
+Persistent Disk
+Input Output operation from Virtual Machine to Persistent Disk is not completing and is stuck in us-central1-a
+Google App Engine
+Google App Engine Flexible deployments and version updates and deletes fail in us-central1-a
+Cloud Dataflow
+Unable to start and run Dataflow jobs in us-central1-a
+Google Kubernetes Engine
+Cluster creation and upgrade operations are failing in us-central1-a.
+Workaround: None at this time.
+13 Sep 2023
+01:51 PDT
+Summary: Multiple services for Google Cloud Platform are impacted in us-central1
+Description: We are experiencing an issue with Google Cloud Dataflow, Google Compute Engine, Google App Engine, Google Kubernetes Engine, Persistent Disk beginning at Wednesday, 2023-09-13 00:30 US/Pacific.
+Our engineering team continues to investigate the issue.
+We will provide an update by Wednesday, 2023-09-13 03:00 US/Pacific with current details.
+We apologize to all who are affected by the disruption.
+Diagnosis:
+Google Compute Engine
+An issue that is preventing VM creation in us-central1 clusters. Also, HTTP requests to GCE API in us-central1 and it's zones are failing intermittently.
+Persistent Disk
+Input Output operation from Virtual Machine to Persistent Disk is not completing and is stuck.
+Google App Engine
+Google App Engine Flexible deployments and version updates and deletes fail in us-central1
+Cloud Dataflow
+Unable to start and run Dataflow jobs.
+Google Kubernetes Engine
+Cluster creation operations are failing in us-central1 and us-central1-a.
+Workaround: None at this time.

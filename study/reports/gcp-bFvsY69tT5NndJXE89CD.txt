@@ -1,0 +1,33 @@
+# Google Cloud Storage may serve HTTP 503 errors for Google Cloud Load Balacing traffic from Europe
+
+URL: https://status.cloud.google.com/incidents/bFvsY69tT5NndJXE89CD
+Published: 2023-06-06
+
+Date
+Time
+Description
+6 Jun 2023
+09:28 PDT
+The issue with Cloud Load Balancing, Google Cloud Storage has been resolved for all affected projects as of Tuesday, 2023-06-06 09:27 US/Pacific.
+We thank you for your patience while we worked on resolving the issue.
+6 Jun 2023
+08:13 PDT
+Summary: Google Cloud Storage may serve HTTP 503 errors for Google Cloud Load Balancing traffic from Europe
+Description: Mitigation work is currently underway by our engineering team.
+The mitigation is expected to complete by Tuesday, 2023-06-06 10:00 US/Pacific.
+We will provide more information by Tuesday, 2023-06-06 10:00 US/Pacific.
+Diagnosis: Google Cloud Storage may serve HTTP 503 errors globally for Google Cloud Load Balancing customers whose traffic originating in Europe.
+Workaround: None at this time.
+6 Jun 2023
+08:01 PDT
+Diagnosis: Google Cloud Storage may serve HTTP 503 errors globally for Google Cloud Load Balancing customers whos traffic originating in Europe.
+Our engineering team continues to investigate the issue.
+We will provide an update by Tuesday, 2023-06-06 10:00 US/Pacific with current details.
+6 Jun 2023
+07:48 PDT
+Summary: Google Cloud Storage may serve HTTP 503 errors to frontend traffic
+Description: We are experiencing an intermittent issue with Google Cloud Storage.
+Our engineering team continues to investigate the issue.
+We will provide an update by Tuesday, 2023-06-06 10:00 US/Pacific with current details.
+Diagnosis: Google Cloud Storage may serve HTTP 503 errors globally but mainly to frontend traffic originating in Europe
+Workaround: None at this time.

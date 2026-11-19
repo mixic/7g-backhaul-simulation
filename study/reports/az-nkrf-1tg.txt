@@ -1,0 +1,47 @@
+Post Incident Review (PIR) - Azure Resource Manager - Services impacted by ARM failures
+
+Post Incident Review (PIR) - Azure Resource Manager - Services impacted by ARM failures
+
+Tracking ID: NKRF-1TG
+
+Join our upcoming 'Azure Incident Retrospective' livestream about this incident: https://aka.ms/AIR8.1/reg
+What happened?
+Between 01:30 and 08:58 UTC on 21 January 2024, customers attempting to leverage Azure Resource Manager (ARM) may have experienced issues when performing resource management operations. This impacted ARM calls that were made via Azure CLI, Azure PowerShell and the Azure portal. While the impact was predominantly experienced in Central US, East US, South Central US, West Central US, and West Europe, impact may have been experienced to a lesser degree in other regions due to the global nature of ARM.
+This incident also impacted downstream Azure services which depend upon ARM for their internal resource management operations – including Analysis Services, Azure Container Registry, API Management, App Service, Backup, Bastion, CDN, Center for SAP solutions, Chaos Studio, Data Factory, Database for MySQL flexible servers, Database for PostgreSQL, Databricks, Device Update for IoT Hub, Event Hubs, Front Door, Key Vault, Log Analytics, Migrate, Relay, Service Bus, SQL Database, Storage, Synapse Analytics, and Virtual Machines.
+In several cases, data plane impact on downstream Azure services was the result of dependencies on ARM for retrieval of Role Based Access Control (RBAC) data (see: https://learn.microsoft.com/azure/role-based-access-control/overview ). For example, services including Storage, Key Vault, Event Hub, and Service Bus rely on ARM to download RBAC authorization policies. During this incident, these services were unable to retrieve updated RBAC information and once the cached data expired these services failed, rejecting incoming requests in the absence of up-to-date access policies. In addition, several internal offerings depend on ARM to support on-demand capacity and configuration changes, leading to degradation and failure when ARM was unable to process their requests.
+What went wrong and why?
+In June 2020, ARM deployed a private preview integration with Entra Continuous Access Evaluation (see: https://learn.microsoft.com/entra/identity/conditional-access/concept-continuous-access-evaluation ). This feature is to support continuous access evaluation for ARM, and was only enabled for a small set of tenants and private preview customers. Unbeknownst to us, this preview feature of the ARM CAE implementation contained a latent code defect that caused issues when authentication to Entra failed. The defect would cause ARM nodes to fail on startup whenever ARM could not authenticate to an Entra tenant enrolled in the preview.
+On 21 January 2024, an internal maintenance process made a configuration change to an internal tenant which was enrolled in this preview. This triggered the latent code defect and caused ARM nodes, which are designed to restart periodically, to fail repeatedly upon startup. ARM nodes restart periodically by design, to account for automated recovery from transient changes in the underlying platform, and to protect against accidental resource exhaustion such as memory leaks.
+Due to these ongoing node restarts and failed startups, ARM began experiencing a gradual loss in capacity to serve requests. Eventually this led to an overwhelming of the remaining ARM nodes, which created a negative feedback loop (increased load resulted in increased timeouts, leading to increased retries and a corresponding further increase in load) and led to a rapid drop in availability. Over time, this impact was experienced in additional regions – predominantly affecting East US, South Central US, Central US, West Central US, and West Europe.
+How did we respond?
+At 01:59 UTC, our monitoring detected a decrease in availability, and we began an investigation. Automated communications to a subset of impacted customers began shortly thereafter and, as impact to additional regions became better understood, we decided to communicate publicly via the Azure Status page. By 04:25 UTC we had correlated the preview feature to the ongoing impact. We mitigated by making a configuration change to disable the feature. The mitigation began to rollout at 04:51 UTC, and ARM recovered in all regions except West Europe by 05:30 UTC.
+The recovery in West Europe was slowed because of a retry storm from failed ARM calls, which increased traffic in West Europe by over 20x, causing CPU spikes on our ARM instances. Because most of this traffic originated from trusted internal systems, by default we allowed it to bypass throughput restrictions which would have normally throttled such traffic. We increased throttling of these requests in West Europe which eventually alleviated our CPUs and enabled ARM to recover in the region by 08:58 UTC, at which point the underlying ARM incident was fully mitigated.
+The vast majority of downstream Azure services recovered shortly thereafter. Specific to Key Vault, we identified a latent bug which resulted in application crashes when latency to ARM from the Key Vault data plane was persistently high. This extended the impact for Vaults in East US and West Europe, beyond the vaults that opted into Azure RBAC.
+20 January 2024 @ 21:00 UTC – An internal maintenance process made a configuration change to an internal tenant enrolled in the CAE private preview.
+20 January 2024 @ 21:16 UTC – First ARM roles start experiencing startup failures, but no customer impact as ARM still has sufficient capacity to serve requests.
+21 January 2024 @ 01:30 UTC – Initial customer impact due to continued capacity loss in several large ARM regions.
+21 January 2024 @ 01:59 UTC – Monitoring detected additional failures in the ARM service, and on-call engineers began immediate investigation.
+21 January 2024 @ 02:23 UTC – Automated communication sent to impacted customers started.
+21 January 2024 @ 03:04 UTC – Additional ARM impact was detected in East US and West Europe.
+21 January 2024 @ 03:24 UTC – Due to additional impact identified in other regions, we raised the severity of the incident, and engaged additional teams to assist in troubleshooting.
+21 January 2024 @ 03:30 UTC – Additional ARM impact was detected in South Central US.
+21 January 2024 @ 03:57 UTC – We posted broad communications via the Azure Status page.
+21 January 2024 @ 04:25 UTC – The causes of impact were understood, and a mitigation strategy was developed.
+21 January 2024 @ 04:51 UTC – We began the rollout of this configuration change to disable the preview feature.
+21 January 2024 @ 05:30 UTC – ARM recovered in all regions except West Europe.
+21 January 2024 @ 08:58 UTC – ARM recovered in West Europe, mitigating vast majority of customer impact beyond specific services who took more time to recover.
+21 January 2024 @ 09:28 UTC – Key Vault recovered instances in West Europe by adding new scale sets to replace the VMs that had crashed due to the code bug.
+How are we making incidents like this less likely or less impactful?
+Our ARM team have already disabled the preview feature through a configuration update. (Completed)
+We have offboarded all tenants from the CAE private preview, as a precaution. (Completed)
+Our Entra team improved the rollout of that type of per-tenant configuration change to wait for multiple input signals, including from canary regions. (Completed)
+Our Key Vault team has fixed the code that resulted in applications crashing when they were unable to refresh their RBAC caches. (Completed)
+We are gradually rolling out a change to proceed with node restart when a tenant-specific call fails. (Estimated completion: February 2024)
+Our ARM team will audit dependencies in role startup logic to de-risk scenarios like this one. (Estimated completion: February 2024)
+Our ARM team will leverage Azure Front Door to dynamically distribute traffic for protection against retry storm or similar events. (Estimated completion: February 2024)
+We are improving monitoring signals on role crashes for reduced time spent on identifying the cause(s), and for earlier detection of availability impact. (Estimated completion: February 2024)
+Our Key Vault, Service Bus and Event Hub teams will migrate to a more robust implementation of the Azure RBAC system that no longer relies on ARM and is regionally isolated with standardized implementation. (Estimated completion: February 2024)
+Our Container Registry team are building a solution to detect and auto-fix stale network connections, to recover more quickly from incidents like this one. (Estimated completion: February 2024)
+Finally, our Key Vault team are adding better fault injection tests and detection logic for RBAC downstream dependencies. (Estimated completion: March 2024).
+How can we make our incident communications more useful?
+You can rate this PIR and provide any feedback using our quick 3-question survey: https://aka.ms/AzPIR/NKRF-1TG

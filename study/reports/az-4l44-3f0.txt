@@ -1,0 +1,64 @@
+Post Incident Review (PIR) – Azure OpenAI Service – Errors in multiple regions
+
+Post Incident Review (PIR) – Azure OpenAI Service – Errors in multiple regions
+
+Tracking ID: 4L44-3F0
+
+Join one of our upcoming 'Azure Incident Retrospective' livestreams about this incident, or watch on demand: https://aka.ms/AIR/4L44-3F0
+What happened?
+Between 00:00 UTC and 23:35 UTC on 13 July 2024, an issue during a cleanup operation caused a subset of critical resources to be deleted, which impacted the Azure OpenAI (AOAI) service across multiple regions. A subset of customers experienced errors when calling the Azure OpenAI endpoints and may have experienced issues, such as 5xx errors when accessing their Azure OpenAI service resources, in 14 of the 28 regions that offer AOAI – specifically Australia East, Brazil South, Canada Central, Canada East, East US 2, France Central, Korea Central, North Central US, Norway East, Poland Central, South Africa North, South India, Sweden Central and UK South.
+Between 01:00 UTC on 13 July 2024 and 16:54 UTC on 15 July 2024, new Standard (Pay-As-You-Go) fine-tuned model deployments were unavailable in a subset of regions, and deployment deletions may not have been effective. This impacted four regions, specifically East US 2, North Central US, Sweden Central, and Switzerland West. However, clients could utilize inference endpoints for their currently deployed models within these regions.
+There was no data loss to Retrieval-augmented generation (RAG) or fine-tuning models due to this event.
+What went wrong and why?
+Our Azure OpenAI service leverages an internal automation system to create and manage Azure resources that are needed by the service. These resources include Azure GPU Virtual Machines (VMs) that host the OpenAI large language models (LLMs) and Azure Machine Learning workspaces that host the managed online endpoints responsible for serving backend inferencing requests. The automation service is also responsible for orchestrating the deployment and managing the lifecycle of fine-tuned models.
+While the automation service itself is a regional service, it uses a global configuration file in a code repository to define the state of the Azure resources needed for Azure OpenAI in all regions. As the service grew its footprint at a highly accelerated rate, multiple components started to leverage the same resource structure to enable new scenarios. Over time, some Azure resource groups grew to contain two different types of resources – those managed by the automation, and those not known by the automation. This discrepancy resulted in inconsistencies between which resources were provisioned in the AOAI production subscription, and which resources the automation’s configuration file identified as existing in the subscription. A specific instance of the inconsistency states that 14 resource groups defined in the repository configuration file contained only resources that are no longer needed by the service, but they actually contained sub resources that include the GPU Compute VMs and Model Endpoints needed by the service. It’s worth calling out that these Model Endpoints support both Pay-As-You-Go (PayGo) and Processing Throughput Unit (PTU) offers.
+As part of the ongoing effort to clean up unused resources to overcome subscription limits and to reduce security vulnerability surface areas, a change was made to the global configuration file – to remove the 14 resource groups that were deemed unused. This change took effect soon after it was committed, and all resources in those resource groups were deleted in a short span of time, resulting in the cascade of failures that caused the incident. Because the configuration change was delivered as a content update at a global scope, there existed no safe deployment process to gate the effect of the change in region-specific order, resulting in a multi-region incident. This is the main gap in the change management process that we addressed as an immediate repair item.
+The incident was detected quickly through our service’s internal monitoring. Once the deletion trigger event was understood, the recovery process was kicked off immediately to rebuild the service in parallel across the 14 impacted regions. Service availability gradually recovered for PayGo and PTU offers across different model types. Deployment of fine-tuned models was the last scenario to be re-enabled because additional changes were needed to be made and validated to ensure service availability.
+How did we respond?
+00:00 UTC on 13 July 2024 – Initial customer impact started, as cleanup operations began across regions, gradually increasing as more regions became unhealthy.
+00:05 UTC on 13 July 2024 – Service monitoring detected failure rates going above defined thresholds, alerting our engineers who began an investigation.
+00:30 UTC on 13 July 2024 – We determined there was a multi-region issue unfolding by correlating alerts, service metrics, and telemetry dashboards. It took 30-40 minutes for the delete to complete, so each region (and even each endpoint in each region) went offline at different times.
+00:45 UTC on 13 July 2024 – We identified that backend endpoints were being deleted, but did not yet know how or why. Our on-call engineers were investigating two hypotheses.
+00:52 UTC on 13 July 2024 – We classified the event as critical, engaging incident response personnel to further investigate, coordinate resources, and drive customer workstreams.
+01:00 UTC on 13 July 2024 – We identified the automated cleanup operation deleting resources. With the problem known, we began mitigation efforts, beginning with stopping the automation that was executing the cleanup.
+01:40 UTC on 13 July 2024 – The cleanup job stopped on its own and did not delete everything. However, we continued to work to ensure further deletion was prevented.
+02:00 UTC on 13 July 2024 – We added resource locks and stopped delete requests at both the ARM and Automation levels, to prevent further deletion.
+02:00 UTC on 13 July 2024 - Initial recovery efforts began to recreate deleted resources. Note regarding recovery time - AOAI models are very large and can only be transferred via secure channels. Within a model pool (there are separate model pools per region per model) each deployment is serial (so the model copying time is a significant factor). Model pools themselves are done in parallel.
+02:22 UTC on 13 July 2024 – First communication posted to the Azure Status page. Communications were delayed due to initial difficulties scoping affected customers, and impact analysis gaps in our communications tooling.
+03:35 UTC on 13 July 2024 – Customer impact scope determined, and first targeted communications sent to customers via Service Health in the Azure portal.
+04:15 UTC on 13 July 2024 – GPT-3.5-Turbo started recovering in North Central US.
+07:10 UTC on 13 July 2024 – GPT-4o recovered in East US 2.
+07:10 UTC on 13 July 2024 – Majority of regions and models began recovering.
+08:35 UTC on 13 July 2024 – GPT-4 in majority of regions recovered and serving traffic.
+10:20 UTC on 13 July 2024 – Majority of models and regions recovered, error rates dropped to normal levels. GPT-4 recovered in all regions except Canada Central, Sweden Central, North Central US, UK South, Central US, and Australia East.
+15:40 UTC on 13 July 2024 – GPT-4 in North Central recovered.
+17:35 UTC on 13 July 2024 – Recovered in all regions except Sweden Central.
+19:20 UTC on 13 July 2024 - DALL-E restored in all regions.
+19:30 UTC on 13 July 2024 – GPT-4 in UK South is recovered.
+20:20 UTC on 13 July 2024 - GPT-4o recovered in Sweden Central.
+23:35 UTC on 13 July 2024 – All base models recovered, and service restoration completed across all affected regions.
+14:00 UTC on 15 July 2024 - Fine tuning model recovery across various regions.
+16:54 UTC on 15 July 2024 - All fine-tuning model deployments restored across affected regions.
+Notes regarding the model-specific recoveries in the timeline above:
+Restoration of all models except GPT-4o, DALL-E, and Fine Tuning - All model pools in all regions are set to recover in parallel via automation. Order when each region reaches restoration point is not determined. For most models and regions recovery occurred over time, improving incrementally. Some model types or regions did not recover automatically via automation and required manual intervention (GPT4o, Dall-E, and Finetuning).
+Restoration of GPT4o - Due to multimodal nature, GPT4o uses REDIS and Private Link. Automation was able to bring back REDIS and Private Link, but due to complex interaction, manual intervention required reconfiguring these items with Azure REDIS and Azure Networking teams due to some complexities in Azure REDIS and Azure Private Link.
+Restoration of Dall-E - Restoration of Dall-E required manual intervention due to Managed Identity between Dall-E frontend and Dall-E backend. After restoration the Managed Identity needed to add to an allowlist.
+Restoration of Finetuning control plane - At the beginning of the incident, on 13 July, we turned off our automation to stop any possibility of further deletion. This same automation governs the creation of new finetuning deployments. We kept the automation off all weekend, out of caution to avoid the automation from deleting resources again. On 15 July, when all was recovered and stable, we turned the automation back on, and Finetuning deployment capability was restored as a part of the automation being turned back on.
+How are we making incidents like this less likely or less impactful?
+We have changed the configuration policy to be regional, according to our Safe Deployment Practices (SDP) for all subsequent configuration updates. This will help ensure potentially unhealthy changes are limited to a single region. (Completed)
+We have removed incorrect metadata tags on the resources that are not to be managed by the automation, and updated the automation configuration to exclude those resources, thus preventing automation from inadvertently deleting critical resources. (Completed)
+We have tightened the regional makeup of workloads to fewer regions, to further prevent widespread issues in the event of similar unintentional deletion or comparable scenarios. (Completed)
+We have enhanced our incident response engagement automation, to ensure more efficient involvement of our incident response personnel. (Completed)
+We are investigating additional implementation of change management controls, to ensure all changes to production go through a gated safe deployment process (Estimated completion: August 2024)
+Our communications tooling will be updated with relevant AOAI data, to ensure faster notification for similar scenarios where there are difficulties scoping affected customers. (Estimated completion: September 2024)
+We are investigating additional test coverage and verification procedures to de-risk future configuration updates. (Estimated completion: September 2024)
+We will develop additional active monitoring for different model families, to assess system health without depending on customer traffic. (Estimated completion: September 2024)
+In the longer term, we will increase the parallelization of model pool buildouts, to reduce the time it takes for recovery. (Estimated completion: December 2024)
+How can customers make incidents like this less impactful?
+Generally, customers can have endpoints in multiple regions for failover if the primary region goes down. For guidance on Business Continuity and Disaster Recovery (BCDR) scenarios, review https://learn.microsoft.com/azure/ai-services/openai/how-to/business-continuity-disaster-recovery
+The global offer is supported for several of the SKUs, consider evaluating and onboarding to it depending on your requirements: https://learn.microsoft.com/en-us/azure/ai-services/openai/how-to/deployment-types
+More generally, consider evaluating the reliability of your applications using guidance from the Azure Well-Architected Framework and its interactive Well-Architected Review: https://aka.ms/AzPIR/WAF
+The impact times above represent the full incident duration, so are not specific to any individual customer. Actual impact to service availability varied between customers and resources – for guidance on implementing monitoring to understand granular impact: https://aka.ms/AzPIR/Monitoring
+Finally, consider ensuring that the right people in your organization will be notified about any future service issues – by configuring Azure Service Health alerts. These can trigger emails, SMS, push notifications, webhooks, and more: https://aka.ms/AzPIR/Alerts
+How can we make our incident communications more useful?
+You can rate this PIR and provide any feedback using our quick 3-question survey: https://aka.ms/AzPIR/4L44-3F0

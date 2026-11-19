@@ -1,0 +1,36 @@
+Post Incident Review (PIR) – Azure Virtual Desktop – Unable to create new connections, impacting US regions
+
+Post Incident Review (PIR) – Azure Virtual Desktop – Unable to create new connections, impacting US regions
+
+Tracking ID: 1LG8-1X0
+
+Join one of our upcoming 'Azure Incident Retrospective' livestreams about this incident, or watch on demand: https://aka.ms/AIR/1LG8-1X0
+What happened?
+Between 18:46 UTC and 20:36 UTC on 16 September 2024, a platform issue resulted in an impact to a subset of customers using Azure Virtual Desktop in several US regions – specifically, those who have their Azure Virtual Desktop configuration and metadata stored in the US Geography, which we host in the East US 2 region. Impacted customers may have experienced failures to access their list of available resources, make new connections, or perform management actions on their Azure Virtual Desktop resources.
+This event impacted customers in the following US regions: Central US, East US, East US 2, North Central US, South Central US, West Central US, West US, West US 2, and West US 3. End users with connections established via any of these US regions may also have been impacted. This connection routing is determined dynamically, to route end users to their nearest Azure Virtual Desktop gateway. More information on this process can be found at: https://learn.microsoft.com/azure/virtual-desktop/service-architecture-resilience#user-connections .
+What went wrong and why?
+Azure Virtual Desktop (AVD) relies on multiple technologies including SQL Database to store configuration data. Each AVD region has a database with multiple secondary copies. We replicate data from our primary copy to these secondary copies using transaction logs, which ensures that all changes are logged and applied to the replicas. Collectively, these replicas house configuration data that is needed when connecting, managing, and troubleshooting AVD.
+We determined that this incident was caused by a degradation in the redo process on one of the secondary copies servicing the US geography, which caused failures to access service resources. As the workload picked up on Monday, the redo subsystem on the readable secondary, started getting stalled while processing specific logical log records (around transaction lifetime). Furthermore, we noticed a spike in read latency to fetch the next set of log records needing to be redone. We have identified an improvement and a bug-fix in this space, which is being prioritized, along with critical detection and mitigation alerts.
+How did we respond?
+At 18:46 UTC on 16 September 2024, our internal telemetry system raised alarms about the redo log on one of our read replicas being several hours behind. Our engineering team immediately started investigating this anomaly. To expedite mitigation, we manually failed over the database to its secondary region.
+18:46 UTC on 16 September 2024 – Customer impact began. Service monitoring detected that the diagnostics service was behind when processing events.
+18:46 UTC on 16 September 2024 – We determined that a degradation in the US geo database had caused failures to access service resources.
+18:57 UTC on 16 September 2024 – Automation attempted to perform a ‘friendly’ geo failover, to move database out of the region.
+19:02 UTC on 16 September 2024 – The friendly geo failover operation failed since it could not synchronize data between the geo secondary and the unavailable geo primary.
+19:59 UTC on 16 September 2024 – To mitigate the issue fully, our engineering team manually started a forced geo-failover of the underlying database to the Central US region.
+20:00 UTC on 16 September 2024 – Geo-failover operation completed.
+20:36 UTC on 16 September 2024 – Customer impact mitigated. Engineering telemetry confirmed that connectivity, application discovery and management issues to service have been resolved.
+How are we making incidents like this less likely or less impactful?
+First and foremost, we will improve our detection of high replication latencies to secondary replicas, to identify problems like this one more quickly. (Estimated completion: October 2024)
+We will improve our troubleshooting guidelines by incorporating mechanisms to perform mitigations without impact, as needed, to bring customers back online more quickly. (Estimated completion: October 2024)
+Our AVD and SQL teams will partner together on updating the SQL Persisted Version Store (PVS) growth troubleshooting guideline, by incorporating this new scenario. (Estimated completion: October 2024)
+To address this particular contention issue in the Redo pipeline, our SQL team has identified a potential new feature (deploying in October 2024) as well as a repair item (which will be completed by December 2024) to de-risk the likelihood of redo lag.
+We will incorporate improved read log generation throttling of non-transactional log records like PVS inserts, which will add another potential mitigation ability to help secondary replicas catchup. (Estimated completion: October 2024)
+Finally, we will work to update our database architecture so that telemetry and control (aka metadata) are stored in separate databases. (Estimated completion: October 2024)
+How can customers make incidents like this less impactful?
+For more information on Azure Virtual Desktop host pool object location and data stored there, see https://learn.microsoft.com/azure/virtual-desktop/data-locations#customer-input .
+For more information on Persisted Version Store (PVS), see https://learn.microsoft.com/azure/azure-sql/accelerated-database-recovery
+The impact times above represent the full incident duration, so are not specific to any individual customer. Actual impact to service availability varied between customers and resources – for guidance on implementing monitoring to understand granular impact: https://aka.ms/AzPIR/Monitoring
+Finally, consider ensuring that the right people in your organization will be notified about any future service issues - by configuring Azure Service Health alerts. These can trigger emails, SMS, push notifications, webhooks, and more: https://aka.ms/ash-alerts
+How can we make our incident communications more useful?
+You can rate this PIR and provide any feedback using our quick 3-question survey: https://aka.ms/AzPIR/1LG8-1X0

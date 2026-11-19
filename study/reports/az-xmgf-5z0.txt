@@ -1,0 +1,11 @@
+Post Incident Review (PIR) - Azure Monitor - Logs data access issues
+
+Post Incident Review (PIR) - Azure Monitor - Logs data access issues
+
+Tracking ID: XMGF-5Z0
+
+Summary of Impact: Between at 23:15 UTC on 06 Jul 2023 and 09:00 UTC on 07 July 2023, customers using Azure Monitor may have experienced issues accessing logs, data gaps, and missed / latent alerts.
+Preliminary Root Cause: We determined a configuration issue triggered a bug, causing a significant unexpected increase in traffic, causing one of our backend services responsible for processing and storing logs to reach throughput limits. This caused the service's control plane to become unresponsive, leading to services becoming unable to retrieve authentication tokens. The resulting impact spread to multiple regions.
+Mitigation: We throttled heavy consumers and spun up additional infrastructure to process the incoming load, as well as the backlog of requests.
+Next Steps: We will publish a Preliminary Post Incident Review (PIR) within approximately 72 hours, to share more details on what happened and how we responded. After our internal retrospective is completed (generally within 14 days) we will publish a "Final" PIR with additional details/learnings.
+Stay informed about Azure service issues by creating custom service health alerts: https://aka.ms/ash-videos for video tutorials and https://aka.ms/ash-alerts for how-to documentation.

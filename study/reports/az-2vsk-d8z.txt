@@ -1,0 +1,10 @@
+Traffic Manager – Intermittent Network Availability Issues - Mitigated
+
+Traffic Manager – Intermittent Network Availability Issues - Mitigated
+
+Tracking ID: 2VSK-D8Z
+
+Summary of Impact: Between 09:00 UTC and 10:42 UTC on 10 November 2023, we identified that an issue affecting the Azure Traffic Manager (ATM) service manifested in intermittent availability issues which affected Azure and a set of Microsoft Services. Customers might have seen intermittent connectivity failures during this duration.
+Preliminary Root Cause: We identified that a sudden spike in traffic resulted in the ATM service reaching transient operational thresholds. This manifested in the above-mentioned intermittent availability issues.
+Mitigation: We changed the traffic management policy for the ATM service which successfully returned the services to a healthy state. Further monitoring of our telemetry confirms that the service is fully recovered, and this issue is mitigated.
+Next Steps: We will continue to investigate to establish the full root cause and prevent future occurrences. You can stay informed about Azure service issues, maintenance events, or advisories by creating custom service health alerts ( https://aka.ms/ash-videos for video tutorials and https://aka.ms/ash-alerts for how-to documentation) and you will be notified via your preferred communication channel(s).

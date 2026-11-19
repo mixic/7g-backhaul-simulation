@@ -1,0 +1,10 @@
+Post Incident Review (PIR) - Intermittent networking issues - South Central US
+
+Post Incident Review (PIR) - Intermittent networking issues - South Central US
+
+Tracking ID: 7NBR-T98
+
+Summary of Impact: Between approximately 16:27 UTC on 23 Jan 2023 and 19:38 UTC on 23 Jan 2023, a subset of customers in the South Central US region may have experienced increased latency and/or intermittent connectivity issues for some services in the region. Downstream impact to other impacted services in the region also occurred.
+Preliminary Root Cause: We identified an unhealthy network device in the regional network gateway in the South Central US region. This device would have impacted traffic between Availability Zones and data centers in South Central US and traffic into and out of the South Central US region.
+Mitigation: The unhealthy network device was removed from service so that traffic was served through other healthy paths.
+You can stay informed about Azure service issues, maintenance events, or advisories by creating custom service health alerts ( https://aka.ms/ash-videos for video tutorials and https://aka.ms/ash-alerts for how-to documentation) and you will be notified via your preferred communication channel(s).

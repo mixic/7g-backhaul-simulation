@@ -1,0 +1,44 @@
+# Cloud Spanner unavailability or elevated errors
+
+URL: https://status.cloud.google.com/incidents/Sen4ACpGsFmquzb8FxRj
+Published: 2023-07-04
+
+Date
+Time
+Description
+5 Jul 2023
+16:35 PDT
+Mini Incident Report
+We apologize for the inconvenience this service disruption/outage may have caused. We would like to provide some information about this incident below. Please note, this information is based on our best knowledge at the time of posting and is subject to change as our investigation continues. If you have experienced impact outside of what is listed below, please reach out to Google Cloud Support using https://cloud.google.com/support
+(All Times US/Pacific)
+Incident Start: 4 July 2023 at 18:47
+Incident End: 4 July 2023 at 21:03
+Duration: 2 hours, 16 minutes
+Affected Services and Features:
+Cloud Spanner
+Regions/Zones: us-central1, asia-south1, europe-west2, europe-west9
+Description:
+A limited number of Cloud Spanner users experienced errors while using control plane APIs and while creating new sessions in the us-central1 for a duration of 2 hours and 16 minutes. A limited number of users of europe-west2, europe-west9 and asia-south1 regions were impacted intermittently for a duration of 5 mins between 20:11 and 21:03 PDT. From our preliminary analysis, the root cause was an incorrect configuration in the way operational metadata was handled, causing an overload on metadata operations for the regions mentioned.
+Customer Impact:
+Customers could have experienced one or more of the following :
+Customers with existing sessions may not have observed any errors, However, upon reconnection, customers may have experienced errors stating “deadline exceeded” when creating new sessions.
+Errors stating ”deadline exceeded” when using the Control Plane API.
+Errors or missing entries while viewing their instances and databases in Cloud Console.
+4 Jul 2023
+21:15 PDT
+The issue with Cloud Spanner has been resolved for all affected users as of Tuesday, 2023-07-04 21:09 US/Pacific.
+We thank you for your patience while we worked on resolving the issue.
+4 Jul 2023
+20:48 PDT
+Summary: Cloud Spanner unavailability or elevated errors
+Description: Starting at 2023-07-04 19:00 US/Pacific, some Cloud Spanner customers started receiving intermittent deadline exceeded errors while creating sessions or querying control plane APIs and missing instances in the cloud console. Existing sessions continue to work. This issue is occurring in the following locations [us-central1] and is currently ongoing. Engineers are working on a resolution.
+We will provide an update by Tuesday, 2023-07-04 23:00 US/Pacific with current details.
+Diagnosis: Customers may be receiving errors or elevated latencies in query executions
+Workaround: None at this time.
+4 Jul 2023
+20:04 PDT
+Summary: Cloud Spanner unavailability or elevated errors
+Description: Starting at 2023-07-04 19:00 US/Pacific, a few Cloud Spanner customers began experiencing elevated intermittent latency when reading and writing data to their instances in us-central1. The problem is currently ongoing. Engineers are working on a resolution.
+We will provide an update by Tuesday, 2023-07-04 21:30 US/Pacific with current details.
+Diagnosis: Customers may be receiving errors or elevated latencies in query executions
+Workaround: None at this time.

@@ -1,0 +1,40 @@
+Post Incident Review (PIR) – Azure Resource Manager – Control plane issues in China North 3
+
+Post Incident Review (PIR) – Azure Resource Manager – Control plane issues in China North 3
+
+Tracking ID: HVZN-VB0
+
+Join one of our upcoming 'Azure Incident Retrospective' livestreams about this incident, or watch on demand: https://aka.ms/AIR/HVZN-VB0
+What happened?
+Between 08:00 and 21:30 CST on 5 September 2024, customers in the Azure China regions were seeing delays in long running control plane operations including create, update and delete operations on resources. Although these delays were affecting all regions, the most significant impact was in China North 3. These delays resulted in various issues for customers and services utilizing Azure Resource Manager (ARM), including timeouts and operation failures.
+Azure Databricks – Customers may have encountered errors or failures while submitting job requests.
+Azure Data Factory – Customers may have experienced Internal Server Errors while running Data Flow Activity or acquiring Data Flow Debug Sessions.
+Azure Database for MySQL – Customers making create/update/delete operations to Azure Database for MySQL would have not seen requests completing as expected.
+Azure Event Hubs - Customers attempting to perform read or write operations may have seen slow response times.
+Azure Firewall - Customers making changes or updating their policies in Azure Firewall may have experienced delays in the updates being completed.
+Azure Kubernetes Service - Customers making Cluster Management operations (such as scaling out, updates, creating/deleting clusters) would not have seen requests completing as expected.
+Azure Service Bus - Customers attempting to perform read or write operations may have seen slow response times.
+Microsoft Purview - Customers making create/update/delete operations to Microsoft Purview accounts/resources would have not seen requests completing as expected.
+Other services leveraging Azure Resource Manager - Customers may have experienced service management operation failures if using services inside of Resource Groups in China North 3.
+What went wrong and why?
+Azure Resource Manager is the control plane Azure customers use to perform CRUD (create, read, update, delete) operations on their resources. For long running operations such as creating a virtual machine, there is background processing of the operation that needs to be tracked. During a certificate rotation, the processes tracking these background operations were repeatedly crashing. While background jobs were still being processed, these crashes caused significant delays and an increasing backlog of jobs. As background jobs may contain sensitive data, their state is encrypted at the application level. When the certificate used to encrypt the jobs is rotated, any in-flight jobs are re-encrypted with the new metadata. The certificate rotation in the Azure China regions exposed a latent bug in the update process which caused the processes to begin crashing.
+How did we respond?
+08:00 CST on 5 September 2024 – Customer impact began.
+11:00 CST on 5 September 2024 – We attempted to increase the worker instance count to mitigate the incident, but were not successful.
+13:05 CST on 5 September 2024 – We continued to investigate to find contributing factors leading to impact.
+16:02 CST on 5 September 2024 – We identified a correlation between specific release versions and increased error processing latency, and determined a safe rollback version.
+16:09 CST on 5 September 2024 – We began rolling back to the previous known good build for one component in China East 3, to validate our mitigation approach.
+16:55 CST on 5 September 2024 – We started to see indications that the mitigation was working as intended.
+17:36 CST on 5 September 2024 – We confirmed mitigation for China East 3 and China North 3, and began rolling back to the safe version in other regions using a safe deployment process which took several hours.
+21:30 CST on 5 September 2024 – The rollback was completed and, after further monitoring, we were confident that service functionality had been fully restored, and customer impact mitigated.
+How are we making incidents like this less likely or less impactful?
+We have fixed the latent code bug related to certificate rotation. (Completed)
+We are improving our monitoring and telemetry related to process crashing in the Azure China regions. (Completed)
+Finally, we are moving the background job encryption process to a newer technology that supports fully automated key rotation, to help minimize the potential for impact in the future. (Estimated completion: October 2024)
+How can customers make incidents like this less impactful?
+For mission-critical workloads, customers should consider a multi-region geodiversity strategy to avoid impact from incidents like this one that predominantly impacted a single region: https://learn.microsoft.com/training/modules/design-a-geographically-distributed-application/ and https ://learn.microsoft.com/azure/architecture/patterns/geodes
+More generally, consider evaluating the reliability of your applications using guidance from the Azure Well-Architected Framework and its interactive Well-Architected Review: https://aka.ms/AzPIR/WAF
+The impact times above represent the full incident duration, so are not specific to any individual customer. Actual impact to service availability varied between customers and resources – for guidance on implementing monitoring to understand granular impact: https://aka.ms/AzPIR/Monitoring
+Finally, consider ensuring that the right people in your organization will be notified about any future service issues – by configuring Azure Service Health alerts. These can trigger emails, SMS, push notifications, webhooks, and more: https://docs.azure.cn/service-health/alerts-activity-log-service-notifications-portal
+How can we make our incident communications more useful?
+You can rate this PIR and provide any feedback using our quick 3-question survey: https://aka.ms/AzPIR/HVZN-VB0

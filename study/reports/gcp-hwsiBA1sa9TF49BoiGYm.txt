@@ -1,0 +1,118 @@
+# Google BigQuery LOAD jobs are experiencing elevated error rates.
+
+URL: https://status.cloud.google.com/incidents/hwsiBA1sa9TF49BoiGYm
+Published: 2023-10-16
+
+Date
+Time
+Description
+23 Oct 2023
+09:28 PDT
+Incident Report
+Summary
+On Monday, 16 October 2023, Google BigQuery’s load job API started rejecting load jobs with the error message:
+[INVALID_INPUT] message=Column Name Character Map is not supported for this format. errorProto=code: "INVALID_VALUE"
+argument: "Column Name Character Map is not supported for this format.
+The issue lasted five hours. To our BigQuery customers whose business analytics were impacted during this disruption, we sincerely apologize. This is not the level of quality and reliability we strive to offer you, and we are taking immediate steps to improve the platform’s availability.
+Root Cause
+The issue originated from a recent rollout to support more features for flexible column name[1] (currently in Preview), in order to support a richer set of additional characters in the column name. Once the feature reaches General Availability (GA), these characters will be able to have full support across various BigQuery features, including column schema in load.
+A subset of these new characters have historically been handled by normalization and were converted to underscore(_) during load when generating table column schema. In order to maintain backwards compatibility for a set of customers, while allowing all customers to have the flexibility to use the richer set of additional characters as is during load, this rollout is intended as one of the steps to:
+Enable additional user control to choose between the previous and new behavior for load with such characters in column names.
+Set normalization as the default for a group of customers that historically have been using this behavior in production, as a backward compatibility support.
+Due to an incomplete configuration during the rollout, BigQuery load APIs were not enabled to handle the introduced normalization setting as the default. This led to errors from load API for all formats for a group of customers who were configured with the backward compatibility support.
+Remediation and Prevention
+Google engineers were alerted to the load job failures via a support case on 16 October 2023 16:24 US/Pacific and immediately started an investigation. Google engineers quickly identified the root cause was an ongoing configuration rollout. They first halted the ongoing configuration rollout and limited the impact to three regions (US multi-region, asia-southeast1, azure-eastus2). At 16:56 US/Pacific, rollback for the configuration in the impacted region started, finishing at 19:00 US/Pacific.
+Google is committed to preventing a repeat of this issue in the future and is completing the following actions:
+Immediately start the work to fix the code issues which led to misconfiguration during the rollout.
+Add additional monitoring and alerting to detect and resolve such issues faster in future.
+Review and improve gradual roll out policy for configuration changes.
+Detailed Description of Impact
+On Monday 16 October, 2023 from 14:00 to 19:00 US/Pacific, BigQuery experienced load job errors in three regions (US multi-region, asia-southeast1, azure-eastus2). Google BigQuery’s load job api started rejecting load jobs with the error message:
+[INVALID_INPUT] message=Column Name Character Map is not supported for this format. errorProto=code: "INVALID_VALUE"
+argument: "Column Name Character Map is not supported for this format.
+For affected customers, 100 percent of their load jobs failed during the incident window. The Load Data SQL statement[2] was not affected.
+[1] https://cloud.google.com/bigquery/docs/schemas#flexible-column-names
+[2] https://cloud.google.com/bigquery/docs/reference/standard-sql/other-statements#load_data_statement
+17 Oct 2023
+09:06 PDT
+Mini Incident Report
+We apologize for the inconvenience this service disruption may have caused. We would like to provide some information about this incident below. Please note, this information is based on our best knowledge at the time of posting and is subject to change as our investigation continues. If you have experienced impact outside of what is listed below, please reach out to Google Cloud Support using https://cloud.google.com/support .
+(All Times US/Pacific)
+Incident Start: 16 October, 2023 14:00
+Incident End: 16 October, 2023 19:00
+Duration: 5 hours
+Affected Services and Features:
+Load Jobs in Google BigQuery
+Regions/Zones:
+US multi-region
+asia-southeast1
+azure-eastus2
+Description:
+Google BigQuery users experienced ‘Column Name Character Map is not supported for this format’ errors when running load jobs in BigQuery.
+From our preliminary analysis, the trigger was a recent roll out to support the flexible column name feature . The roll out uncovered an unexpected side effect caused by a configuration change, causing BigQuery load jobs to fail. The issue was fully mitigated by rolling back the change.
+Google will complete a detailed Incident Report in the following days that will provide a full root cause.
+Customer Impact:
+Customer experienced load job fails with error message:
+[INVALID_INPUT] message=Column Name Character Map is not supported for this format. errorProto=code: "INVALID_VALUE"
+argument: "Column Name Character Map is not supported for this format.
+16 Oct 2023
+19:14 PDT
+The issue with BigQuery LOAD jobs has been resolved for all affected projects as of Monday, 2023-10-16 19:00 US/Pacific.
+From preliminary analysis, we believe that the issue was caused by an unexpected side effect of a configuration change that was rolled out between 14:00-14:30 US/Pacific. The issue was mitigated by rolling back the change.
+We will publish an analysis of this incident once we have completed our internal investigation.
+We thank you for your patience while we worked on resolving the issue.
+16 Oct 2023
+18:35 PDT
+Summary: Google BigQuery LOAD jobs are experiencing elevated error rates.
+Description: Mitigation work completed in asia-southeast1 and azure-eastus2. Our engineering team is closely monitoring the error rates in these two regions to ensure full resolution.
+Mitigation is currently underway in the US multi-region and is expected to complete by Monday, 2023-10-16 19:15 US/Pacific.
+We will provide more information by Monday, 2023-10-16 19:15 US/Pacific.
+Diagnosis:
+BigQuery LOAD jobs are failing with error message "Column Name Character Map is not supported for this format".
+The issue is currently affecting jobs in US multi-region.
+The issue is mitigated in asia-southeast1, and azure-eastus2.
+Workaround: None at this time.
+16 Oct 2023
+17:58 PDT
+Summary: Google BigQuery jobs experiencing elevated error rate
+Description: Mitigation work is currently underway by our engineering team and is still on track.
+The mitigation is expected to complete by Monday, 2023-10-16 19:15 US/Pacific.
+We will provide more information by Monday, 2023-10-16 19:15 US/Pacific.
+Diagnosis:
+BigQuery jobs are failing with error message "Column Name Character Map is not supported for this format".
+The issue is affecting jobs in us multi-region, asia-southeast1, and azure-eastus2.
+Workaround: None at this time.
+16 Oct 2023
+17:19 PDT
+Summary: Google BigQuery jobs experiencing elevated error rate
+Description: Mitigation work is currently underway by our engineering team.
+The mitigation is expected to complete by Monday, 2023-10-16 19:15 US/Pacific.
+We will provide more information by Monday, 2023-10-16 18:00 US/Pacific.
+Diagnosis:
+BigQuery jobs are failing with error message "Column Name Character Map is not supported for this format".
+The issue is affecting jobs in us multi-region, asia-southeast1, and azure-eastus2.
+Workaround: None at this time.
+16 Oct 2023
+16:53 PDT
+Summary: Google BigQuery jobs experiencing elevated error rate
+Description: Mitigation work is currently underway by our engineering team.
+We do not have an ETA for mitigation at this point.
+We will provide more information by Monday, 2023-10-16 17:30 US/Pacific.
+Diagnosis: BigQuery jobs are failing with error message "Column Name Character Map is not supported for this format"
+Workaround: None at this time.
+16 Oct 2023
+16:49 PDT
+Summary: Google BigQuery jobs experiencing elevated error rate
+Description: We are experiencing an issue with Google BigQuery.
+Our engineering team continues to investigate the issue.
+We will provide an update by Monday, 2023-10-16 17:59 US/Pacific with current details.
+We apologize to all who are affected by the disruption.
+Diagnosis: BigQuery jobs are failing with error message "Column Name Character Map is not supported for this format"
+Workaround: None at this time.
+16 Oct 2023
+16:45 PDT
+Summary: We've received a report of an issue with Google BigQuery
+Description: We've received a report of an issue with Google BigQuery as of Monday, 2023-10-16 16:37 US/Pacific.
+We will provide more information by Monday, 2023-10-16 17:15 US/Pacific.
+Diagnosis: None at this time.
+Workaround: None at this time.

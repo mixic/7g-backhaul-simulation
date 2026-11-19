@@ -1,0 +1,24 @@
+Post Incident Review (PIR) – Azure OpenAI Service – Latency and intermittent failures in multiple regions
+
+Post Incident Review (PIR) – Azure OpenAI Service – Latency and intermittent failures in multiple regions
+
+Tracking ID: LYXT-C1Z
+
+What happened?
+Between 09:39 UTC and 17:05 UTC on 29 May 2026, a platform issue resulted in impact to the Azure OpenAI service across multiple regions. Customers may have experienced degraded service health where requests intermittently failed, returned HTTP 5XX errors, or experienced increased latency.
+What do we know so far?
+We detected this issue through our automated monitoring systems after observing a drop in call success rates. Our investigation found that a backend service upon which Azure OpenAI depends for request load balancing experienced high memory utilization, causing intermittent failures across request processing and routing. This resulted in some requests being rejected within the backend processing system, leading to failures or timeouts for impacted customers. After initial mitigation efforts were performed, we identified a sudden spike in retry traffic originating from a trusted internal service that did not have sufficient rate limiting in place. Our system did not automatically scale out to meet the increased retry volume, which temporarily caused backend thresholds to be reached and throttled parts of the system.
+How did we respond?
+09:39 UTC on 29 May 2026 – Initial impact detected with increased failures and latency across regions.
+10:00 UTC on 29 May 2026 – Investigation identified widespread service instability and correlated failures across models and regions.
+12:17 UTC on 29 May 2026 – Mitigation deployed globally by disabling the affected component causing instability.
+12:40 UTC on 29 May 2026 – Service health and performance began recovering across impacted regions; we monitored closely for full recovery.
+14:40 UTC on 29 May 2026 – We determined that the issue had reoccurred due to increased retry traffic that temporarily overloaded the system.
+16:30 UTC on 29 May 2026 – We identified the source of the elevated retry requests and failed it over to an isolated backend cluster to alleviate impact and prevent reoccurrence.
+17:05 UTC on 29 May 2026 – Service restored and customer impact mitigated.
+What happens next?
+Our team will be completing an internal retrospective to understand the incident in more detail. Once completed, generally within 14 days, we will publish a Final Post Incident Review (PIR) to all impacted customers.
+To get notified when that happens, and/or to stay informed about future Azure service issues, make sure that you configure and maintain Azure Service Health alerts – these can trigger emails, SMS, push notifications, webhooks, and more: https://aka.ms/ash-alerts
+For more information on Post Incident Reviews, refer to: https://aka.ms/AzurePIRs
+The impact times above represent the full incident duration and are not specific to any individual customer. Actual impact to service availability may vary between customers and resources – for guidance on implementing monitoring to understand granular impact: https://aka.ms/AzPIR/Monitoring
+Finally, for broader guidance on preparing for cloud incidents, refer to: https://aka.ms/incidentreadiness

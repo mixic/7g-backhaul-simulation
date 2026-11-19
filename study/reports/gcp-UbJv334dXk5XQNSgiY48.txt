@@ -1,0 +1,20 @@
+# Looker Studio users are experiencing elevated query performance when loading and accessing reports.
+
+URL: https://status.cloud.google.com/incidents/UbJv334dXk5XQNSgiY48
+Published: 2024-09-09
+
+Date
+Time
+Description
+9 Sep 2024
+21:04 PDT
+The issue with Looker Studio has been resolved for all affected users as of Monday, 2024-09-09 21:01 US/Pacific.
+We thank you for your patience while we worked on resolving the issue.
+9 Sep 2024
+19:00 PDT
+Summary: Looker Studio users are experiencing elevated query performance when loading and accessing reports.
+Description: Mitigation work is currently underway by our engineering team.
+We do not have an ETA for mitigation at this point.
+We will provide more information by Tuesday, 2024-09-10 09:00 US/Pacific.
+Diagnosis: Looker Studio users are experiencing elevated query performance or errors after wait of around 5 minutes
+Workaround: None at this time.

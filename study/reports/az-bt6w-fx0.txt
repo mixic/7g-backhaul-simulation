@@ -1,0 +1,34 @@
+Preliminary Post Incident Review (PIR) – Multi-service impact in Switzerland North
+
+Preliminary Post Incident Review (PIR) – Multi-service impact in Switzerland North
+
+Tracking ID: BT6W-FX0
+
+This is our Preliminary PIR to share what we know so far. After our internal retrospective is completed (generally within 14 days) we will publish a Final PIR with additional details.
+What happened?
+Between 23:54 UTC on 26 September 2025 and 21:59 UTC on 27 September 2025, a platform issue resulted in service availability issues for resources hosted in the Switzerland North region. Many customers experienced mitigation by 04:00 UTC on 27 September 2025, while those impacted by additional residual impacts - that remained after initial mitigation steps - experienced full mitigation as late as 21:59 UTC on 27 September 2025.
+Impacted services included API Management, App Service, Application Gateway, Application Insights, Azure Cache for Redis, Azure Cosmos DB, Azure Data Explorer, Azure Database for PostgreSQL, Azure Databricks, Azure Firewall, Azure Kubernetes Service, Azure Storage, Azure Synapse Analytics, Backup, Batch, Data Factory, Log Analytics, Microsoft Sentinel, SQL Database, SQL Managed Instance, Site Recovery, Stream Analytics, Virtual Machine Scale Sets (VMSS), and Virtual Machines (VMs). Other services reliant on these may have also been impacted.
+What went wrong and why?
+A planned change updated the accepted certificates used for Software Load Balancer node connection authorization. An error in the change was not identified during the validation process, and resulted in a malformed prefix in one of the certificates to be deployed in the region. A region-specific configuration carried that certificate through a deployment pipeline/process that was not covered by our standard deployment health checks. This change was intended to be impactless to customer workloads but, due to the error, resulted in a loss of connectivity between nodes and resources inside the region.
+How did we respond?
+The error was corrected and deployed to re-establish network communication within the region. Most resources were automatically restored and communication was re-established. However, some resources and services that depend on VMs with specific extensions entered a failed state that required extra manual intervention to be brought back online.
+23:54 UTC on 26 September 2025 – Customer impact began, triggered by the change described above.
+00:08 UTC on 27 September 2025 – The issue was detected via our automated monitoring.
+00:12 UTC on 27 September 2025 – Investigation commenced by our Azure Storage and Networking engineering teams.
+02:33 UTC on 27 September 2025 – We performed steps to revert the configuration change.
+03:40 UTC on 27 September 2025 – The configuration was successfully reverted.
+04:00 UTC on 27 September 2025 – Validation of recovery was confirmed for the majority of impacted services, but a subset of resources were still unhealthy due to residual impact.
+16:15 UTC on 27 September 2025 – Recovery operations were investigated and performed in order to recover residual impact to VMs with specific extensions that remained in a failed state. This included applying mitigation scripts and performing steps to safely reboot and recover the remaining subset of resources.
+21:59 UTC on 27 September 2025 – Residual impact recovery activities and validation completed, confirming full recovery of all impacted services and customers.
+How are we making incidents like this less likely or less impactful?
+We are putting in place additional validation procedures for configuration updates of this type, prior to being queued for deployment. (Estimated completion: TBD)
+We will improve our deployment systems for such scenarios, including providing more safety measures for such updates. (Estimated completion: TBD)
+We will investigate ways to improve the recovery time for resources affected by such issues. (Estimated completion: TBD)
+This is our Preliminary PIR to share what we know so far. After our internal retrospective is completed (generally within 14 days) we will publish a Final PIR with additional details.
+How can customers make incidents like this less impactful?
+For mission-critical workloads, customers should consider a multi-region geodiversity strategy to avoid impact from incidents like this one that impacted a single region: https://learn.microsoft.com/azure/well-architected/design-guides/regions-availability-zones#deployment-approach-4-multi-region-deployments and https://learn.microsoft.com/azure/well-architected/design-guides/disaster-recovery
+More generally, consider evaluating the reliability of your applications using guidance from the Azure Well-Architected Framework and its interactive Well-Architected Review: https://aka.ms/AzPIR/WAF
+The impact times above represent the full incident duration, so are not specific to any individual customer. Actual impact to service availability varied between customers and resources – for guidance on implementing monitoring to understand granular impact: https://aka.ms/AzPIR/Monitoring
+Finally, consider ensuring that the right people in your organization will be notified about any future service issues – by configuring Azure Service Health alerts. These can trigger emails, SMS, push notifications, webhooks, and more: https://aka.ms/AzPIR/Alerts
+How can we make our incident communications more useful?
+You can rate this PIR and provide any feedback using our quick 3-question survey: https://aka.ms/AzPIR/BT6W-FX0

@@ -1,0 +1,37 @@
+# Multi-Region: Google Cloud VMWare Engine Portal Unavailable in Google Cloud Console
+
+URL: https://status.cloud.google.com/incidents/oSkQCweQ7xWmgu1g1Jps
+Published: 2024-01-23
+
+Date
+Time
+Description
+23 Jan 2024
+12:51 PST
+Mini Incident Report
+We apologize for the inconvenience this service disruption may have caused. We would like to provide some information about this incident below. Please note, this information is based on our best knowledge at the time of posting and is subject to change as our investigation continues. If you have experienced impact outside of what is listed below, please reach out to Google Cloud Support using https://cloud.google.com/support .
+(All Times US/Pacific)
+Incident Start: 23 January, 2024 07:45
+Incident End: 23 January, 2024 09:20
+Duration: 1 hour, 35 minutes
+Affected Services and Features:
+Google Cloud VMware Engine
+Regions/Zones: Global
+Description:
+Google Cloud VMware Engine (GCVE) customers were unable to navigate to the GCVE Portal in Cloud Console, or perform management actions for VMware resources using the GCVE API or gcloud CLI, for a duration of 1 hour 35 minutes. From preliminary analysis, the root cause of the issue was expired certificates.
+The issue was mitigated on 23 January, 2024 09:20 US/Pacific by installing new certificates.
+Customer Impact:
+GCVE customers were unable to access the GCVE Portal through Cloud Console and would have experienced errors when using the GCVE API and gcloud CLI to perform management actions on VMware resources. VMware workloads were not impacted and remained accessible through vCenter.
+23 Jan 2024
+09:21 PST
+The issue with Google Cloud VMWare Engine Portal in the Google Cloud Console has been resolved for all affected users as of Tuesday, 2024-01-23 09:20 US/Pacific.
+We thank you for your patience while we worked on resolving the issue.
+23 Jan 2024
+09:08 PST
+Summary: Multi-Region: Google Cloud VMWare Engine Portal Unavailable in Google Cloud Console
+Description: We are experiencing an issue with Google Cloud VMWare Engine Portal.
+Our engineering team continues to investigate the issue.
+We will provide an update by Tuesday, 2024-01-23 09:40 US/Pacific with current details.
+We apologize to all who are affected by the disruption.
+Diagnosis: Customers are unable to navigate to the Google Cloud VMWare Engine Portal in the Google Cloud Console. The UI, API, and CLI are not available and there is no impact to VM workloads.
+Workaround: None at this time.

@@ -1,0 +1,68 @@
+# [Vertex AI Search] structData may not be returned for some documents in multi regions: EU, US and also Globally
+
+URL: https://status.cloud.google.com/incidents/qNhiGBTnMwW5L1iX6rbY
+Published: 2024-05-22
+
+Date
+Time
+Description
+23 May 2024
+09:04 PDT
+The issue with Vertex AI Search structData has been resolved for all affected users as of Thursday, 2024-05-23 08:56 US/Pacific. There may be some indexing delays, and customers are advised to send search requests to verify if the response contains structData.
+We thank you for your patience while we worked on resolving the issue. If you have questions or are impacted, please open a case with the Support Team.
+23 May 2024
+08:50 PDT
+Summary: [Vertex AI Search] structData may not be returned for some documents in multi regions: EU, US and also Globally
+Description: Our engineering team is still validating the fix and has determined that additional time is needed to mitigate the issue.
+We don't have a firm mitigation ETA at this point but will continue to communicate any change in status.
+We will provide an update by Thursday, 2024-05-23 13:00 US/Pacific with current details.
+Diagnosis: structData may not be returned for some documents in multi regions: EU, US and also Globally
+Workaround: None at this time.
+22 May 2024
+20:46 PDT
+Summary: [Vertex AI Search] structData may not be returned for some documents in multi regions: EU, US and also Globally
+Description: Our engineering team is still validating the fix and has determined that additional time is needed to mitigate the issue.
+We don't have a firm mitigation ETA at this point but will continue to communicate any change in status.
+We will provide an update by Thursday, 2024-05-23 09:00 US/Pacific with current details.
+Diagnosis: structData may not be returned for some documents in multi regions: EU, US and also Globally
+Workaround: None at this time.
+22 May 2024
+16:47 PDT
+Summary: [Vertex AI Search] structData may not be returned for some documents in multi regions: EU, US and also Globally
+Description: Our engineering team is still validating the fix and has determined that additional time is needed to mitigate the issue.
+We don't have a firm mitigation ETA at this point but will continue to communicate any change in status.
+We will provide an update by Wednesday, 2024-05-22 23:00 US/Pacific with current details.
+Diagnosis: structData may not be returned for some documents in multi regions: EU, US and also Globally
+Workaround: None at this time.
+22 May 2024
+11:55 PDT
+Summary: [Vertex AI Search] structData may not be returned for some documents in multi regions: EU, US and also Globally
+Description: Our engineering team is still validating the fix and has determined that additional time is needed to mitigate the issue.
+We don't have a firm mitigation ETA at this point but will continue to communicate any change in status.
+We will provide an update by Wednesday, 2024-05-22 17:00 US/Pacific with current details.
+Diagnosis: structData may not be returned for some documents in multi regions: EU, US and also Globally
+Workaround: None at this time.
+22 May 2024
+08:24 PDT
+Summary: [Vertex AI Search] structData may not be returned for some documents in multi regions: EU, US and also Globally
+Description: Our engineering team has identified and are validating a fix in production.
+We don't have a firm mitigation ETA at this point but will continue to communicate any changes in status.
+We will provide more information by Wednesday, 2024-05-22 13:00 US/Pacific.
+Diagnosis: structData may not be returned for some documents in multi regions: EU, US and also Globally
+Workaround: None at this time.
+22 May 2024
+07:03 PDT
+Summary: [Vertex AI Search] structData may not be returned for some documents in multi regions: EU, US and also Globally
+Description: Mitigation work is currently underway by our engineering team.
+We do not have an ETA for mitigation at this point.
+We will provide more information by Wednesday, 2024-05-22 09:00 US/Pacific.
+Diagnosis: structData may not be returned for some documents in multi regions: EU, US and also Globally
+Workaround: None at this time.
+22 May 2024
+06:22 PDT
+Summary: [Vertex AI Search] structData may not be returned for some documents in multi regions: EU, US and also Globally
+Description: We are experiencing an issue with Vertex AI Search.
+Our engineering team continues to investigate the issue.
+We will provide an update by Wednesday, 2024-05-22 08:00 US/Pacific with current details.
+Diagnosis: structData may not be returned for some documents in multi regions: EU, US and also Globally
+Workaround: None at this time.

@@ -1,0 +1,46 @@
+# Global: CreateLake requests in Dataplex have degraded performance.
+
+URL: https://status.cloud.google.com/incidents/fgL9wHug2j1heVLfnipT
+Published: 2023-01-26
+
+Date
+Time
+Description
+26 Jan 2023
+12:06 PST
+The issue with Dataplex has been resolved for all affected users as of Thursday, 2023-01-26 11:40 US/Pacific. Customers are able to create data lakes using CreateLake requests.
+We thank you for your patience while we worked on resolving the issue.
+26 Jan 2023
+11:32 PST
+Summary: Global: CreateLake requests in Dataplex have degraded performance.
+Description: Our engineering team is currently working on the mitigation of the issue.
+We will provide an update by Thursday, 2023-01-26 12:30 US/Pacific with current details.
+We apologize to all who are affected by the disruption.
+Diagnosis: Customers are not able to create a new Lake in Dataplex
+Workaround: Affected customers could retry the create lake request
+26 Jan 2023
+10:55 PST
+Summary: Global: CreateLake requests in Dataplex have degraded performance.
+Description: Our engineering team continues to investigate the issue.
+We will provide an update by Thursday, 2023-01-26 12:00 US/Pacific with current details.
+We apologize to all who are affected by the disruption.
+Diagnosis: Customers are not able to create a new Lake in Dataplex
+Workaround: Affected customers could retry the create lake request
+26 Jan 2023
+10:24 PST
+Summary: Global: CreateLake requests in Dataplex have degraded performance.
+Description: We are experiencing an issue with Dataplex beginning at Thursday, 2023-01-26 06:30 US/Pacific.
+Our engineering team continues to investigate the issue.
+We will provide an update by Thursday, 2023-01-26 11:30 US/Pacific with current details.
+We apologize to all who are affected by the disruption.
+Diagnosis: Customers are not able to create a new Lake in Dataplex
+Workaround: Affected customers could retry the create lake request
+26 Jan 2023
+10:22 PST
+Summary: Global: CreateLake requests in Dataplex have degraded performance.
+Description: We are experiencing an issue with Dataplex beginning at Thursday, 2023-01-26 06:30 US/Pacific.
+Our engineering team continues to investigate the issue.
+We will provide an update by Thursday, 2023-01-26 11:30 US/Pacific with current details.
+We apologize to all who are affected by the disruption.
+Diagnosis: Customers are not able to create a new Lake in Dataplex
+Workaround: Affected customers could retry the create lake request.

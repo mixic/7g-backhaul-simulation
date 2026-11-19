@@ -1,0 +1,37 @@
+# Cloud Audit Logging misconfigured for prod dedicated environment
+
+URL: https://status.cloud.google.com/incidents/eDpMQWJPXiQRvMPL8ahx
+Published: 2023-08-11
+
+Date
+Time
+Description
+12 Aug 2023
+05:51 PDT
+The issue with Access Context Manager has been resolved for all affected users as of Saturday, 2023-08-12 03:20 US/Pacific.
+We thank you for your patience while we worked on resolving the issue.
+11 Aug 2023
+14:41 PDT
+Summary: Cloud Audit Logging misconfigured for prod dedicated environment
+Description: Mitigation work is currently underway by our engineering team.
+We do not have an ETA for mitigation at this point.
+We will provide more information by Monday, 2023-08-14 10:00 US/Pacific.
+Diagnosis: None at this time.
+Workaround: None at this time.
+11 Aug 2023
+13:49 PDT
+Summary: Cloud Audit Logging misconfigured for prod dedicated environment
+Description: Mitigation work is currently underway by our engineering team.
+We do not have an ETA for mitigation at this point.
+We will provide more information by Friday, 2023-08-11 15:00 US/Pacific.
+Diagnosis: None at this time.
+Workaround: None at this time.
+11 Aug 2023
+12:57 PDT
+Summary: Cloud Audit Logging misconfigured for prod dedicated environment
+Description: We are experiencing an issue with Access Context Manager beginning at Friday, 2023-07-02 20:00 US/Pacific.
+Our engineering team continues to investigate the issue.
+We will provide an update by Friday, 2023-08-11 14:00 US/Pacific with current details.
+We apologize to all who are affected by the disruption.
+Diagnosis: None at this time.
+Workaround: None at this time.

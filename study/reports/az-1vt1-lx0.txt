@@ -1,0 +1,8 @@
+Virtual Machines startup failures due to CrowdStrike Falcon Agent update issue
+
+Virtual Machines startup failures due to CrowdStrike Falcon Agent update issue
+
+Tracking ID: 1VT1-LX0
+
+Virtual Machines customers may have experienced unresponsiveness and startup failures on Windows machines using the CrowdStrike Falcon agent, affecting both on-premises and various cloud platforms. This issue was caused by a CrowdStrike antivirus software update, which resulted in Windows OS virtual machines experiencing a bug check (BSOD) and entering a continuous restart loop. Customer can access the guidance which will remain available on our main blog site - https://aka.ms/CSfalcon-VMRecoveryOptions
+CrowdStrike’s technical PIR for their outage can be found here: https://www.crowdstrike.com/falcon-content-update-remediation-and-guidance-hub/

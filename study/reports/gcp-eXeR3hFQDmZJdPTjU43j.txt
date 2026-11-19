@@ -1,0 +1,64 @@
+# Vertex Gemini API and Vertex AI in Firebase customers in us-central1 are experiencing elevated errors for requests to Gemini models
+
+URL: https://status.cloud.google.com/incidents/eXeR3hFQDmZJdPTjU43j
+Published: 2024-12-19
+
+Date
+Time
+Description
+19 Dec 2024
+17:35 PST
+The issue with Vertex Gemini API has been resolved for all affected users as of Thursday, 2024-12-19 17:30 US/Pacific.
+We thank you for your patience while we worked on resolving the issue.
+19 Dec 2024
+17:28 PST
+Summary: Vertex Gemini API and Vertex AI in Firebase customers in us-central1 are experiencing elevated errors for requests to Gemini models
+Description: Mitigation work is currently underway by our engineering team.
+We do not have an ETA for mitigation at this point.
+We will provide more information by Thursday, 2024-12-19 22:00 US/Pacific.
+Diagnosis:
+Vertex Gemini API customers in us-central1 are experiencing elevated errors for requests to Gemini models.
+Vertex AI In Firebase - Calls to StreamGenerateContent and GenerateContent may experience increased rates of INTERNAL errors in us-central1.
+Workaround: We request customers to redirect the traffic to a different region where feasible.
+19 Dec 2024
+14:02 PST
+Summary: Vertex Gemini API and Vertex AI in Firebase customers in us-central1 are experiencing elevated errors for requests to Gemini models
+Description: We are experiencing an issue with Vertex Gemini API and Vertex AI in Firebase beginning at Thursday, 2024-12-19 11:36 US/Pacific.
+Our engineers are actively investigating the root cause of the issue and are currently testing a potential mitigation.
+We will provide an update by Thursday, 2024-12-19 19:00 US/Pacific with current details.
+We apologize to all who are affected by the disruption.
+Diagnosis:
+Vertex Gemini API customers in us-central1 are experiencing elevated errors for requests to Gemini models.
+Vertex AI In Firebase - Calls to StreamGenerateContent and GenerateContent may experience increased rates of INTERNAL errors in us-central1.
+Workaround: We request customers to redirect the traffic to a different region where feasible.
+19 Dec 2024
+13:07 PST
+Summary: Vertex Gemini API and Vertex AI in Firebase customers in us-central1 are experiencing elevated errors for requests to Gemini models
+Description: We are experiencing an issue with Vertex Gemini API and Vertex AI in Firebase beginning at Thursday, 2024-12-19 11:36 US/Pacific.
+Our engineers are actively investigating the root cause of the issue and are currently testing a potential mitigation.
+We will provide an update by Thursday, 2024-12-19 14:15 US/Pacific with current details.
+We apologize to all who are affected by the disruption.
+Diagnosis:
+Vertex Gemini API customers in us-central1 are experiencing elevated errors for requests to Gemini models.
+Vertex AI In Firebase - Calls to StreamGenerateContent and GenerateContent may experience increased rates of INTERNAL errors in us-central1.
+Workaround: We request customers to redirect the traffic to a different region where feasible.
+19 Dec 2024
+12:49 PST
+Summary: Vertex Gemini API and Vertex AI in Firebase customers in us-central1 are experiencing elevated errors for requests to Gemini models
+Description: We are experiencing an issue with Vertex Gemini API and Vertex AI in Firebase beginning at Thursday, 2024-12-19 11:36 US/Pacific.
+Our engineers are actively investigating the root cause of the issue and are currently testing a potential mitigation.
+We will provide an update by Thursday, 2024-12-19 14:00 US/Pacific with current details.
+We apologize to all who are affected by the disruption.
+Diagnosis:
+Vertex Gemini API customers in us-central1 are experiencing elevated errors for requests to Gemini models
+Vertex AI In Firebase - Calls to StreamGenerateContent and GenerateContent may experience increased rates of INTERNAL errors in us-central1
+Workaround: Customers can redirect the traffic to a different region where feasible.
+19 Dec 2024
+12:29 PST
+Summary: Vertex Gemini API customers in us-central1 are experiencing elevated errors for requests to Gemini models
+Description: We are experiencing an issue with Vertex Gemini API beginning at Thursday, 2024-12-19 11:36 US/Pacific.
+Our engineers are actively investigating the root cause of the issue and are currently testing a potential mitigation.
+We will provide an update by Thursday, 2024-12-19 13:15 US/Pacific with current details.
+We apologize to all who are affected by the disruption.
+Diagnosis: Vertex Gemini API users in us-central1 are experiencing elevated errors for requests to Gemini models.
+Workaround: Customers can redirect the traffic to an alternate region where feasible.

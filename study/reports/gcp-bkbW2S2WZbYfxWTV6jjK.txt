@@ -1,0 +1,21 @@
+# Intermittent increased latency for load balancers in us-central1
+
+URL: https://status.cloud.google.com/incidents/bkbW2S2WZbYfxWTV6jjK
+Published: 2023-05-22
+
+Date
+Time
+Description
+22 May 2023
+16:17 PDT
+The issue with Google Cloud Networking has been resolved for all affected projects as of Monday, 2023-05-22 16:17 US/Pacific.
+We thank you for your patience while we worked on resolving the issue.
+22 May 2023
+14:53 PDT
+Summary: Intermittent increased latency for load balancers in us-central1
+Description: We are experiencing an intermittent issue with Google Cloud Networking.
+Our engineering team continues to investigate the issue.
+We will provide an update by Monday, 2023-05-22 16:30 US/Pacific with current details.
+We apologize to all who are affected by the disruption.
+Diagnosis: Customers may experience intermittent periods of increased latency for load balancers in us-central1
+Workaround: None at this time.

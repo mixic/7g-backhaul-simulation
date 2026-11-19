@@ -1,0 +1,161 @@
+# Google Cloud Networking experiencing elevated latency in multiple regions
+
+URL: https://status.cloud.google.com/incidents/nieR2aLyg1rwFKq1aWZU
+Published: 2023-03-29
+
+Date
+Time
+Description
+30 Mar 2023
+16:32 PDT
+The issue related to latency for Google Cloud Networking is still ongoing and the latest updates for the same can be found here : https://status.cloud.google.com/incidents/NWHmzRntXN6AeNzjTFHV
+We apologize to all who are affected by the disruption.
+30 Mar 2023
+16:06 PDT
+The issue with Google Cloud Networking has been resolved for all affected users as of Thursday, 2023-03-30 16:06 US/Pacific.
+We thank you for your patience while we worked on resolving the issue.
+30 Mar 2023
+14:23 PDT
+Summary: Google Cloud Networking experiencing elevated latency in multiple regions
+Description: We believe the issue with Google Cloud Identity-Aware Proxy, Google Cloud Networking, Identity and Access Management is no longer causing any impact due to packet loss.
+However, we have identified an increase in latency for Google Cloud Networking affecting some regions, in particular us-central1, us-east4 and us-east5, due to physical damage resulting in a longer inter-regional path.
+We are continuing to work on recovering capacity as soon as possible by our onsite teams at the highest priority. We do not have an ETA for service restoration.
+We will provide an update by Thursday, 2023-03-30 16:00 US/Pacific with current details.
+We apologize to all who are affected by the disruption.
+Diagnosis: Customers experienced packet loss for two events in the approximate time frames 12:30 - 12:40 and 13:40 - 13:50 US/Pacific on Wednesday, 2023-03-29.
+Customers may experience slightly elevated latency between regions while traffic recovers.
+Workaround: None at this time.
+30 Mar 2023
+11:41 PDT
+Summary: Google Cloud Networking experiencing elevated latency in multiple regions
+Description: We believe the issue with Google Cloud Identity-Aware Proxy, Google Cloud Networking, Identity and Access Management is no longer causing any impact due to packet loss.
+However, we have identified an increase in latency for Google Cloud Networking affecting some regions, in particular us-central1, us-east4 and us-east5, due to physical damage resulting in reduced capacity and a longer inter-regional path.
+We are continuing to work on recovering capacity as soon as possible. We do not have an ETA for the mitigation at this point.
+We will provide an update by Thursday, 2023-03-30 14:00 US/Pacific with current details.
+We apologize to all who are affected by the disruption.
+Diagnosis: Customers experienced packet loss for two events in the approximate time frames 12:30 - 12:40 and 13:40 - 13:50 US/Pacific. Customers may not see packet loss, however, will continue to observe latency while traffic recovers.
+Workaround: None at this time.
+30 Mar 2023
+09:53 PDT
+Summary: Google Cloud Networking experiencing elevated latency in multiple regions
+Description: We believe the issue with Google Cloud Identity-Aware Proxy, Google Cloud Networking, Identity and Access Management is no longer causing any impact due to packet loss.
+However, we have identified an increase in latency affecting some regions, in particular us-central1, us-east4 and us-east5, due to physical damage resulting in reduced capacity and a longer inter-regional path.
+We are continuing to work on recovering capacity as soon as possible. We do not have an ETA for the mitigation at this point.
+We will provide an update by Thursday, 2023-03-30 12:00 US/Pacific with current details.
+We apologize to all who are affected by the disruption.
+Diagnosis: Customers experienced packet loss for two events in the approximate time frames 12:30 - 12:40 and 13:40 - 13:50 US/Pacific. Customers may not see packet loss, however, will continue to observe latency while traffic recovers.
+Workaround: None at this time.
+30 Mar 2023
+08:02 PDT
+Summary: Google Cloud Networking experiencing elevated latency in multiple regions
+Description: We believe the issue with Google Cloud Identity-Aware Proxy, Google Cloud Networking, Identity and Access Management is no longer causing any impact due to packet loss.
+However, we have identified an increase in latency affecting some regions, in particular us-central1, us-east4 and us-east5, due to physical damage resulting in reduced capacity and a longer inter-regional path.
+We are continuing to work on recovering capacity as soon as possible. We do not have an ETA for the mitigation at this point.
+We will provide an update by Thursday, 2023-03-30 10:00 US/Pacific with current details.
+We apologize to all who are affected by the disruption.
+Diagnosis: Customers experienced packet loss for two events in the approximate time frames 12:30 - 12:40 and 13:40 - 13:50 US/Pacific. Customers may not see packet loss, however, will continue to observe latency while traffic recovers.
+Workaround: None at this time.
+30 Mar 2023
+05:47 PDT
+Summary: Google Cloud Networking experiencing elevated latency in multiple regions
+Description: We believe the issue with Google Cloud Identity-Aware Proxy, Google Cloud Networking, Identity and Access Management is no longer causing any impact due to packet loss.
+However, we have identified an increase in latency affecting some regions, in particular us-central1 and us-east4, due to physical damage resulting in reduced capacity and a longer inter-regional path.
+We are continuing to work on recovering capacity as soon as possible. We do not have an ETA for the mitigation at this point.
+We will provide an update by Thursday, 2023-03-30 08:00 US/Pacific with current details.
+We apologize to all who are affected by the disruption.
+Diagnosis: Customers experienced packet loss for two events in the approximate time frames 12:30 - 12:40 and 13:40 - 13:50 US/Pacific. Customers may not see packet loss, however, will continue to observe latency while traffic recovers.
+Workaround: None at this time.
+30 Mar 2023
+03:35 PDT
+Summary: Google Cloud Networking experiencing elevated latency in multiple regions
+Description: We believe the issue with Google Cloud Identity-Aware Proxy, Google Cloud Networking, Identity and Access Management is no longer causing any impact due to packet loss.
+However, we have identified an increase in latency affecting some regions, in particular us-central1 and us-east4, due to physical damage resulting in reduced capacity and a longer inter-regional path.
+We are continuing to work on recovering capacity as soon as possible. We do not have an ETA for the mitigation at this point.
+We will provide an update by Thursday, 2023-03-30 06:00 US/Pacific with current details.
+We apologize to all who are affected by the disruption.
+Diagnosis: Customers experienced packet loss for two events in the approximate time frames 12:30 - 12:40 and 13:40 - 13:50 US/Pacific. Customers may not see packet loss, however, will continue to observe latency while traffic recovers.
+Workaround: None at this time.
+29 Mar 2023
+22:24 PDT
+Summary: Google Cloud Networking experiencing elevated latency in multiple regions
+Description: We believe the issue with Google Cloud Identity-Aware Proxy, Google Cloud Networking, Identity and Access Management is no longer causing any impact due to packet loss.
+However, we have identified an increase in latency affecting some regions, in particular us-central1 and us-east4, due to physical damage resulting in reduced capacity and a longer inter-regional path. We are working on recovering capacity as soon as possible. We do not have an ETA for the mitigation at this point.
+We will provide an update by Thursday, 2023-03-30 04:00 US/Pacific with current details.
+We apologize to all who are affected by the disruption.
+Diagnosis: Customers experienced packet loss for two events in the approximate time frames 12:30 - 12:40 and 13:40 - 13:50 US/Pacific. Customers may not see packet loss, however, will continue to observe latency while traffic recovers.
+Workaround: None at this time.
+29 Mar 2023
+20:26 PDT
+Summary: Google Cloud Networking experiencing elevated latency in multiple regions
+Description: We believe the issue with Google Cloud Identity-Aware Proxy, Google Cloud Networking, Identity and Access Management is no longer causing any impact due to packet loss.
+However, we have identified an increase in latency affecting some regions, in particular us-central1 and us-east4, due to physical damage resulting in reduced capacity and a longer inter-regional path. We are working on recovering capacity as soon as possible. We do not have an ETA for the mitigation at this point.
+We will provide an update by Thursday, 2023-03-30 01:00 US/Pacific with current details.
+We apologize to all who are affected by the disruption.
+Diagnosis: Customers experienced packet loss for two events in the approximate time frames 12:30 - 12:40 and 13:40 - 13:50 US/Pacific. Customers may not see packet loss, however, will continue to observe latency while traffic recovers.
+Workaround: None at this time.
+29 Mar 2023
+19:38 PDT
+Summary: Google Cloud Networking experiencing elevated latency in multiple regions
+Description: We believe the issue with Google Cloud Identity-Aware Proxy, Google Cloud Networking, Identity and Access Management is no longer causing any impact due to packet loss.
+However, we have identified an increase in latency affecting some regions, in particular us-central1 and us-east4, due to physical damage resulting in reduced capacity and a longer inter-regional path. We are working on recovering capacity as soon as possible. We do not have an ETA for the mitigation at this point.
+We will provide an update by Wednesday, 2023-03-29 20:30 US/Pacific with current details.
+We apologize to all who are affected by the disruption.
+Diagnosis: Customers experienced packet loss for two events in the approximate time frames 12:30 - 12:40 and 13:40 - 13:50 US/Pacific. Customers may not see packet loss, however, will continue to observe latency while traffic recovers.
+Workaround: None at this time.
+29 Mar 2023
+18:29 PDT
+Summary: Google Cloud Networking experiencing elevated latency in multiple regions
+Description: We believe the issue with Google Cloud Identity-Aware Proxy, Google Cloud Networking, Identity and Access Management is no longer causing any impact due to packet loss.
+However, we have identified an increase in latency affecting some regions, in particular us-central1 and us-east4, due to physical damage resulting in reduced capacity and a longer inter-regional path. We are working on recovering capacity as soon as possible. We do not have an ETA for the mitigation at this point.
+We will provide an update by Wednesday, 2023-03-29 20:00 US/Pacific with current details.
+We apologize to all who are affected by the disruption.
+Diagnosis: Customers experienced packet loss for two events in the approximate time frames 12:30 - 12:40 and 13:40 - 13:50 US/Pacific. Customers may not see packet loss, however, will continue to observe latency while traffic recovers.
+Workaround: None at this time.
+29 Mar 2023
+17:40 PDT
+Summary: Google Cloud Networking experiencing elevated latency in multiple regions
+Description: We believe the issue with Google Cloud Identity-Aware Proxy, Google Cloud Networking, Identity and Access Management is no longer causing any impact due to packet loss.
+However, we have identified an increase in latency affecting some regions, in particular us-central1 and us-east4, due to physical damage resulting in reduced capacity and a longer inter-regional path. We are working on recovering capacity as soon as possible.
+We will provide an update by Wednesday, 2023-03-29 18:10 US/Pacific with current details.
+We apologize to all who are affected by the disruption.
+Diagnosis: Customers experienced packet loss for two events in the approximate time frames 12:30 - 12:40 and 13:40 - 13:50 US/Pacific. Customers may not see packet loss, however, will continue to observe latency while traffic recovers.
+Workaround: None at this time.
+29 Mar 2023
+17:39 PDT
+Summary: Google Cloud Networking experiencing elevated latency in multiple regions
+Description: We believe the issue with Google Cloud Identity-Aware Proxy, Google Cloud Networking, Identity and Access Management is no longer causing any impact due to packet loss.
+However, we have identified an increase in latency affecting some regions, in particular us-central1 and us-east4, due to physical damage resulting in reduced capacity and a longer inter-regional path. We are working on recovering capacity as soon as possible.
+We will provide an update by Wednesday, 2023-03-29 18:10 US/Pacific with current details.
+We apologize to all who are affected by the disruption.
+Diagnosis: Customers experienced packet loss for two events in the approximate time frames 12:30 - 12:40 and 13:40 - 13:50 US/Pacific.
+Workaround: None at this time.
+29 Mar 2023
+16:43 PDT
+Summary: Google Cloud Networking experiencing elevated packet loss in multiple regions
+Description: We believe the issue with Google Cloud Identity-Aware Proxy, Google Cloud Networking, Identity and Access Management is no longer causing any packet loss or latency.
+Our engineers continue to further stabilize and prevent any recurrence. We will provide an update by Wednesday, 2023-03-29 17:40 US/Pacific with current details.
+Diagnosis: Customers experienced packet loss for two events in the approximate time frames 12:30 - 12:40 and 13:40 - 13:50 US/Pacific.
+Workaround: None at this time.
+29 Mar 2023
+15:52 PDT
+Summary: Google Cloud Networking experiencing elevated packet loss in multiple regions
+Description: We believe the issue with Google Cloud Identity-Aware Proxy, Google Cloud Networking, Identity and Access Management is no longer causing any packet loss or latency.
+We will provide an update by Wednesday, 2023-03-29 16:40 US/Pacific with current details.
+Diagnosis: Customers experienced packet loss for two events in the approximate time frames 12:30 - 12:40 and 13:40 - 13:50 US/Pacific.
+Workaround: None at this time.
+29 Mar 2023
+15:36 PDT
+Summary: Google Cloud Networking experiencing elevated packet loss in multiple regions
+Description: We believe the issue with Google Cloud Identity-Aware Proxy, Google Cloud Networking, Identity and Access Management is no longer causing any packet loss or latency.
+We will provide an update by Wednesday, 2023-03-29 16:13 US/Pacific with current details.
+Diagnosis: Customers experienced packet loss for two events in the approximate time frames 12:30 - 12:40 and 13:40 - 13:50 US/Pacific.
+Workaround: None at this time.
+29 Mar 2023
+14:52 PDT
+Summary: Google Cloud Networking experiencing elevated packet loss in multiple regions
+Description: We are experiencing an issue with Google Cloud Identity-Aware Proxy, Google Cloud Networking, Identity and Access Management.
+Our engineering team continues to investigate the issue.
+We will provide an update by Wednesday, 2023-03-29 15:26 US/Pacific with current details.
+We apologize to all who are affected by the disruption.
+Diagnosis: Customers experienced packet loss for two events in the approximate time frames 12:30 - 12:40 and 13:40 - 13:50 US/Pacific. Customers will continue to experience packet loss while traffic recovers.
+Workaround: None at this time.

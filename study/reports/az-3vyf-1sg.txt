@@ -1,0 +1,10 @@
+Mitigated - Azure Cloud Shell - Functionality Inaccessible
+
+Mitigated - Azure Cloud Shell - Functionality Inaccessible
+
+Tracking ID: 3VYF-1SG
+
+Note: During this incident, as a result of a delay in determining exactly which customer subscriptions were impacted, we chose to communicate via the public Azure Status page. This overcommunication was to ensure that all affected customers received information, described as 'scenario 3' in our documentation: https://aka.ms/StatusPageCriteria . Our Post-Incident Review (PIR) will be communicated to affected customers through Azure Service Health, then this entry on the Status History page will be removed. As described in our documentation, public PIR postings on this page are reserved for 'scenario 1' incidents - typically broadly impacting incidents across entire zones or regions, or even multiple zones or regions.
+Impact Statement : Starting at 06:55 UTC - 19:15 UTC on 19 Jan 2024, customers attempting to use Cloud Shell experienced issues. Additionally, customers using the Microsoft Learn platform experienced issues with our ‘Try it’ and ‘Azure sandbox’ features.
+Mitigation : The engineering team resolved the 404 errors that were received from the dependent backend database. Further monitoring of our telemetry confirmed that full-service functionality had been restored and mitigated this issue.
+Next Steps : We will continue to investigate to establish the full root cause and prevent future occurrences. Stay informed about Azure service issues by creating custom service health alerts ( https://aka.ms/ash-videos ) for video tutorials and ( https://aka.ms/ash-alerts ) for how-to documentation.

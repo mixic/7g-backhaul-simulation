@@ -1,0 +1,20 @@
+# We are investigating a potential issue with Google Cloud SQL.
+
+URL: https://status.cloud.google.com/incidents/YuTyMJL1XNhPDMiib559
+Published: 2023-06-26
+
+Date
+Time
+Description
+26 Jun 2023
+11:43 PDT
+Please refer to https://status.cloud.google.com/incidents/QGLbjf9r6jTh2ieZpKyE for more details of the issue.
+26 Jun 2023
+11:29 PDT
+Summary: We are investigating a potential issue with Google Cloud SQL.
+Description: We are experiencing an issue with Google Cloud SQL.
+Our engineering team continues to investigate the issue.
+We will provide an update by Monday, 2023-06-26 12:56 US/Pacific with current details.
+We apologize to all who are affected by the disruption.
+Diagnosis: Customer running an operation to change their machine shape may result in failed operation
+Workaround: None at this time.

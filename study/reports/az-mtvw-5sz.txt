@@ -1,0 +1,11 @@
+Mitigated - Azure Data Factory - Availability issues
+
+Mitigated - Azure Data Factory - Availability issues
+
+Tracking ID: MTVW-5SZ
+
+Note: During this incident, as a result of a delay in determining exactly which customer subscriptions were impacted, we chose to communicate via the public Azure Status page. This overcommunication was to ensure that all affected customers received information, described as 'scenario 3' in our documentation: https://aka.ms/StatusPageCriteria . Our Post-Incident Review (PIR) will be communicated to affected customers through Azure Service Health, then this entry on the Status History page will be removed. As described in our documentation, public PIR postings on this page are reserved for 'scenario 1' incidents - typically broadly impacting incidents across entire zones or regions, or even multiple zones or regions.
+Summary of Impact: Between 21:00 UTC on 22 January 2024 and 00:55 UTC on 23 January 2024, customers who leverage Azure Data Factory in West Europe, UK South, Switzerland North, Sweden Central and France Central regions may have experienced service availability issues, including ability to access their ADF resources, perform any CRUD operations, and schedule pipelines. Customers using Power BI, Microsoft Defender for Cloud and Microsoft Purview may have experienced downstream impact due to this issue in these regions.
+Preliminary Root Cause: We determined that this issue was caused by a recent configuration change made to a dependent Redis cache account that Azure Data Factory relies on.
+Mitigation: We mitigated this by fixing the configuration issue and thus recovering access to the Redis cache resources.
+Next Steps: We will follow up in approximately 14 days with a Post Incident Review (PIR) where we will share a deep dive into the incident detailing the cause and the identified repair items.

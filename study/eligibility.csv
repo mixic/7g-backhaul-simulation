@@ -1,0 +1,7 @@
+incident_id,eligible,duplicate_of,notes
+cloudflare-18-november-2025-outage-uk-ua,yes,cloudflare-18-november-2025-outage,"same incident and same text as cloudflare-18-november-2025-outage; kept once"
+cloudflare-code-orange-fail-small-complete,no,,"programme completion announcement; describes no single incident's impact or root cause"
+cloudflare-fail-small-resilience-plan,no,,"resilience plan published after the incidents; not an incident report"
+cloudflare-rearchitecting-workers-kv-for-redundancy,no,,"engineering redesign post; the incident it cites has its own postmortem in the frame (cloudflare-cloudflare-service-outage-june-12-2025)"
+cloudflare-response-to-salesloft-drift-incident,no,,"security breach disclosure: third-party (Salesloft Drift) breach of customer support data"
+cloudflare-cname-a-record-order-dns-standards,yes,,"engineering retrospective of the 8 January 2026 1.1.1.1 resolution incident; customer-visible and root cause stated"

@@ -1,0 +1,21 @@
+# Performance of Github-related triggers is degraded in Cloud Build
+
+URL: https://status.cloud.google.com/incidents/srJTKXSbbL9LdUAfQ9Nh
+Published: 2023-03-27
+
+Date
+Time
+Description
+27 Mar 2023
+06:52 PDT
+The issue with Cloud Build has been resolved for all affected projects as of Monday, 2023-03-27 06:48 US/Pacific.
+We thank you for your patience while we worked on resolving the issue.
+27 Mar 2023
+06:03 PDT
+Summary: Performance of Github-related triggers is degraded in Cloud Build
+Description: We are experiencing an issue with Cloud Build.
+Our engineering team continues to investigate the issue.
+We will provide an update by Monday, 2023-03-27 07:00 US/Pacific with current details.
+Diagnosis: If the customers push to Github repo, their triggers may not not trigger a build.
+If the customers try to set up a new trigger Github might respond with '500' error.
+Workaround: None at this time.

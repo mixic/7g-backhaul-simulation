@@ -1,0 +1,61 @@
+# Cloud SQL dashboard might be unavailable.
+
+URL: https://status.cloud.google.com/incidents/xg2qrL1UuSJiPDZALJpu
+Published: 2023-01-11
+
+Date
+Time
+Description
+11 Jan 2023
+18:58 PST
+The issue with Cloud Monitoring has been resolved for all affected users as of Wednesday, 2023-01-11 17:43 US/Pacific.
+We thank you for your patience while we worked on resolving the issue.
+11 Jan 2023
+18:42 PST
+Summary: Cloud SQL dashboard might be unavailable.
+Description: Mitigation work is currently underway by our engineering team.
+We do not have an ETA for mitigation at this point.
+We will provide more information by Wednesday, 2023-01-11 19:30 US/Pacific.
+Diagnosis: Customers might be unable to see their Cloud SQL dashboards.
+Workaround: None at this time.
+11 Jan 2023
+16:31 PST
+Summary: Cloud SQL dashboard might be unavailable.
+Description: Mitigation work is currently underway by our engineering team.
+We do not have an ETA for mitigation at this point.
+We will provide more information by Wednesday, 2023-01-11 19:00 US/Pacific.
+Diagnosis: Customers might be unable to see their Cloud SQL dashboards.
+Workaround: None at this time.
+11 Jan 2023
+09:19 PST
+Summary: Cloud SQL dashboard might be unavailable.
+Description: Mitigation work is currently underway by our engineering team.
+We do not have an ETA for mitigation at this point.
+We will provide more information by Wednesday, 2023-01-11 17:00 US/Pacific.
+Diagnosis: Customers might be unable to see their Cloud SQL dashboards.
+Workaround: None at this time.
+11 Jan 2023
+08:57 PST
+Summary: Cloud SQL dashboard might be unavailable.
+Description: Mitigation work is currently underway by our engineering team.
+We do not have an ETA for mitigation at this point.
+We will provide more information by Wednesday, 2023-01-11 09:30 US/Pacific.
+Diagnosis: Customers might be unable to see their Cloud SQL dashboards.
+Workaround: None at this time.
+11 Jan 2023
+07:55 PST
+Summary: Cloud SQL dashboard might be unavailable.
+Description: Mitigation work is currently underway by our engineering team.
+We do not have an ETA for mitigation at this point.
+We will provide more information by Wednesday, 2023-01-11 09:00 US/Pacific.
+Diagnosis: Customers might be unable to see their Cloud SQL dashboards.
+Workaround: None at this time.
+11 Jan 2023
+07:05 PST
+Summary: Cloud SQL dashboard might be unavailable.
+Description: We are experiencing an intermittent issue with Cloud Monitoring.
+Our engineering team continues to investigate the issue.
+We will provide an update by Wednesday, 2023-01-11 08:00 US/Pacific with current details.
+We apologize to all who are affected by the disruption.
+Diagnosis: Customers might be unable to see their Cloud SQL dashboards.
+Workaround: None at this time.

@@ -1,0 +1,29 @@
+# BigQuery Reservation API customers may observe discrepancies in billing charges in multi-region US and multi-region EU
+
+URL: https://status.cloud.google.com/incidents/u49ki3CHRRR2dpbsD2sQ
+Published: 2023-07-18
+
+Date
+Time
+Description
+19 Jul 2023
+17:12 PDT
+The issue with Google BigQuery has been resolved for all affected users as of Wednesday, 2023-07-19 17:12 US/Pacific.
+We thank you for your patience while we worked on resolving the issue.
+19 Jul 2023
+12:14 PDT
+Summary: BigQuery Reservation API customers may observe discrepancies in billing charges in multi-region US and multi-region EU
+Description: The roll out for mitigation is still underway by our engineering team.
+Current data indicates that most of the affected users should see updated usage in their billing console.
+The mitigation for the remaining customers is expected to complete by Wednesday, 2023-07-19 17:00 US/Pacific.
+We will provide more information by Wednesday, 2023-07-19 17:30 US/Pacific.
+Diagnosis: BigQuery Reservation API customers may observe discrepancies in billing charges in multi-region US and multi-region EU for usage starting from 2023-07-06.
+Workaround: None at this time.
+18 Jul 2023
+22:40 PDT
+Summary: BigQuery Reservation API customers may observe discrepancies in billing charges in multi-region US and multi-region EU
+Description: Mitigation work is currently underway by our engineering team.
+The mitigation and billing adjustments are expected to complete by Wednesday, 2023-07-19 13:00 US/Pacific.
+We will provide more information by Wednesday, 2023-07-19 13:00 US/Pacific.
+Diagnosis: BigQuery Reservation API customers may observe discrepancies in billing charges in multi-region US and multi-region EU for usage starting from 2023-07-06.
+Workaround: None at this time.

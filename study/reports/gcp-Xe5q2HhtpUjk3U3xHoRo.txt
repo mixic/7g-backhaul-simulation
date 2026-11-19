@@ -1,0 +1,14 @@
+# We experienced an issue with AppSheet
+
+URL: https://status.cloud.google.com/incidents/Xe5q2HhtpUjk3U3xHoRo
+Published: 2024-01-09
+
+Date
+Time
+Description
+10 Jan 2024
+01:52 PST
+We experienced an issue with AppSheet beginning at Wednesday, 2024-01-09 11:00 US/Pacific. Self-diagnosis: Clicking on PDF links or external links in apps would take the users to a blocking "App Upgrade Required" screen. The issue has been resolved for all affected users as of Wednesday, 2024-01-10 01:30 US/Pacific. We thank you for your patience while we worked on resolving the issue.
+10 Jan 2024
+01:51 PST
+We've received a report of an issue with AppSheet as of Wednesday, 2024-01-10 01:38 US/Pacific. We will provide more information by Wednesday, 2024-01-10 02:10 US/Pacific.

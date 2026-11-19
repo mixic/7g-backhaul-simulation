@@ -1,0 +1,18 @@
+# Metrics unavailable for External Load Balancer
+
+URL: https://status.cloud.google.com/incidents/kY3Qq5EQkhU8n1AaRuDs
+Published: 2024-02-08
+
+Date
+Time
+Description
+8 Feb 2024
+12:53 PST
+We experienced a degradation with Cloud Load Balancing metrics beginning on Thursday, 2024-02-08 08:10 US/Pacific.
+Customers’ would have observed their load balancer metrics unavailable, potentially leading to their monitoring alerts firing incorrectly.
+The issue has been resolved for all affected users as of Thursday, 2024-02-08 10:30 US/Pacific.
+We thank you for your patience while we worked on resolving the issue.
+8 Feb 2024
+12:52 PST
+We are investigating a potential issue with Cloud Load Balancing.
+We will provide more information by Thursday, 2024-02-08 13:00 US/Pacific.
