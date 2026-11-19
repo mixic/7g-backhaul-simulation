@@ -1,0 +1,17 @@
+scenario,id,n,value,low,high,verdict,reason
+replicate-kappa,E1,56,0.785714,0.661805,0.872941,CONFIRMED,"Wilson [0.6618, 0.8729] vs threshold 0.5"
+replicate-kappa,E2,87,0.413793,0.316093,0.518784,CONFIRMED,"Wilson [0.3161, 0.5188] vs threshold 0.3"
+replicate-kappa,E3,6,0.0,,,INCONCLUSIVE,size gate: n=6 < 30
+replicate-kappa,E4,10,,,,INCONCLUSIVE,"size gate: path n=5, control n=5"
+replicate-kappa,E5,59,0.864407,0.754603,0.929658,CONFIRMED,"Wilson [0.7546, 0.9297] vs threshold 0.2"
+replicate-kappa,E6,54,,,,INCONCLUSIVE,"size gate: yes n=32, no n=22"
+replicate-kappa,E7,24,0.958333,,,INCONCLUSIVE,size gate: n=24 < 30
+replicate-kappa,E8,87,0.597701,0.492647,0.694492,REFUTED,"Wilson [0.4926, 0.6945] vs threshold 0.8"
+no-reliability,E1,56,0.785714,,,INVALID,"kappa unavailable or below 0.60: V3_shared_dependency, V2_failed_plane, V4_blast_radius"
+no-reliability,E2,87,0.413793,,,INVALID,kappa unavailable or below 0.60: V1_trigger
+no-reliability,E3,6,0.0,,,INVALID,"kappa unavailable or below 0.60: V4_blast_radius, V8a_tenant_isolation_retained"
+no-reliability,E4,10,,,,INVALID,"kappa unavailable or below 0.60: V1_trigger, V2_failed_plane, V8b_multipath_or_multiprovider_retained"
+no-reliability,E5,59,0.864407,,,INVALID,kappa unavailable or below 0.60: V6_fallback_outcome
+no-reliability,E6,54,,,,INVALID,"kappa unavailable or below 0.60: V4_blast_radius, V7_central_controller"
+no-reliability,E7,24,0.958333,,,INVALID,"kappa unavailable or below 0.60: V4_blast_radius, V5_independence_breach"
+no-reliability,E8,87,0.597701,,,INVALID,"kappa unavailable or below 0.60: V1_trigger, V2_failed_plane"

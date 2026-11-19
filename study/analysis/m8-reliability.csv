@@ -1,0 +1,14 @@
+variable,n,kappa,reliable,distinct_c1,distinct_c2,agree,agreement,gate
+V1_trigger,88,0.926063,True,8,9,83,0.943182,PASS
+V1b_secondary_trigger,88,0.681489,True,7,7,74,0.840909,PASS
+V2_failed_plane,88,0.7942,True,9,9,73,0.829545,PASS
+V3_shared_dependency,88,0.788969,True,4,4,76,0.863636,PASS
+V4_blast_radius,88,0.882195,True,4,4,81,0.920455,PASS
+V5_independence_breach,88,0.65282,True,3,3,71,0.806818,PASS
+V6_fallback_outcome,88,0.675144,True,4,4,70,0.795455,PASS
+V7_central_controller,88,0.724731,True,3,3,72,0.818182,PASS
+V8a_tenant_isolation_retained,88,0.691499,True,2,3,84,0.954545,PASS
+V8b_multipath_or_multiprovider_retained,88,0.705122,True,3,3,81,0.920455,PASS
+V8c_tested_local_fallback_retained,88,0.582444,False,3,3,84,0.954545,BELOW 0.60
+V9_duration_minutes,88,0.930799,True,78,81,82,0.931818,PASS
+V10_known_before_freeze,88,1.0,True,1,1,88,1.0,PASS
