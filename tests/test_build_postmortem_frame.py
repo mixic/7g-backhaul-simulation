@@ -49,6 +49,16 @@ class DateTests(unittest.TestCase):
     def test_invalid(self) -> None:
         self.assertEqual(bf.parse_date("not a date"), "")
 
+    def test_abbreviated_month_first(self) -> None:
+        # The Google Cloud status tables write "12 Jun 2025".
+        self.assertEqual(bf.parse_date("12 Jun 2025"), "2025-06-12")
+
+    def test_abbreviated_month_with_comma(self) -> None:
+        self.assertEqual(bf.parse_date("Sept 8, 2024"), "2024-09-08")
+
+    def test_full_name_still_wins(self) -> None:
+        self.assertEqual(bf.parse_date("12 March 2025"), "2025-03-12")
+
 
 class IndexTests(unittest.TestCase):
     def spec(self) -> bf.ProviderSpec:

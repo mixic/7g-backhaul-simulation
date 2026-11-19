@@ -62,6 +62,9 @@ WINDOW_END = date(2026, 10, 31)
 SAMPLE_SIZE = 40
 SEED = 2026
 
+# Full names first, then the abbreviations the Google Cloud status pages use
+# ("12 Jun 2025").  Alternation is first-match, so the abbreviated forms are only
+# reached when they differ from the full name they prefix.
 MONTHS = {
     "january": 1,
     "february": 2,
@@ -75,6 +78,18 @@ MONTHS = {
     "october": 10,
     "november": 11,
     "december": 12,
+    "jan": 1,
+    "feb": 2,
+    "mar": 3,
+    "apr": 4,
+    "jun": 6,
+    "jul": 7,
+    "aug": 8,
+    "sep": 9,
+    "sept": 9,
+    "oct": 10,
+    "nov": 11,
+    "dec": 12,
 }
 
 
