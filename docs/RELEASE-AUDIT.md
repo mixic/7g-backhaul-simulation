@@ -16,7 +16,7 @@ human tags and submits.
 | Paper A invariants | `py -3 tools/make_paper_tables.py --check` | 0 FAIL (29 checks, incl. round 3) |
 | Claims lint | `py -3 tools/lint_claims.py` | PASS |
 | Round-3 tests | `py -3 -m unittest tests.test_round3 -q` | 7 OK |
-| Postmortem scaffold tests | `py -3 -m unittest tests.test_postmortems tests.test_build_postmortem_frame -q` | 22 OK |
+| Postmortem tooling tests | `py -3.14 -m unittest tests.test_postmortems tests.test_build_postmortem_frame tests.test_collect_postmortem_frame -q` | 56 OK |
 
 ## Paper A
 
@@ -68,10 +68,12 @@ human tags and submits.
 
 | Claim | Source | Evidence | Disposition |
 |---|---|---|---|
-| Predictions E1-E8 frozen before real coding | `docs/postmortem-study-predictions.md` | committed with template | scaffold only |
-| Frame builder and analyser exist | `tools/build_postmortem_frame.py`, `tools/analyze_postmortems.py` | 22 synthetic tests | scaffold only |
-| No real coding by the agent | `study/README.md`; this audit | M8 is human | **NOT RUN (H)** |
-| C2 prompt committed | `docs/postmortem-coder-prompt.md` | model/version fields to fill | prepared, not used |
+| Predictions E1-E8 frozen before real coding | `docs/postmortem-study-predictions.md` | frozen at `fc91471`, unchanged by M8 | freeze held |
+| Frame built from the four official indexes | `study/frame.csv`, `study/indexes/MANIFEST.csv` | 88 incidents, 603 candidates in window, SHA-256 per report, frame gate passes | **DONE (M8b `434ee71`)** |
+| Independent C2 coding, LLM declared | `study/coded_c2.csv`, `study/c2-packet/PROMPT.md` | model `deepseek-official/deepseek-flash`, prompt commit `7a3ec57`, 88/88 rows valid | **DONE (M8c `6061002`)** |
+| Reliability measured | `study/analysis/m8-reliability.csv` | C2-vs-C2b kappa 0.58-0.93; V8c below the 0.60 gate | measured, same-model replicate |
+| Author C1 and C3 adjudication | -- | absent | **NOT RUN (H)** |
+| E1-E8 verdicts | `study/analysis/m8-verdicts.csv` | two labelled scenarios only | **UNADJUDICATED -- no verdict claimed** |
 | Contamination disclosure includes a vendor figure at E2's threshold | `docs/postmortem-study-predictions.md` sections 1 and 12 | Control Plane 2026 report: 20 of 62 configuration-or-deployment changes (32 %) | disclosed pre-freeze |
 
 ## Release package
@@ -104,6 +106,8 @@ claim `[unverified]`; do not silently drop it.
 - **Second kernel (M3):** the host is one WSL2 kernel
   (`6.18.58.1-microsoft-standard-WSL2`); WSL root works, but a second kernel is
   not available. Runbook and comparison tool are ready.
-- **Real postmortem frame and coding (M8):** human-only; the agent has read the
-  predictions and is not a blind coder.
+- **Postmortem study verdicts (M8):** the frame and two blind LLM coding passes
+  exist, but the protocol's reliability gate is defined between the author (C1)
+  and an independent coder, and no C3 adjudicated. E1-E8 are therefore
+  unadjudicated; the two labelled scenarios are not verdicts.
 - **No external upload/submission:** by design.

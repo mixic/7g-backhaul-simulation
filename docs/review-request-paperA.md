@@ -47,7 +47,9 @@ confirmed.
 - The name fabric, T-NDN, DDMR, CRMR, bio-control and energy work are separate
   scopes in the repository; they are not part of Paper A.
 - The common-mode testbed (Paper D) is a separate model-check study.
-- The postmortem study is scaffolded only; no real coding has been done.
+- The postmortem study has a frozen 88-incident frame and two blind LLM coding
+  passes, but no author C1 and no C3 adjudication; it carries no verdict, and
+  Paper D does not use it as evidence.
 
 ## How to check a number
 

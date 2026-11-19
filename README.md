@@ -51,10 +51,11 @@ combined document, so each can be reviewed on its own terms:
 | A | ready for external review at the release commit; not submitted | three-fidelity Linux tests, 34/36 scored predictions (P1–P17), Brier 0.0833 (round 2) and 0.0542 (round 3) |
 | B | scoped model-check / negative result; not submitted | flow-level simulation |
 | C | scoped model study; not submitted | flow-level simulation with a real persistent-homology library |
-| D | model-check study with break-even analysis; empirical anchor is the postmortem study, scaffolded but not run; not submitted | stipulated flow-level simulation |
+| D | model-check study with break-even analysis; empirical anchor is the postmortem study (frame and two blind LLM coding passes done, no author C1/C3, no verdicts); not submitted | stipulated flow-level simulation |
 
 No paper has been peer reviewed or independently replicated. The second-kernel
-replication and the real postmortem coding are **NOT RUN**; see
+replication is **NOT RUN**; the postmortem study has a frozen frame and two blind
+LLM coding passes but no author C1 and no C3, so it carries no verdict; see
 [`docs/TASKS-STATUS.md`](docs/TASKS-STATUS.md) and the release audit.
 
 **Review package:** [`review request`](docs/review-request-paperA.md) ·
