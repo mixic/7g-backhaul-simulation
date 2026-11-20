@@ -11,9 +11,16 @@
 \graphicspath{{../figures/}}
 \captionsetup{font=small,labelfont=bf}
 
+\hypersetup{
+  pdftitle={Complex-Rotation Manifold Routing: Continuous Phase Control for DDoS Isolation in Name-Based Networks},
+  pdfauthor={Milan Nikolic},
+  pdfsubject={named data networking; DDoS isolation; persistent homology},
+  pdfkeywords={named data networking, DDoS isolation, persistent homology, dynamic dimensionality, complex phase control, service migration}
+}
+
 \title{\vspace{-1.2cm}\textbf{Complex-Rotation Manifold Routing}\\[2pt]
 \large Continuous Phase Control for DDoS Isolation in Name-Based Networks}
-\author{Milan Nikolic\\\small Independent Researcher\\\small \texttt{m\_nikolic@yahoo.com}}
+\author{Milan Nikolic\\\small Independent Researcher\\\small \href{mailto:m_nikolic@yahoo.com}{\texttt{m\_nikolic@yahoo.com}}}
 \date{}
 
 \begin{document}
@@ -439,7 +446,7 @@ state transitions ($10.13$ per flapping run for both arms; $2.27$ versus $2.40$ 
 sustained). What the rotation removes is the thundering herd at each edge, not the
 need to reconfigure.
 
-The four-dimensional homology cost is $3.31$\,J per sustained run against
+The four-dimensional homology cost (Fig.~\ref{fig:energy}) is $3.31$\,J per sustained run against
 $14.08$\,J of prevented-loss energy (ratio $0.235$, 30/30 seeds pass); under
 flapping it is $4.44$\,J against $7.70$\,J (ratio $0.577$, 30/30 pass). The
 break-even is $4.7$\,mJ per prevented request under the sustained regime and
@@ -554,7 +561,7 @@ The simulator, the frozen pre-registration, the evaluation seeds, the per-seed
 CSVs and the figure-generation code are in the accompanying repository:
 \texttt{simulation/} (the CRMR model and the scenario), \texttt{tools/} (the
 benchmark) and \texttt{docs/crmr-predictions.md}. Every number in this paper is
-reproduced by that benchmark. The repository README lists this paper with the
+reproduced by that benchmark \cite{repo}. The repository README lists this paper with the
 layering and bio-control papers and records how the PDFs are built.\footnote{%
 Repository README: \href{../README.md}{\texttt{README.md}} (relative to
 \texttt{docs/}).}
