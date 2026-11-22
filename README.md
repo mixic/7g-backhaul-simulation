@@ -10,15 +10,51 @@ The research material is split into **four focused papers** rather than one
 combined document, so each can be reviewed on its own terms:
 
 - **Paper A — [`Markdown`](docs/paper-layering-testbed.md) · [`PDF`](docs/paper-layering-testbed.pdf)**:
-  *When Do Protocol Layers Commute? An Empirical Study Across Model, Simulator,
-  and Kernel.* Four frozen rounds
+  *When Do Protocol Layers Commute? A Pre-Registered, Cross-Fidelity Study of
+  Encapsulation Ordering.* Four frozen rounds
   (P1–P17) at three fidelities: six of seven initial predictions confirmed, five
   real-stack predictions confirmed, 17 of 18 in the failure-prone round
   (Brier 0.083), and six of six in the replay-window follow-up (Brier 0.054) —
   34 of 36 scored predictions, with both refutations explained.
 - **Paper B — [`Markdown`](docs/paper-bio-control-limits.md) · [`PDF`](docs/paper-bio-control-limits.pdf)**:
   *Why Fair-Queueing Beats the Fick Principle.* The negative result on
-  bio-inspired control (M3–M6).
+  bio-inspired control, written as a self-contained methods-and-results paper: the
+  five controllers and their parameters, the frozen expectations, the energy model,
+  the break-even thresholds, and the detector campaign.
+
+### Paper figures
+
+Paper A carries four figures and Paper B carries six, all generated from the
+committed CSVs by [`tools/generate_paper_figures.py`](tools/generate_paper_figures.py).
+Every plotted value is asserted against the claim the text makes about it before the
+figure is drawn, and the full list of plotted numbers with their source files is in
+[`figures/figure-data-manifest.md`](figures/figure-data-manifest.md).
+
+| Paper A | Paper B |
+|---|---|
+| [Fig. 1 — layer orderings](figures/paperA_fig1_stack_comparison.pdf) | [Fig. 1 — goodput over time](figures/paperB_fig1_goodput_timeseries.pdf) |
+| [Fig. 2 — wire bytes per ordering](figures/paperA_fig2_wire_bytes.pdf) | [Fig. 2 — peak burst speed](figures/paperB_fig2_peak_burst.pdf) |
+| [Fig. 3 — verdict heatmap](figures/paperA_fig3_verdict_heatmap.pdf) | [Fig. 3 — compiler break-even](figures/paperB_fig3_breakeven.pdf) |
+| [Fig. 4 — integrity scope vs NAT](figures/paperA_fig4_integrity_scope.pdf) | [Fig. 4 — energy audit](figures/paperB_fig6_energy_audit.pdf) |
+| | [Fig. 5 — discrete packet bound](figures/paperB_fig5_discrete_boundary.pdf) |
+| | [Fig. 6 — detector trade-off](figures/paperB_fig7_detector_tradeoff.pdf) |
+
+```powershell
+py tools\extract_arm_timeseries.py            # verify + write the per-tick goodput trace
+py tools\generate_paper_figures.py --output-dir figures
+```
+
+`tools/extract_arm_timeseries.py` exists because the committed CSVs contain no
+per-arm time series: the controller-campaign runner computes one in memory for a PNG
+and discards it. The extractor re-runs the frozen harness on the committed seed set
+and refuses to write the trace unless all 150 recomputed aggregate rows reproduce
+`results/m4/final_benchmark_raw.csv`; the record is
+[`results/m4/timeseries_reproduction.md`](results/m4/timeseries_reproduction.md).
+The simulated program-chair review that drove the first revision, and the fixes it
+produced, is [`docs/m15-self-review.md`](docs/m15-self-review.md); the
+external-referee report on both papers, with the disposition of every point, is
+[`docs/peer-review-papers-a-b.md`](docs/peer-review-papers-a-b.md).
+
 <!-- Paper C links back to this README from its Reproducibility section
      (docs/paper-crmr.tex, footnote to ../README.md). -->
 - **Paper C — [`LaTeX`](docs/paper-crmr.tex) · [`PDF`](docs/paper-crmr.pdf)**:
@@ -67,6 +103,22 @@ LLM coding passes but no author C1 and no C3, so it carries no verdict; see
 The PDFs are generated from the sources: A, B, D and the short D position paper
 from their Markdown with pandoc + XeLaTeX, and C from its LaTeX source with
 pdfLaTeX.
+
+Papers A and B are rebuilt from the repository root with:
+
+```powershell
+pandoc --from=markdown+tex_math_single_backslash-implicit_figures --standalone --table-of-contents --toc-depth=3 --shift-heading-level-by=-1 --metadata lang=en-US --variable documentclass=article --variable fontsize=11pt --variable geometry:margin=1in --variable linestretch=1.15 --variable colorlinks=true --variable linkcolor=blue --variable urlcolor=blue --include-in-header=docs\7g-backhaul-author.tex --output docs\paper-layering-testbed.tex docs\paper-layering-testbed.md
+cd docs
+xelatex --enable-installer --interaction=nonstopmode --halt-on-error paper-layering-testbed.tex
+xelatex --enable-installer --interaction=nonstopmode --halt-on-error paper-layering-testbed.tex
+```
+
+and the same three commands with `paper-bio-control-limits` in place of
+`paper-layering-testbed`. The `-implicit_figures` extension is deliberate: the
+figures are placed inline so that the bold `**Figure N.**` caption paragraph in
+the Markdown is the only caption, rather than a generated float caption followed by
+the real one. The `.tex`, `.aux`, `.log` and `.toc` byproducts are not committed.
+
 
 The long-horizon vision remains in
 [`docs/7g-backhaul-vision-paper.md`](docs/7g-backhaul-vision-paper.md).
@@ -1449,3 +1501,5 @@ python -m unittest discover -s tests -v
 ## License
 
 This project is licensed under the GNU General Public License v3.0 or later. See [LICENSE](LICENSE).
+
+
