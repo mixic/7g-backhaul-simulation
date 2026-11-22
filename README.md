@@ -10,8 +10,8 @@ The research material is split into **four focused papers** rather than one
 combined document, so each can be reviewed on its own terms:
 
 - **Paper A — [`Markdown`](docs/paper-layering-testbed.md) · [`PDF`](docs/paper-layering-testbed.pdf)**:
-  *Which Rewrites Survive? Pre-registered Tests of a Field-Class Model of
-  Encapsulation, Middleboxes and Decapsulation on Linux.* Four frozen rounds
+  *When Do Protocol Layers Commute? An Empirical Study Across Model, Simulator,
+  and Kernel.* Four frozen rounds
   (P1–P17) at three fidelities: six of seven initial predictions confirmed, five
   real-stack predictions confirmed, 17 of 18 in the failure-prone round
   (Brier 0.083), and six of six in the replay-window follow-up (Brier 0.054) —

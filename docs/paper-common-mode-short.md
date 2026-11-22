@@ -239,7 +239,7 @@ the population.
 6. P. S. L. Paladugu, "How Configuration and Deployment Changes Trigger Large Cloud and SaaS Outages: An Empirical Study of 70 Public Postmortems," Zenodo preprint, 2026, DOI 10.5281/zenodo.23585116.
 7. A. Ford et al., "TCP Extensions for Multipath Operation with Multiple Addresses," RFC 8684, 2020.
 8. K. Kompella and Y. Rekhter, "Routing Extensions in Support of GMPLS," RFC 4202, 2005.
-9. M. Nikolic, "Which Rewrites Survive? Pre-registered Tests of a Field-Class Model of Encapsulation, Middleboxes and Decapsulation on Linux," repository paper, 2026.
+9. M. Nikolic, "When Do Protocol Layers Commute? An Empirical Study Across Model, Simulator, and Kernel," repository paper, 2026.
 10. Bernama-Anadolu, "Nationwide Ground Stop Issued At US Airports Over 'Communication Issue': Transport Secretary," 14 November 2026.
 11. Yonhap News Agency, "US-wide flight communications failure causes a four-and-a-half-hour all-stop; fallout continues," 14 November 2026.
 12. Cambridge Independent / PA News, "Microsoft 'deeply sorry' for disruption caused by major global outage," 13 November 2026.

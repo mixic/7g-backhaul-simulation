@@ -1254,7 +1254,7 @@ costs in packets.
 10. A. Ford, C. Raiciu, M. Handley, O. Bonaventure and C. Paasch, "TCP Extensions for Multipath Operation with Multiple Addresses," RFC 8684, 2020.
 11. C. Hopps, "Analysis of an Equal-Cost Multi-Path Algorithm," RFC 2992, 2000.
 12. K. Kompella and Y. Rekhter, "Routing Extensions in Support of Generalized Multi-Protocol Label Switching (GMPLS)," RFC 4202, 2005.
-13. M. Nikolic, "Which Rewrites Survive? Pre-registered Tests of a Field-Class Model of Encapsulation, Middleboxes and Decapsulation on Linux," repository paper, 2026. [Online]. Available: [Paper A](paper-layering-testbed.md)
+13. M. Nikolic, "When Do Protocol Layers Commute? An Empirical Study Across Model, Simulator, and Kernel," repository paper, 2026. [Online]. Available: [Paper A](paper-layering-testbed.md)
 14. M. Nikolic, "Why Fair-Queueing Beats the Fick Principle," repository paper, 2026. [Online]. Available: [Paper B](paper-bio-control-limits.md)
 15. Bernama-Anadolu, "Nationwide Ground Stop Issued At US Airports Over 'Communication Issue': Transport Secretary," 14 November 2026. [Online]. Available: [Bernama](https://bernama.com/en/region/news.php?id=2634099)
 16. Yonhap News Agency, "US-wide flight communications failure causes a four-and-a-half-hour all-stop; fallout continues" (in Korean; English title supplied for readability), 14 November 2026. [Online]. Available: [Yonhap](https://www.yna.co.kr/view/AKR20261114010353071)

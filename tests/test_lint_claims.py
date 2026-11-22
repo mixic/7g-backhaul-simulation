@@ -75,8 +75,8 @@ class LintTests(unittest.TestCase):
 
     def test_7g_in_title_is_caught(self) -> None:
         text = self.paper_a.replace(
-            "# Which Rewrites Survive?",
-            "# 7G Which Rewrites Survive?",
+            "# When Do Protocol Layers Commute?",
+            "# 7G When Do Protocol Layers Commute?",
             1,
         )
         self.assertNotEqual(text, self.paper_a)

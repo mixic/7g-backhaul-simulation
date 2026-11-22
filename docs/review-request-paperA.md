@@ -1,7 +1,7 @@
 # Review request: Paper A
 
-**Paper:** *Which Rewrites Survive? Pre-registered Tests of a Field-Class Model
-of Encapsulation, Middleboxes and Decapsulation on Linux.*
+**Paper:** *When Do Protocol Layers Commute? An Empirical Study Across Model,
+Simulator, and Kernel.*
 **Artifact:** https://github.com/mixic/7g-backhaul-simulation
 **Review commit:** `[HUMAN: fill the release commit]`
 **Time needed:** about 2-3 hours; the focused review below is about 90 minutes.

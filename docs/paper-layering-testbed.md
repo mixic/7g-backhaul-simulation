@@ -1,6 +1,16 @@
-# Which Rewrites Survive? Pre-registered Tests of a Field-Class Model of Encapsulation, Middleboxes and Decapsulation on Linux
+# When Do Protocol Layers Commute? An Empirical Study Across Model, Simulator, and Kernel
 
 **Milan Nikolic** · Independent Researcher · <m_nikolic@yahoo.com>
+
+**Comments:** 21 pages, 15 tables, 2 figures. Part of a three-paper series on
+topological routing (arXiv:XXXX.XXXXX), protocol layering (this paper), and
+bio-inspired control limits (arXiv:YYYY.YYYYY).
+**Primary:** cs.NI · **Cross-list:** cs.CR.
+
+**Series note.** This paper is part of a three-paper series. The companion papers
+are *Complex-Rotation Manifold Routing* (arXiv:XXXX.XXXXX) and *Why Fair-Queueing
+Beats the Fick Principle* (arXiv:YYYY.YYYYY). The identifiers are placeholders
+until the companion papers are posted.
 
 **Status.** Focused measurement paper. Predictions were frozen in version control at
 four commits, each before the corresponding harness code: `96d59f3` (P1–P7),
@@ -12,35 +22,44 @@ linked results files, with the reproduction commands in §9.
 
 ## Abstract
 
-Packets in practice carry stacked encapsulations (compression, encryption,
-tunnelling, fragmentation, sequencing) and cross middleboxes that rewrite headers
-and decapsulators that act on outer fields. We ask a narrow question: when layer
-order or middlebox behaviour changes, which rewrites corrupt a datagram? We state
-a field-class rule: a rewrite is applied iff the field is visible at the wire and
+Protocol stacks are composed by convention — compress before encrypt, fragment
+before tunnel, rewrite headers at middleboxes — yet these orderings are rarely
+justified empirically. A wrong ordering is invisible until it manifests as
+authentication failure, delivery collapse, or silent byte inflation. We report a
+pre-registered, three-fidelity evaluation of layer commutation. We state a
+field-class rule — a rewrite is applied iff the field is visible at the wire and
 reachable by the middlebox, and breaks delivery iff the field is authenticated or
-structural. We test it with predictions committed to version control before any
-experiment code, at three fidelities: an executable model, a discrete-event
-simulation, and a Linux namespace testbed that runs kernel WireGuard, IPsec
-AH/ESP, IPIP and nftables NAT in two real-stack rounds. Of seven initial
-predictions, six are confirmed; one is refuted at the Linux fidelity because a
-compressor saw real headers and crossed a fragment boundary. Real-stack runs
-(20 per case) confirm five further predictions
-and show that the rule needs two more classes: quantised fields (WireGuard pads to
-16 bytes, so IPIP and WireGuard orderings differ by −4 or +12 bytes) and derived
-fields (an inner UDP checksum depends on the outer address). A final, deliberately
-failure-prone round, with credences recorded in advance (Brier 0.0833), confirms
-17 of 18 predictions, and finds that the same outer ECN mark is fatal under IPIP but
-harmless under WireGuard and ESP (decapsulation-coupled), that two ESP clients
-cannot share a NAT (a middlebox lookup-key failure), and that delivery under
-reordering is bounded by the integrity layer's replay window. One prediction is
-refuted by our own mis-specified reordering depth. A fourth, smaller round then
-measures the boundary that refutation left open — a gated depth and an exact
-`window` / `window − 1` reinjection in both legacy and ESN mode — and confirms six
-of six (Brier 0.0542), so **34 of 36 scored predictions are confirmed across the
-four rounds**. Evidence is one kernel series (two WSL2 builds), veth links and one
-NAT; security is not evaluated. The frozen two-kernel replication clause is
-**unmet**: both builds are WSL2 kernels of the same series, so every result here
-is a one-kernel result. Predictions, harness and raw data are open.
+structural — and test it with sixteen prediction categories (34 sub-cases in the
+real-stack rounds) plus a six-case replay-window follow-up. Together they expand
+into 36 scored predictions about compression, encryption, fragmentation,
+tunnelling and header rewriting. The predictions run in an executable Python
+model, a SimPy event-driven simulator, and Linux network namespaces with kernel
+WireGuard, IPsec AH/ESP, IPIP and nftables NAT, across four rounds frozen in
+version control.
+
+Of seven initial predictions, six are confirmed and P5 is refuted at the Linux
+fidelity; the real-stack round confirms five further predictions; a deliberately
+failure-prone round confirms 17 of 18 (Brier 0.0833) and refutes P16d; a
+replay-window follow-up confirms six of six (Brier 0.0542). In total, **34 of 36
+scored predictions are confirmed**.
+
+Four findings. First, commutation is exact when every layer has fixed size effects
+(P4: all six orderings of tunnelling, encryption and sequencing give 1104 B) and
+fails when a layer quantises size (P10: IPIP and WireGuard orderings differ by −4
+or +12 B by `L mod 16`). Fragmentation placement (P2) changes the wire bytes by
+exactly 224 B (12,100 vs 12,324), i.e. 28 B per affected fragment. Second,
+integrity boundaries are fragile under rewriting: AH through NAT delivers 0 %
+(P8a), an outer CE mark is fatal on IPIP but inert on WireGuard and ESP (P13),
+and the ESP replay window bounds delivery under reordering (P16, P17). Third,
+reproducibility is achievable at kernel fidelity: the table generator rebuilds
+every results table and re-checks the invariants from the committed CSVs, and 27
+in-memory tamper tests prove that each gate fails when the data is corrupted.
+Fourth, the refutations are reported, not removed: P5 (12.35 pp at Linux against
+19.76 pp predicted) and P16d (673–717 of 2000 delivered at window 256).
+
+All kernel evidence comes from one WSL2 kernel series, veth links and one nftables
+NAT; the frozen two-kernel replication clause is **unmet**, and security is not
+evaluated. Predictions, harness and raw data are open.
 
 ## 1. Introduction
 
@@ -298,7 +317,7 @@ P10 makes that visible as a commutation failure: swapping IPIP and WireGuard
 changes the wire length by −4 or +12 bytes depending on `L mod 16`, and the
 quantised model `d(L) = R(L+20) − R(L) − 20` is exact.
 
-**Table 3b. P9: WireGuard wire size against the formula 60 + 16*ceil(L/16).**
+**Table 3b. P9: WireGuard wire size against the formula 60 + 16·ceil(L/16).**
 Generated from `validation/real_stack/results/observations.csv`.
 
 | Inner length L (B) | R(L) | Predicted wire (B) | Observed wire (B) | Observed − (L + 56) | Match |
