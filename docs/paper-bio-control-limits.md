@@ -29,7 +29,9 @@ under DDoS shockwaves: a five-arm main comparison against static per-flow
 isolation, plus a smoothing arm, a stack compiler and a three-detector campaign. The arms are faithful implementations of *one* reading of
 that analogy — a set-point metabolic law and a compensatory state-geometry law —
 not re-implementations of a specific published controller, and §6.2.5 states the
-claim that follows. The result is negative, and the negative result is the
+claim that follows. The paper therefore tests the *mechanism* the analogy proposes
+— a continuous compensation signal driving a discrete actuator — and not the
+metaphor of homeostasis itself. The result is negative, and the negative result is the
 contribution. Static isolation is not beaten on goodput under the DDoS
 shockwave: the extraction-fraction (OEF) controller reaches 84.65 % legitimate
 goodput against 86.48 % (paired p = 0.527); the four-dimensional kinematic trigger
@@ -161,7 +163,12 @@ faithful to two explicit readings of the biology — restore the set point (the
 extraction fraction), and hold the geometry of the state vector (the kinematic
 trigger) — and we test those. The result is therefore a complete statement about
 *these* controllers and a bounded statement about the design pattern; §6.2.5 says
-exactly how bounded.
+exactly how bounded. What is tested is the mechanism the two readings share — a
+continuous signal that modulates a quantised queue — not the claim that no
+bio-inspired control law can ever help. A different set-point law would still have
+to act through the same discrete edit, which is the object §5.5 measures, but that
+is an argument about the actuator rather than a measurement of every possible
+controller.
 
 ### 2.3 Fair queueing and DDoS defence
 
@@ -440,6 +447,20 @@ whenever a NAT is present (it breaks authentication). On a violation the guardra
 installs the canonical `C→E→F` order and logs the intervention. The oracle here is
 a deterministic mock, not a language model: this arm measures the *guardrail and
 the wire cost*, not the search quality of a real model (§6.2.6).
+
+**Where the 42 % comes from.** The arm's wire saving is a compression-placement
+effect, and the mechanism is the same one the companion layering paper measures as
+P1. The workload is 1,400-byte payloads over a fiber–microwave–satellite sequence,
+compressible on the fiber and satellite phases and incompressible on the microwave
+phase. The static arm runs the convention `fragment → encrypt → compress`, so
+compression meets ciphertext, which does not compress: the saving is zero and the
+wire cost is 4,650 B. The compiler arm installs `compress → encrypt → fragment`, so
+the same payloads compress before encryption: 2,673.9 B, a 42.5 % reduction
+(1,976.1 B). Nothing about this number depends on the oracle being a language
+model; it depends on the payload being compressible and on the compression having
+been placed on the wrong side of the encryptor. That is why §5.4 reports the
+saving as the guardrail's, and why a real model with the same wire saving faces
+the same energy arithmetic.
 
 **(g) Dual-band detector.** A low-pass/high-pass pair per node. The LPF
 ($\tau = 2.0$ s) gives the utilisation baseline; the HPF residual is compared with
@@ -724,6 +745,23 @@ its own seeds (worst case 311.1 against 256.2) and is quoted here rather than
 plotted, so that panel (b) shares its seeds with panel (a). Data: 30 per-seed
 peaks per arm, from the controller campaign in both panels.
 
+**Why the trigger cannot cap the burst.** The measured peak is dominated by the
+*surgical edit itself*, not by the decision that fires it, and the data show this
+directly: the 1-D limiter and the extraction arm report the *same* peak,
+222.04 ± 31.70, because both issue the identical edit, while the 4-D trigger
+differs by −3.66 with p = 0.891. The edit promotes one class across roughly fifteen
+routers in a single control tick, so the state-change speed of that tick is fixed by
+the actuator — the byte limit of 12 % of the buffer and the weight of 0.05 — and
+cannot be reduced by any trigger that issues the same edit. What a trigger can
+change is *when* it fires, and the campaign shows that freedom is worth nothing
+here: the 4-D arm issues 49.8 ± 9.97 edits against 45.3 ± 6.51 for the 1-D limiter,
+keeps false positives at exactly zero, and yet produces a *worse tail* — its worst
+seed reaches 402.6 against 256.2 — because firing on fewer seeds means each firing
+coincides with a larger accumulated state. Capping the peak would require changing
+the edit (spreading one edit over several ticks, or bounding the per-tick byte
+change), which no arm in this paper does; §5.5 explains why that is not an
+implementation detail but a consequence of a quantised queue.
+
 **The cost side.** The 4-D trigger keeps steady-state edits at exactly zero,
 satisfying that clause of E2 (the triggerless baseline is exempt: its isolation
 edits are by design). It also costs 813.4 µs per control tick against 6.0 µs for
@@ -849,6 +887,22 @@ arm therefore measures the guardrail and the wire cost, and E4's break-even is a
 bound on what *any* model with that wire saving would need to be viable — it does
 not depend on the mock being realistic, which is the point of stating it as a
 threshold.
+
+**What the mock can and cannot represent.** The mock is a policy table with three
+guardrails, and its installed stack is `C→E→F` on every one of its ten
+hallucinated proposals; the greedy heuristic picks the same order, so the two arms
+are bit-identical at 2,673.9 B in 30 of 30 seeds. The oracle therefore contributes
+*nothing* to the wire saving in this workload — the entire 42 % is the guardrail's
+correction — and the honest comparison is between a correct ordering and an
+incorrect one, not between a model and a heuristic. A real language model could
+beat this arm only by proposing, and the guardrail accepting, an ordering that is
+better than compression-first on these payloads; for the tested workload
+compression-first is optimal, so 2,673.9 B is a ceiling and not a floor. The mock
+is optimistic in one respect (it decides instantly and freely) and irrelevant in
+another (the saving is set by where compression sits relative to the encryptor).
+§6.2.6 states the consequence: the arm bounds what any model with this wire saving
+would need to be viable, and says nothing about what a model would save on a
+workload where the ordering is genuinely uncertain.
 
 ### 5.5 Why continuous compensation cannot win
 

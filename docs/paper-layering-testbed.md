@@ -25,7 +25,11 @@ Protocol stacks are composed by convention — compress before encrypt, fragment
 before tunnel, rewrite headers at middleboxes — yet these orderings are rarely
 justified empirically. A wrong ordering is invisible until it manifests as
 authentication failure, delivery collapse, or silent byte inflation. We report a
-pre-registered, three-fidelity evaluation of layer commutation. We state a
+pre-registered evaluation of layer commutation at three fidelities, only one of
+which is independent: the Python model, the SimPy simulator and the Linux
+namespace leg are three engines, but the first two share an author and a
+specification with the predictions, and the Linux leg of the first round runs the
+harness's own user-space codec. We state a
 field-class rule — a rewrite is applied iff the field is visible at the wire and
 reachable by the middlebox, and breaks delivery iff the field is authenticated or
 structural — and test it with sixteen prediction categories (34 sub-cases in the
@@ -33,10 +37,11 @@ real-stack rounds) plus a six-case replay-window follow-up. Together they expand
 into 36 scored predictions about compression, encryption, fragmentation,
 tunnelling and header rewriting. The predictions run in an executable Python
 model, a SimPy event-driven simulator, and Linux network namespaces, across four
-rounds, each frozen before the harness that tested it existed. The first round's
-Linux leg drives the kernel
-data plane with the harness's user-space codec; kernel WireGuard, IPsec AH/ESP,
-IPIP and nftables NAT are exercised from round two on.
+rounds, each frozen before the harness that tested it existed. All kernel evidence
+comes from one WSL2 kernel series, veth links and one nftables implementation; the
+frozen two-kernel replication clause is unmet, and the paper does not claim that
+the rule transfers to another kernel series, another NAT implementation or a
+physical NIC.
 
 Of seven initial predictions, six are confirmed and P5 is refuted at the Linux
 fidelity; the real-stack round confirms five further predictions; a deliberately
@@ -103,6 +108,13 @@ middlebox behaviour is harmless on one decapsulator and fatal on another (P13), 
 an operator cannot infer safety from the field alone. None of the three is
 discoverable from the specification, because in all three the behaviour is left to
 the implementation.
+
+**Reading guide for a workshop audience.** The paper is long because it reports
+every scored case. A reader who wants the method and the result can read §3.1–3.2
+(the rule and the field classes, Table 1), §5.2–5.6 (the mechanism results) and
+§5.3 (the verdict map); §4 and §5.1 give the protocol and the arithmetic, and the
+per-case tables and the two raw size tables are in the appendix and are not needed
+to follow any verdict.
 
 **Contributions.**
 
@@ -245,7 +257,9 @@ The claim is bounded, and the bound is part of the claim. The three fidelities a
 one Python model, one SimPy model and one kernel; the first two were written by the
 same author from the same specification as the predictions, so they are a
 consistency check rather than an independent replication (§6.2.1), and the kernel
-evidence is one series, one NAT, one encryptor, IPv4 only (§6.2.3, §6.3). What is
+evidence is one series, one NAT, one encryptor, IPv4 only (§6.2.3, §6.3). When the
+paper says a prediction is "confirmed at three fidelities" it means three engines
+of which at most one is independent, and the kernel leg is the one that decides. What is
 new is the *method* — a pre-run freeze plus a scored credence — and the table of
 measured facts it produced, not a priority claim over the RFCs or the middlebox
 literature.
@@ -518,6 +532,16 @@ cross-reference — and each one must make the corresponding check fail. A check
 still passes after its input is corrupted is a check that proves nothing, which is
 why the count (27) is reported rather than the assertion that the checks exist.
 
+The scope of that evidence is narrow and is stated so a referee can weigh it. A
+tamper test proves that the *pipeline* is sensitive to corruption; it proves
+nothing about whether the *model* is right, and it is orthogonal to a corrupted
+model. Three things it does not substitute for: a second implementation of the
+same predictions by a different author, a second kernel series, and an independent
+re-derivation of a verdict from the published numbers alone. The first two are
+absent from this paper (§6.2.1, §6.2.3); the third is what Figures 3 and 7 are
+for, since every plotted number is recomputed from the per-run rows rather than
+transcribed.
+
 **Repeating the study.** The four rounds are independent setups, and each is
 repeatable from this description alone: the scenario of §4.1 and the environment
 above fix the topology and the kernel; §4.3 fixes the pairing and the run count; the
@@ -620,37 +644,6 @@ as a commutation failure: swapping IPIP and WireGuard changes the wire length by
 −4 or +12 bytes depending on `L mod 16`, and the quantised model
 `d(L) = R(L+20) − R(L) − 20` is exact. Figure 5 draws both: the staircase against the
 nine measured sizes, and `d(L)` against `L mod 16`.
-
-**Table 2c. P9: WireGuard wire size against the formula $60 + 16\lceil L/16\rceil$.** Nine inner
-lengths, each run 20 times with five datagrams per run; the wire size is identical in
-every run of a length, so one observed value is shown per length.
-
-| Inner length L (B) | $R(L) = 16\lceil L/16\rceil$ | Predicted wire (B) | Observed wire (B) | Observed − (L + 56) | Match |
-|---|---|---|---|---|---|
-| 29 | 32 | 92 | 92 | 7 | yes |
-| 44 | 48 | 108 | 108 | 8 | yes |
-| 60 | 64 | 124 | 124 | 8 | yes |
-| 61 | 64 | 124 | 124 | 7 | yes |
-| 76 | 80 | 140 | 140 | 8 | yes |
-| 100 | 112 | 172 | 172 | 16 | yes |
-| 1000 | 1008 | 1068 | 1068 | 12 | yes |
-| 1024 | 1024 | 1084 | 1084 | 4 | yes |
-| 1400 | 1408 | 1468 | 1468 | 12 | yes |
-
-**Table 2d. P10: IPIP and WireGuard nesting order.** Eight inner lengths in both
-nesting orders, 20 runs each. `d(L)` is the measured wire length of
-IPIP-inside-WireGuard minus the reverse, and it is never zero.
-
-| Inner length L (B) | L mod 16 | Wire, IPIP then WG (B) | Wire, WG then IPIP (B) | Difference d(L) | Match |
-|---|---|---|---|---|---|
-| 64 | 0 | 156 | 144 | +12 (predicted +12) | yes |
-| 65 | 1 | 156 | 160 | -4 (predicted -4) | yes |
-| 76 | 12 | 156 | 160 | -4 (predicted -4) | yes |
-| 77 | 13 | 172 | 160 | +12 (predicted +12) | yes |
-| 79 | 15 | 172 | 160 | +12 (predicted +12) | yes |
-| 100 | 4 | 188 | 192 | -4 (predicted -4) | yes |
-| 1000 | 8 | 1084 | 1088 | -4 (predicted -4) | yes |
-| 1008 | 0 | 1100 | 1088 | +12 (predicted +12) | yes |
 
 ### 5.3 The verdict map
 
@@ -1130,12 +1123,12 @@ commutation holds under the stipulation and fails under the real encryptor: the
 stipulated arithmetic is a *model of the fixed-size regime*, not a model of
 WireGuard. Second, P9's verdict is really a calibration result — "the stipulated
 composite is low by 4 + (16·ceil(L/16) − L) bytes" — and it is reported that way.
-A reader who wants a deployment number should read Table 2c, not the 56.
+A reader who wants a deployment number should read Table A1, not the 56.
 
 The threat is that a different stipulation (say, 60 B) would change the *size* of
 the P4/P10 discrepancy but not its sign, because the sign is set by the staircase
 `R`, not by the constant. We verified this by recomputing `d(L)` with the measured
-staircase in Table 2d: `d(L)` is never zero for any tested `L`, whatever the
+staircase in Table A2: `d(L)` is never zero for any tested `L`, whatever the
 constant. The 56 therefore does not carry the conclusion; the staircase does.
 
 #### 6.2.3 Kernel and toolchain scope
@@ -1461,15 +1454,42 @@ exists, and RFC numbers are given in lieu of a DOI.
 }
 ```
 
+## Appendix A. Detail tables
 
+The two tables below are the raw P9/P10 size records. They are in an appendix
+because the conclusions they carry are stated in §5.2 and drawn in Figure 5; the
+tables are here so that a reader can check the arithmetic without leaving the
+paper.
 
+**Table A1. P9: WireGuard wire size against the formula $60 + 16\lceil L/16\rceil$.** Nine inner
+lengths, each run 20 times with five datagrams per run; the wire size is identical in
+every run of a length, so one observed value is shown per length.
 
+| Inner length L (B) | $R(L) = 16\lceil L/16\rceil$ | Predicted wire (B) | Observed wire (B) | Observed − (L + 56) | Match |
+|---|---|---|---|---|---|
+| 29 | 32 | 92 | 92 | 7 | yes |
+| 44 | 48 | 108 | 108 | 8 | yes |
+| 60 | 64 | 124 | 124 | 8 | yes |
+| 61 | 64 | 124 | 124 | 7 | yes |
+| 76 | 80 | 140 | 140 | 8 | yes |
+| 100 | 112 | 172 | 172 | 16 | yes |
+| 1000 | 1008 | 1068 | 1068 | 12 | yes |
+| 1024 | 1024 | 1084 | 1084 | 4 | yes |
+| 1400 | 1408 | 1468 | 1468 | 12 | yes |
 
+**Table A2. P10: IPIP and WireGuard nesting order.** Eight inner lengths in both
+nesting orders, 20 runs each. `d(L)` is the measured wire length of
+IPIP-inside-WireGuard minus the reverse, and it is never zero.
 
-
-
-
-
-
+| Inner length L (B) | L mod 16 | Wire, IPIP then WG (B) | Wire, WG then IPIP (B) | Difference d(L) | Match |
+|---|---|---|---|---|---|
+| 64 | 0 | 156 | 144 | +12 (predicted +12) | yes |
+| 65 | 1 | 156 | 160 | -4 (predicted -4) | yes |
+| 76 | 12 | 156 | 160 | -4 (predicted -4) | yes |
+| 77 | 13 | 172 | 160 | +12 (predicted +12) | yes |
+| 79 | 15 | 172 | 160 | +12 (predicted +12) | yes |
+| 100 | 4 | 188 | 192 | -4 (predicted -4) | yes |
+| 1000 | 8 | 1084 | 1088 | -4 (predicted -4) | yes |
+| 1008 | 0 | 1100 | 1088 | +12 (predicted +12) | yes |
 
 
