@@ -31,6 +31,49 @@ py tools\generate_paper_figures.py --output-dir figures
 | A-4 | (b) | ESP through NAT, delivery % | 100 | `validation/real_stack/results/observations.csv` |
 | A-4 | (b) | WireGuard through NAT, delivery % | 100 | `validation/real_stack/results/observations.csv` |
 | A-4 | (b) | P12 inner checksum live / zeroed, delivery % | 0/100 | `validation/real_stack/results/observations.csv` |
+| A-5 | (a) | observed wire bytes at L=29 | 92 B | `validation/real_stack/results/observations.csv` |
+| A-5 | (a) | observed wire bytes at L=44 | 108 B | `validation/real_stack/results/observations.csv` |
+| A-5 | (a) | observed wire bytes at L=60 | 124 B | `validation/real_stack/results/observations.csv` |
+| A-5 | (a) | observed wire bytes at L=61 | 124 B | `validation/real_stack/results/observations.csv` |
+| A-5 | (a) | observed wire bytes at L=76 | 140 B | `validation/real_stack/results/observations.csv` |
+| A-5 | (a) | observed wire bytes at L=100 | 172 B | `validation/real_stack/results/observations.csv` |
+| A-5 | (a) | observed wire bytes at L=1000 | 1068 B | `validation/real_stack/results/observations.csv` |
+| A-5 | (a) | observed wire bytes at L=1024 | 1084 B | `validation/real_stack/results/observations.csv` |
+| A-5 | (a) | observed wire bytes at L=1400 | 1468 B | `validation/real_stack/results/observations.csv` |
+| A-5 | (b) | wire bytes IPIP→WG / WG→IPIP at L=64 | 156 / 144 B | `validation/real_stack/results/observations.csv` |
+| A-5 | (b) | wire bytes IPIP→WG / WG→IPIP at L=65 | 156 / 160 B | `validation/real_stack/results/observations.csv` |
+| A-5 | (b) | wire bytes IPIP→WG / WG→IPIP at L=76 | 156 / 160 B | `validation/real_stack/results/observations.csv` |
+| A-5 | (b) | wire bytes IPIP→WG / WG→IPIP at L=77 | 172 / 160 B | `validation/real_stack/results/observations.csv` |
+| A-5 | (b) | wire bytes IPIP→WG / WG→IPIP at L=79 | 172 / 160 B | `validation/real_stack/results/observations.csv` |
+| A-5 | (b) | wire bytes IPIP→WG / WG→IPIP at L=100 | 188 / 192 B | `validation/real_stack/results/observations.csv` |
+| A-5 | (b) | wire bytes IPIP→WG / WG→IPIP at L=1000 | 1084 / 1088 B | `validation/real_stack/results/observations.csv` |
+| A-5 | (b) | wire bytes IPIP→WG / WG→IPIP at L=1008 | 1100 / 1088 B | `validation/real_stack/results/observations.csv` |
+| A-6 | (a) | P13 delivery, IPIP, column 1 | 0 % | `validation/round2/results/observations.csv` |
+| A-6 | (a) | P13 delivery, IPIP, column 2 | 100 % | `validation/round2/results/observations.csv` |
+| A-6 | (a) | P13 delivery, IPIP, column 3 | 100 % | `validation/round2/results/observations.csv` |
+| A-6 | (a) | P13 delivery, WireGuard, column 1 | 100 % | `validation/round2/results/observations.csv` |
+| A-6 | (a) | P13 delivery, WireGuard, column 2 | 100 % | `validation/round2/results/observations.csv` |
+| A-6 | (a) | P13 delivery, WireGuard, column 3 | 100 % | `validation/round2/results/observations.csv` |
+| A-6 | (a) | P13 delivery, ESP tunnel, column 1 | 100 % | `validation/round2/results/observations.csv` |
+| A-6 | (a) | P13 delivery, ESP tunnel, column 2 | 100 % | `validation/round2/results/observations.csv` |
+| A-6 | (a) | P13 delivery, ESP tunnel, column 3 | 100 % | `validation/round2/results/observations.csv` |
+| A-6 | (b) | P14a delivered client 1 / client 2 | 60 / 0 | `validation/round2/results/observations.csv` |
+| A-6 | (b) | P14b delivered client 1 / client 2 | 0 / 60 | `validation/round2/results/observations.csv` |
+| A-6 | (b) | P14c delivered client 1 / client 2 | 60 / 50 | `validation/round2/results/observations.csv` |
+| A-6 | (b) | P14d delivered client 1 / client 2 | 60 / 50 | `validation/round2/results/observations.csv` |
+| A-7 | (a) | P16a delivered per run (min-max) | 476-565 of 2000 | `validation/round2/results/observations.csv` |
+| A-7 | (a) | P16a reorder depth (min-max) | 1992-1999 | `validation/round2/results/observations.csv` |
+| A-7 | (a) | P16b delivered per run (min-max) | 2000-2000 of 2000 | `validation/round2/results/observations.csv` |
+| A-7 | (a) | P16b reorder depth (min-max) | 1-1 | `validation/round2/results/observations.csv` |
+| A-7 | (a) | P16c delivered per run (min-max) | 2000-2000 of 2000 | `validation/round2/results/observations.csv` |
+| A-7 | (a) | P16c reorder depth (min-max) | 1985-1999 | `validation/round2/results/observations.csv` |
+| A-7 | (a) | P16d delivered per run (min-max) | 673-717 of 2000 | `validation/round2/results/observations.csv` |
+| A-7 | (a) | P16d reorder depth (min-max) | 1991-1999 | `validation/round2/results/observations.csv` |
+| A-7 | (b) | legacy window 32: accepted at displacement = window | 2 of 2 | `validation/round3/results/observations.csv` |
+| A-7 | (b) | legacy window 32: accepted at displacement = window - 1 | 1 of 2 | `validation/round3/results/observations.csv` |
+| A-7 | (b) | ESN window 256: accepted at displacement = window | 2 of 2 | `validation/round3/results/observations.csv` |
+| A-7 | (b) | ESN window 256: accepted at displacement = window - 1 | 1 of 2 | `validation/round3/results/observations.csv` |
+| A-7 | (b) | P17a delivered / depth | 600 at 91-92 | `validation/round3/results/observations.csv` |
 | B-1 | trace | shock-window goodput static_isolation (mean ± 95 % CI) | 0.8648 ± 0.0177 | `results/m4/final_benchmark_raw.csv` |
 | B-1 | trace | shock-window goodput m4_oef (mean ± 95 % CI) | 0.8465 ± 0.0542 | `results/m4/final_benchmark_raw.csv` |
 | B-1 | trace | shock-window goodput m4_mkb (mean ± 95 % CI) | 0.8083 ± 0.0467 | `results/m4/final_benchmark_raw.csv` |
@@ -78,6 +121,36 @@ py tools\generate_paper_figures.py --output-dir figures
 | B-7 | (b) | false positives over 30 seeds dual_band | 115 | `results/m7/m7_exp1_raw.csv` |
 | B-7 | (b) | goodput dual_band (mean ± 95 % CI) | 0.6595 ± 0.0567 | `results/m7/m7_exp2_raw.csv` |
 | B-7 | (b) | churn energy dual_band (mean ± 95 % CI) | 988.0 ± 85.5 J | `results/m7/m7_exp2_raw.csv` |
+| B-8 | (a) | goodput baseline A (mean ± 95 % CI) | 0.5887 ± 0.0238 | `results/m3/exp1_<A-D>_*.csv` |
+| B-8 | (a) | p95 latency baseline A (mean ± 95 % CI) | 0.3510 ± 0.0080 | `results/m3/exp1_<A-D>_*.csv` |
+| B-8 | (a) | goodput baseline B (mean ± 95 % CI) | 0.5887 ± 0.0238 | `results/m3/exp1_<A-D>_*.csv` |
+| B-8 | (a) | p95 latency baseline B (mean ± 95 % CI) | 0.3510 ± 0.0080 | `results/m3/exp1_<A-D>_*.csv` |
+| B-8 | (a) | goodput baseline C (mean ± 95 % CI) | 0.7460 ± 0.0115 | `results/m3/exp1_<A-D>_*.csv` |
+| B-8 | (a) | p95 latency baseline C (mean ± 95 % CI) | 0.3343 ± 0.0114 | `results/m3/exp1_<A-D>_*.csv` |
+| B-8 | (a) | goodput baseline D (mean ± 95 % CI) | 0.8576 ± 0.0573 | `results/m3/exp1_<A-D>_*.csv` |
+| B-8 | (a) | p95 latency baseline D (mean ± 95 % CI) | 0.2886 ± 0.0185 | `results/m3/exp1_<A-D>_*.csv` |
+| B-8 | (b) | goodput static_isolation (mean ± 95 % CI) | 0.8648 ± 0.0177 | `results/m4/final_benchmark_raw.csv` |
+| B-8 | (b) | goodput m3_surgical_1d (mean ± 95 % CI) | 0.8461 ± 0.0541 | `results/m4/final_benchmark_raw.csv` |
+| B-8 | (b) | goodput m4_oef (mean ± 95 % CI) | 0.8465 ± 0.0542 | `results/m4/final_benchmark_raw.csv` |
+| B-8 | (b) | goodput m4_mkb (mean ± 95 % CI) | 0.8083 ± 0.0467 | `results/m4/final_benchmark_raw.csv` |
+| B-8 | (b) | goodput m4_combined (mean ± 95 % CI) | 0.4823 ± 0.0262 | `results/m4/final_benchmark_raw.csv` |
+| B-8 | (b) | paired p, OEF vs static | 0.5274 | `results/m4/final_benchmark_raw.csv` |
+| B-8 | (b) | paired p, combined vs 1-D limiter | 4.17e-12 | `results/m4/final_benchmark_raw.csv` |
+| B-8 | (c) | goodput at weight 1x (mean ± 95 % CI) | 0.8461 ± 0.0541 | `results/m4/starvation_sweep_raw.csv` |
+| B-8 | (c) | transit drop at weight 1x (mean ± 95 % CI) | 0.0994 ± 0.0329 | `results/m4/starvation_sweep_raw.csv` |
+| B-8 | (c) | goodput at weight 2x (mean ± 95 % CI) | 0.8528 ± 0.0550 | `results/m4/starvation_sweep_raw.csv` |
+| B-8 | (c) | transit drop at weight 2x (mean ± 95 % CI) | 0.0955 ± 0.0335 | `results/m4/starvation_sweep_raw.csv` |
+| B-8 | (c) | goodput at weight 4x (mean ± 95 % CI) | 0.8515 ± 0.0543 | `results/m4/starvation_sweep_raw.csv` |
+| B-8 | (c) | transit drop at weight 4x (mean ± 95 % CI) | 0.0978 ± 0.0329 | `results/m4/starvation_sweep_raw.csv` |
+| B-8 | (c) | goodput at weight 8x (mean ± 95 % CI) | 0.8521 ± 0.0544 | `results/m4/starvation_sweep_raw.csv` |
+| B-8 | (c) | transit drop at weight 8x (mean ± 95 % CI) | 0.0977 ± 0.0329 | `results/m4/starvation_sweep_raw.csv` |
+| B-8 | (c) | goodput at weight 16x (mean ± 95 % CI) | 0.8521 ± 0.0544 | `results/m4/starvation_sweep_raw.csv` |
+| B-8 | (c) | transit drop at weight 16x (mean ± 95 % CI) | 0.0977 ± 0.0329 | `results/m4/starvation_sweep_raw.csv` |
+| B-8 | (d) | CPU per tick, Static isolation | 0.3 us | `results/m4/m4_summary.md` |
+| B-8 | (d) | CPU per tick, 1-D limiter | 6.0 us | `results/m4/m4_summary.md` |
+| B-8 | (d) | CPU per tick, OEF (Fick) | 214.2 us | `results/m4/m4_summary.md` |
+| B-8 | (d) | CPU per tick, 4-D trigger | 813.4 us | `results/m4/m4_summary.md` |
+| B-8 | (d) | CPU per tick, OEF + 4-D | 686.6 us | `results/m4/m4_summary.md` |
 
 Two panels are schematic and carry no measurement: A-1 draws the *order* of the
 layers (its numbers come from the CSVs) and B-4 illustrates the discretisation

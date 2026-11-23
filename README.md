@@ -24,7 +24,7 @@ combined document, so each can be reviewed on its own terms:
 
 ### Paper figures
 
-Paper A carries four figures and Paper B carries six, all generated from the
+Paper A carries seven figures and Paper B carries seven, all generated from the
 committed CSVs by [`tools/generate_paper_figures.py`](tools/generate_paper_figures.py).
 Every plotted value is asserted against the claim the text makes about it before the
 figure is drawn, and the full list of plotted numbers with their source files is in
@@ -36,8 +36,9 @@ figure is drawn, and the full list of plotted numbers with their source files is
 | [Fig. 2 — wire bytes per ordering](figures/paperA_fig2_wire_bytes.pdf) | [Fig. 2 — peak burst speed](figures/paperB_fig2_peak_burst.pdf) |
 | [Fig. 3 — verdict heatmap](figures/paperA_fig3_verdict_heatmap.pdf) | [Fig. 3 — compiler break-even](figures/paperB_fig3_breakeven.pdf) |
 | [Fig. 4 — integrity scope vs NAT](figures/paperA_fig4_integrity_scope.pdf) | [Fig. 4 — energy audit](figures/paperB_fig6_energy_audit.pdf) |
-| | [Fig. 5 — discrete packet bound](figures/paperB_fig5_discrete_boundary.pdf) |
-| | [Fig. 6 — detector trade-off](figures/paperB_fig7_detector_tradeoff.pdf) |
+| [Fig. 5 — quantised sizing (P9, P10)](figures/paperA_fig5_quantised_sizing.pdf) | [Fig. 5 — discrete packet bound](figures/paperB_fig5_discrete_boundary.pdf) |
+| [Fig. 6 — decapsulation and middlebox state (P13, P14)](figures/paperA_fig6_decapsulation.pdf) | [Fig. 6 — detector trade-off](figures/paperB_fig7_detector_tradeoff.pdf) |
+| [Fig. 7 — replay window (P16, P17)](figures/paperA_fig7_replay_window.pdf) | [Fig. 7 — results overview](figures/paperB_fig8_results_overview.pdf) |
 
 ```powershell
 py tools\extract_arm_timeseries.py            # verify + write the per-tick goodput trace

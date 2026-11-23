@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-"""Generate the eight paper figures (paper A: 4, paper B: 4) from committed CSVs.
+"""Generate the eleven paper figures (paper A: 4, paper B: 7) from committed CSVs.
 
 Anti-cheat contract
 -------------------
@@ -57,6 +57,7 @@ from __future__ import annotations
 import argparse
 import csv
 import math
+import re
 import sys
 from pathlib import Path
 
@@ -790,6 +791,342 @@ def figure_a4_integrity_scope(output_dir: Path) -> None:
 
 
 # ---------------------------------------------------------------------------
+# Paper A, figure 5: quantised sizing (P9, P10)
+# ---------------------------------------------------------------------------
+def _single_value(rows, scenario: str, policy: str, metric: str) -> float:
+    values = _values(rows, scenario, policy, metric)
+    _check(bool(values), f"no {metric} for {scenario}/{policy}")
+    return _distinct(values)
+
+
+def figure_a5_quantised_sizing(output_dir: Path) -> None:
+    """P9 and P10 on one plate: the staircase, and the commutation failure it causes.
+
+    Panel (a) plots the measured WireGuard wire size against the inner length, the
+    staircase model ``60 + 16 * ceil(L/16)`` and the stipulated fixed 56-byte
+    composite.  Panel (b) plots the measured ``d(L)`` for both nesting orders,
+    which is never zero.  Every value is deterministic across the 20 runs, so the
+    panels plot the single observed value per length.
+    """
+    rows = _observations("validation/real_stack/results/observations.csv")
+
+    lengths = (29, 44, 60, 61, 76, 100, 1000, 1024, 1400)
+    observed = {length: _single_value(rows, "P9", f"P9_L{length}", "wire_bytes_max")
+                for length in lengths}
+    _check(observed[29] == 92.0, "P9 wire size at L=29 is not 92")
+    _check(observed[1000] == 1068.0, "P9 wire size at L=1000 is not 1068")
+    _check(observed[1400] == 1468.0, "P9 wire size at L=1400 is not 1468")
+    for length, wire in observed.items():
+        _check(wire == 60 + 16 * math.ceil(length / 16),
+               f"P9 staircase disagrees with the observation at L={length}")
+
+    nest = {}
+    for length in (64, 65, 76, 77, 79, 100, 1000, 1008):
+        # ``P10_y_to_w`` is IPIP inside WireGuard; ``P10_w_to_y`` is the reverse.
+        ipip_first = _single_value(rows, "P10", f"P10_y_to_w_L{length}", "wire_bytes_max")
+        wg_first = _single_value(rows, "P10", f"P10_w_to_y_L{length}", "wire_bytes_max")
+        nest[length] = (ipip_first, wg_first)
+    _check(nest[64] == (156.0, 144.0), "P10 at L=64 is not 156/144")
+    _check(nest[65] == (156.0, 160.0), "P10 at L=65 is not 156/160")
+    _check(nest[1008] == (1100.0, 1088.0), "P10 at L=1008 is not 1100/1088")
+    for length, (ipip_first, wg_first) in nest.items():
+        _check(ipip_first - wg_first != 0, f"P10 difference is zero at L={length}")
+
+    figure, (ax, ax_diff) = plt.subplots(1, 2, figsize=(7.1, 3.1), gridspec_kw={"width_ratios": [1.05, 1.0]})
+
+    # (a) the staircase ----------------------------------------------------
+    grid = [value / 4 for value in range(4 * 20, 4 * 1401)]
+    ax.plot(grid, [60 + 16 * math.ceil(value / 16) for value in grid], color=BLUE,
+            linewidth=1.1, label=r"staircase $60 + 16\,\lceil L/16 \rceil$")
+    ax.plot(grid, [value + 56 for value in grid], color=GREY, linewidth=0.9,
+            linestyle=(0, (4, 2)), label=r"stipulated $L + 56$")
+    ordered = sorted(observed)
+    ax.scatter(ordered, [observed[length] for length in ordered], s=22, color=RED,
+               edgecolor="white", linewidth=0.5, zorder=4, label="observed (kernel)")
+    for length in (29, 100, 1000):
+        offset = (6, 8) if length == 29 else (4, -12)
+        ax.annotate(f"{observed[length]:,.0f}", xy=(length, observed[length]),
+                    xytext=offset, textcoords="offset points", fontsize=6.4, color=RED)
+    ax.set_xscale("log")
+    ax.set_xlim(20, 2400)
+    ax.set_xlabel("Inner length L (bytes, log scale)")
+    ax.set_ylabel("Wire bytes per datagram (B)")
+    ax.set_title("(a) P9: WireGuard rounds up to a 16-byte boundary", loc="left", fontsize=8.3)
+    ax.legend(loc="upper left", frameon=False, fontsize=6.6, handlelength=1.6)
+    ax.text(
+        0.03, 0.62,
+        "the stipulation is low by 4 + (16·⌈L/16⌉ − L) B\nfor every tested length (4 to 16 B); the\n"
+        "staircase is exact, so the dots sit on the line",
+        transform=ax.transAxes, ha="left", va="top", fontsize=6.3, color="#444444",
+    )
+
+    # (b) the commutation failure ------------------------------------------
+    diffs = [nest[length][0] - nest[length][1] for length in sorted(nest)]
+    predicted = []
+    for length in sorted(nest):
+        staircase = 16 * math.ceil((length + 20) / 16)
+        predicted.append(staircase - 16 * math.ceil(length / 16) - 20)
+    positions = list(range(len(nest)))
+    colours = [RED if value > 0 else MID_BLUE for value in diffs]
+    ax_diff.bar(positions, diffs, width=0.62, color=colours, edgecolor=INK, linewidth=0.7)
+    ax_diff.scatter(positions, predicted, marker="D", s=16, facecolor="white", edgecolor=INK,
+                    linewidth=0.9, zorder=4, label=r"predicted $d(L)=R(L+20)-R(L)-20$")
+    for index, value in enumerate(diffs):
+        ax_diff.text(index, value + (2.5 if value > 0 else -2.5), f"{value:+.0f}",
+                     ha="center", va="bottom" if value > 0 else "top", fontsize=6.6)
+    ax_diff.axhline(0.0, color=INK, linewidth=0.8)
+    ax_diff.set_xticks(positions)
+    ax_diff.set_xticklabels([f"{length}\n{length % 16}" for length in sorted(nest)], fontsize=6.4)
+    ax_diff.set_xlabel("Inner length L (B) and L mod 16")
+    ax_diff.set_ylabel("Wire, IPIP→WG minus WG→IPIP (B)")
+    ax_diff.set_ylim(-12, 22)
+    ax_diff.set_title("(b) P10: swapping the tunnel changes the wire length", loc="left", fontsize=8.3)
+    ax_diff.legend(loc="upper left", frameon=False, fontsize=6.4, handlelength=1.4)
+    ax_diff.text(
+        0.98, 0.03,
+        "no tested length gives d(L) = 0: the sign is set by\nthe staircase, not by the 56-byte constant",
+        transform=ax_diff.transAxes, ha="right", va="bottom", fontsize=6.3, color="#444444",
+    )
+
+    for panel in (ax, ax_diff):
+        for spine in ("top", "right"):
+            panel.spines[spine].set_visible(False)
+    figure.tight_layout()
+
+    for length in sorted(observed):
+        record("A-5", "(a)", f"observed wire bytes at L={length}", f"{observed[length]:.0f} B",
+               "validation/real_stack/results/observations.csv")
+    for length in sorted(nest):
+        first, second = nest[length]
+        record("A-5", "(b)", f"wire bytes IPIP→WG / WG→IPIP at L={length}", f"{first:.0f} / {second:.0f} B",
+               "validation/real_stack/results/observations.csv")
+    _save(figure, output_dir, "paperA_fig5_quantised_sizing")
+
+
+# ---------------------------------------------------------------------------
+# Paper A, figure 6: decapsulation and middlebox state (P13, P14)
+# ---------------------------------------------------------------------------
+def figure_a6_decapsulation(output_dir: Path) -> None:
+    """P13 (outer CE by decapsulator) and P14 (two ESP clients, one NAT).
+
+    Panel (a) is a delivery matrix: the same visible, unauthenticated ECN rewrite
+    is fatal on IPIP and inert on WireGuard and ESP.  Panel (b) is the conntrack
+    collision: whichever ESP client sends first wins, and ESP-in-UDP lifts the
+    collision by giving the NAT a usable key.
+    """
+    rows = _observations("validation/round2/results/observations.csv")
+
+    def delivered(policy: str) -> float:
+        return _distinct(_values(rows, "P13", policy, "delivery_percent"))
+
+    matrix = {
+        "IPIP": (delivered("P13a"), delivered("P13c"), delivered("P13h_ipip")),
+        "WireGuard": (delivered("P13d"), delivered("P13e"), delivered("P13h_wg")),
+        "ESP tunnel": (delivered("P13f"), delivered("P13g"), delivered("P13h_esp")),
+    }
+    _check(matrix["IPIP"][0] == 0.0, "P13a no longer delivers 0 %")
+    _check(matrix["IPIP"][1] == 100.0, "P13c no longer delivers 100 %")
+    _check(all(value == 100.0 for name, cells in matrix.items() if name != "IPIP" for value in cells),
+           "a WireGuard/ESP cell no longer delivers 100 %")
+    frame_errors = _distinct(_values(rows, "P13", "P13a", "ipip_rx_frame_errors_delta"))
+    _check(frame_errors == 50.0, "the IPIP frame-error counter is no longer 50 per run")
+
+    figure, (left, right) = plt.subplots(1, 2, figsize=(7.2, 3.15), gridspec_kw={"width_ratios": [1.25, 1.0]})
+
+    # (a) the decapsulation matrix ----------------------------------------
+    columns = ("inner Not-ECT,\nouter CE", "inner ECT(0),\nouter CE", "control:\nno mark")
+    names = list(matrix)
+    for row_index, name in enumerate(names):
+        for column_index, value in enumerate(matrix[name]):
+            good = value == 100.0
+            left.add_patch(
+                Rectangle(
+                    (column_index, len(names) - 1 - row_index),
+                    1.0,
+                    1.0,
+                    facecolor=GREEN if good else RED,
+                    alpha=0.22 if good else 0.30,
+                    edgecolor=INK,
+                    linewidth=0.7,
+                )
+            )
+            label = "delivered\n100 %" if good else "dropped\n0 %"
+            left.text(
+                column_index + 0.5,
+                len(names) - 1 - row_index + 0.66,
+                label,
+                ha="center",
+                va="center",
+                fontsize=7.0,
+                color=GREEN if good else RED,
+                fontweight="bold" if not good else "normal",
+            )
+    left.text(0.5, 2.07, "50 frame errors/run", ha="center", va="bottom",
+              fontsize=5.8, color=RED)
+    left.set_xlim(0, 3)
+    left.set_ylim(0, 3)
+    left.set_xticks([index + 0.5 for index in range(3)])
+    left.set_xticklabels(columns, fontsize=6.6)
+    left.set_yticks([index + 0.5 for index in range(3)])
+    left.set_yticklabels(list(reversed(names)), fontsize=7.0)
+    left.tick_params(length=0)
+    for spine in ("top", "right", "bottom", "left"):
+        left.spines[spine].set_visible(False)
+    left.set_title("(a) P13: one outer CE mark, three answers", loc="left", fontsize=8.3)
+    left.text(3.0, -0.55, "outer ECN rewritten to CE after the NAT; 20 runs × 50 datagrams",
+              ha="right", va="top", fontsize=6.1, color="#444444")
+
+    # (b) two ESP clients behind one NAT ----------------------------------
+    cases = ("P14a", "P14b", "P14c", "P14d")
+    labels = ("client 1 first", "client 2 first", "ESP-in-UDP\n(NAT-T)", "no NAT\n(control)")
+    first_client = [_distinct(_values(rows, "P14", case, "delivered_client1")) for case in cases]
+    second_client = [_distinct(_values(rows, "P14", case, "delivered_client2")) for case in cases]
+    conntrack = [_distinct(_values(rows, "P14", case, "ct_esp_entries_after")) for case in cases]
+    _check(first_client == [60.0, 0.0, 60.0, 60.0], "P14 client-1 deliveries changed")
+    _check(second_client == [0.0, 60.0, 50.0, 50.0], "P14 client-2 deliveries changed")
+    _check(conntrack == [1.0, 1.0, 0.0, 0.0], "P14 conntrack counts changed")
+
+    x = list(range(len(cases)))
+    width = 0.36
+    right.bar([value - width / 2 for value in x], first_client, width=width, color=BLUE,
+              edgecolor=INK, linewidth=0.7, label="client 1")
+    right.bar([value + width / 2 for value in x], second_client, width=width, color=AMBER,
+              edgecolor=INK, linewidth=0.7, label="client 2")
+    for index, (one, two) in enumerate(zip(first_client, second_client)):
+        right.text(index - width / 2, one + 2, f"{one:.0f}", ha="center", va="bottom", fontsize=6.5)
+        right.text(index + width / 2, two + 2, f"{two:.0f}", ha="center", va="bottom", fontsize=6.5)
+        mark = "1 ct entry" if conntrack[index] == 1 else "0 ct entries"
+        right.text(index, -12, mark, ha="center", va="top", fontsize=5.9,
+                   color=RED if conntrack[index] else GREEN)
+    right.set_xticks(x)
+    right.set_xticklabels(labels, fontsize=6.5)
+    right.set_ylim(0, 78)
+    right.set_ylabel("Datagrams delivered in the run")
+    right.legend(loc="upper right", frameon=False, fontsize=6.5, handlelength=1.2)
+    right.set_title("(b) P14: first come, first served", loc="left", fontsize=8.3)
+    for spine in ("top", "right"):
+        right.spines[spine].set_visible(False)
+    figure.tight_layout()
+
+    for name, cells in matrix.items():
+        for index, value in enumerate(cells):
+            record("A-6", "(a)", f"P13 delivery, {name}, column {index + 1}", f"{value:.0f} %",
+                   "validation/round2/results/observations.csv")
+    for case, one, two in zip(cases, first_client, second_client):
+        record("A-6", "(b)", f"{case} delivered client 1 / client 2", f"{one:.0f} / {two:.0f}",
+               "validation/round2/results/observations.csv")
+    _save(figure, output_dir, "paperA_fig6_decapsulation")
+
+
+# ---------------------------------------------------------------------------
+# Paper A, figure 7: the replay window (P16, P17)
+# ---------------------------------------------------------------------------
+def figure_a7_replay_window(output_dir: Path) -> None:
+    """P16 (reordering against the window) and P17 (the boundary, to the packet).
+
+    Panel (a) plots the 20 per-run delivered counts of each P16 case against the
+    2,000 sent, so the two refuted/confirmed windows are visible as the same
+    mechanism with different depths.  Panel (b) plots P17's reinjection result:
+    a packet displaced by exactly the window is rejected, one packet inside it is
+    accepted, in both anti-replay modes.
+    """
+    round2 = _observations("validation/round2/results/observations.csv")
+    round3 = _observations("validation/round3/results/observations.csv")
+
+    cases = ("P16a", "P16b", "P16c", "P16d")
+    labels = ("ESP\nwindow 32\n100 ms", "ESP\nwindow 32\n4 ms",
+              "WireGuard\n100 ms", "ESP\nwindow 256\n100 ms")
+    delivered = {case: _values(round2, "P16", case, "delivered_datagrams") for case in cases}
+    depth = {case: _values(round2, "P16", case, "reorder_depth") for case in cases}
+    reference = {case: _values(round2, "P16", case, "reference_accepted") for case in cases}
+    _check(sorted(delivered["P16a"])[0] == 476 and sorted(delivered["P16a"])[-1] == 565,
+           "P16a delivered range is not 476-565")
+    _check(sorted(delivered["P16d"])[0] == 673 and sorted(delivered["P16d"])[-1] == 717,
+           "P16d delivered range is not 673-717")
+    for case in cases:
+        _check(delivered[case] == reference[case], f"{case}: kernel no longer matches the reference filter")
+
+    figure, (ax, ax_boundary) = plt.subplots(1, 2, figsize=(7.2, 3.2), gridspec_kw={"width_ratios": [1.15, 1.0]})
+
+    colours = {"P16a": RED, "P16b": GREEN, "P16c": GREEN, "P16d": AMBER}
+    for index, case in enumerate(cases):
+        values = delivered[case]
+        jitter = [((position % 7) - 3) * 0.018 for position in range(len(values))]
+        ax.scatter([index + shift for shift in jitter], values, s=14, color=colours[case],
+                   edgecolor="white", linewidth=0.3, zorder=3)
+        low, high = min(values), max(values)
+        ax.plot([index - 0.22, index + 0.22], [low, low], color=INK, linewidth=0.9, zorder=4)
+        ax.plot([index - 0.22, index + 0.22], [high, high], color=INK, linewidth=0.9, zorder=4)
+        text = f"{low:.0f}–{high:.0f}" if low != high else f"{low:.0f} (all)"
+        ax.text(index + 0.26, (low + high) / 2, text, va="center", ha="left",
+                fontsize=6.3, color=INK)
+        depth_low, depth_high = min(depth[case]), max(depth[case])
+        depth_text = f"depth\n{depth_low:.0f}–{depth_high:.0f}" if depth_high > depth_low else f"depth\n{depth_low:.0f}"
+        ax.text(index, 120, depth_text, ha="center", va="bottom", fontsize=5.9, color="#555555")
+    ax.axhline(2000, color=GREY, linewidth=0.8, linestyle=(0, (4, 2)), zorder=0)
+    ax.text(3.62, 2035, "2,000 sent", ha="right", va="bottom", fontsize=6.4, color="#555555")
+    ax.set_xlim(-0.5, 3.7)
+    ax.set_ylim(0, 2300)
+    ax.set_xticks(list(range(len(cases))))
+    ax.set_xticklabels(labels, fontsize=6.2)
+    ax.set_ylabel("Delivered datagrams per run")
+    ax.set_title("(a) P16: the burst, not the path, sets the loss", loc="left", fontsize=8.3)
+    ax.text(0.02, 0.40,
+            "20 runs per case; the kernel equals the reference\nanti-replay filter in every run",
+            transform=ax.transAxes, ha="left", va="bottom", fontsize=6.2, color="#444444")
+
+    # (b) P17: the boundary ------------------------------------------------
+    offsets = (("P17b", "P17c", 32.0, "legacy window 32"),
+               ("P17d", "P17e", 256.0, "ESN window 256"))
+    positions = [0.0, 1.0]
+    at_window, inside = [], []
+    for at_case, inside_case, _, _ in offsets:
+        inside.append(_distinct(_values(round3, at_case, at_case, "delivered_datagrams")))
+        at_window.append(_distinct(_values(round3, inside_case, inside_case, "delivered_datagrams")))
+    _check(inside == [1.0, 1.0], "P17 displacement-equal-window no longer rejects one packet")
+    _check(at_window == [2.0, 2.0], "P17 displacement-inside-window no longer delivers both")
+    width = 0.34
+    ax_boundary.bar([value - width / 2 for value in positions], at_window, width=width,
+                    color=RED, edgecolor=INK, linewidth=0.7, label="displacement = window")
+    ax_boundary.bar([value + width / 2 for value in positions], inside, width=width,
+                    color=GREEN, edgecolor=INK, linewidth=0.7, label="displacement = window − 1")
+    for index, (rejected, accepted) in enumerate(zip(at_window, inside)):
+        ax_boundary.text(index - width / 2, rejected + 0.06, f"{rejected:.0f}/2",
+                         ha="center", va="bottom", fontsize=6.8)
+        ax_boundary.text(index + width / 2, accepted + 0.06, f"{accepted:.0f}/2",
+                         ha="center", va="bottom", fontsize=6.8)
+    ax_boundary.set_xticks(positions)
+    ax_boundary.set_xticklabels([label for _, _, _, label in offsets], fontsize=6.6)
+    ax_boundary.set_ylim(0, 2.75)
+    ax_boundary.set_ylabel("Reinjected datagrams accepted")
+    ax_boundary.legend(loc="upper left", frameon=False, fontsize=6.3, handlelength=1.2)
+    ax_boundary.set_title("(b) P17: the boundary is strict", loc="left", fontsize=8.3)
+    paced = _values(round3, "P17a", "P17a", "delivered_datagrams")
+    paced_depth = _values(round3, "P17a", "P17a", "reorder_depth")
+    _check(sorted(paced)[0] == 600 and sorted(paced)[-1] == 600, "P17a is no longer 600 of 600")
+    for panel in (ax, ax_boundary):
+        for spine in ("top", "right"):
+            panel.spines[spine].set_visible(False)
+    figure.tight_layout()
+
+    for case in cases:
+        record("A-7", "(a)", f"{case} delivered per run (min-max)",
+               f"{min(delivered[case]):.0f}-{max(delivered[case]):.0f} of 2000",
+               "validation/round2/results/observations.csv")
+        record("A-7", "(a)", f"{case} reorder depth (min-max)",
+               f"{min(depth[case]):.0f}-{max(depth[case]):.0f}",
+               "validation/round2/results/observations.csv")
+    for (at_case, inside_case, window, label), rejected, accepted in zip(offsets, at_window, inside):
+        record("A-7", "(b)", f"{label}: accepted at displacement = window", f"{rejected:.0f} of 2",
+               "validation/round3/results/observations.csv")
+        record("A-7", "(b)", f"{label}: accepted at displacement = window - 1", f"{accepted:.0f} of 2",
+               "validation/round3/results/observations.csv")
+    record("A-7", "(b)", "P17a delivered / depth", f"{paced[0]:.0f} at {min(paced_depth):.0f}-{max(paced_depth):.0f}",
+           "validation/round3/results/observations.csv")
+    _save(figure, output_dir, "paperA_fig7_replay_window")
+
+
+# ---------------------------------------------------------------------------
 # Paper B, figure 1: goodput against time
 # ---------------------------------------------------------------------------
 def figure_b1_goodput_timeseries(output_dir: Path) -> None:
@@ -1468,6 +1805,246 @@ def figure_b7_detector_tradeoff(output_dir: Path) -> None:
 
 
 # ---------------------------------------------------------------------------
+# Paper B, figure 8: every table on one plate
+# ---------------------------------------------------------------------------
+def _baselines() -> dict[str, tuple[float, float, float, float]]:
+    """(goodput mean, goodput CI, p95 latency mean, p95 latency CI) per baseline."""
+    out: dict[str, tuple[float, float, float, float]] = {}
+    for baseline in ("A", "B", "C", "D"):
+        files = sorted((REPO / "results/m3").glob(f"exp1_{baseline}_*.csv"))
+        _check(len(files) == 30, f"baseline {baseline} does not hold 30 seeds")
+        rows = [row for path in files for row in _rows(path)]
+        goodput = _mean_ci([float(row["Goodput_Legitimate"]) for row in rows])
+        latency = _mean_ci([float(row["p95_Latency"]) for row in rows])
+        out[baseline] = (goodput[0], goodput[1], latency[0], latency[1])
+    return out
+
+
+def _cpu_costs() -> dict[str, float]:
+    """Per-tick controller CPU (µs), read from the campaign's summary table.
+
+    The timing loop is a benchmark the campaign prints as a table rather than a
+    per-seed CSV, so the summary is the source of record for this panel.
+    """
+    text = (REPO / "results/m4/m4_summary.md").read_text(encoding="utf-8")
+    costs: dict[str, float] = {}
+    for line in text.splitlines():
+        match = re.match(
+            r"\|\s*(static_isolation|m3_surgical_1d|m4_oef|m4_mkb|m4_combined)\s*"
+            r"\|\s*([0-9.]+)\s*\|",
+            line,
+        )
+        if match:
+            costs[match.group(1)] = float(match.group(2))
+    _check(len(costs) == 5, f"the per-tick CPU table lists {len(costs)} arms, expected 5")
+    return costs
+
+
+def figure_b8_results_overview(output_dir: Path) -> None:
+    """Every table of the results chapter, drawn from the campaign records.
+
+    Panel (a) is Table 2 (reference campaign), (b) is Table 5 (controller
+    campaign), (c) is Table 6 (starvation sweep) and (d) is Table 8 (per-tick
+    CPU).  The remaining tables are already plotted by B-1, B-2, B-3, B-6 and
+    B-7; this plate exists so that no result in the paper is table-only.
+    """
+    baselines = _baselines()
+    _check(abs(baselines["A"][0] - 0.5887) < 5e-4, "baseline A goodput is not 0.5887")
+    _check(abs(baselines["C"][0] - 0.7460) < 5e-4, "baseline C goodput is not 0.7460")
+    _check(abs(baselines["D"][0] - 0.8576) < 5e-4, "baseline D goodput is not 0.8576")
+    _check(abs(baselines["D"][2] - 0.2886) < 5e-4, "baseline D p95 latency is not 0.2886")
+    _check(baselines["A"][0] == baselines["B"][0], "baselines A and B are no longer identical")
+
+    aggregates = _rows(REPO / "results/m4/final_benchmark_raw.csv")
+    arms = (
+        ("static_isolation", "Static\nisolation", GREY),
+        ("m3_surgical_1d", "1-D\nlimiter", MID_BLUE),
+        ("m4_oef", "OEF\n(Fick)", RED),
+        ("m4_mkb", "4-D\ntrigger", AMBER),
+        ("m4_combined", "OEF\n+ 4-D", INK),
+    )
+    goodput = {
+        arm: _mean_ci([float(row["Legitimate_Goodput_CMRO2"]) for row in aggregates if row["arm"] == arm])
+        for arm, _, _ in arms
+    }
+    _check(abs(goodput["static_isolation"][0] - 0.8648) < 5e-4, "static goodput is not 0.8648")
+    _check(abs(goodput["m4_oef"][0] - 0.8465) < 5e-4, "OEF goodput is not 0.8465")
+    _check(abs(goodput["m4_mkb"][0] - 0.8083) < 5e-4, "4-D goodput is not 0.8083")
+    _check(abs(goodput["m4_combined"][0] - 0.4823) < 5e-4, "combined goodput is not 0.4823")
+    p_oef = _paired_p(
+        [float(row["Legitimate_Goodput_CMRO2"]) for row in aggregates if row["arm"] == "m4_oef"],
+        [float(row["Legitimate_Goodput_CMRO2"]) for row in aggregates
+         if row["arm"] == "static_isolation"],
+    )
+    p_combined = _paired_p(
+        [float(row["Legitimate_Goodput_CMRO2"]) for row in aggregates if row["arm"] == "m4_combined"],
+        [float(row["Legitimate_Goodput_CMRO2"]) for row in aggregates
+         if row["arm"] == "m3_surgical_1d"],
+    )
+    _check(abs(p_oef - 0.5274) < 5e-3, f"the OEF paired p is {p_oef:.4f}, expected 0.5274")
+    _check(p_combined < 1e-3, "the combined arm is no longer significant against the 1-D limiter")
+
+    sweep = _rows(REPO / "results/m4/starvation_sweep_raw.csv")
+    multipliers = sorted({float(row["oef_max"]) for row in sweep})
+    _check(multipliers == [1.0, 2.0, 4.0, 8.0, 16.0], f"the sweep weights are {multipliers}")
+    sweep_goodput = {
+        weight: _mean_ci([float(row["Legitimate_Goodput"]) for row in sweep
+                          if float(row["oef_max"]) == weight])
+        for weight in multipliers
+    }
+    sweep_drop = {
+        weight: _mean_ci([float(row["Transit_Drop_Rate"]) for row in sweep
+                          if float(row["oef_max"]) == weight])
+        for weight in multipliers
+    }
+    _check(abs(sweep_goodput[1.0][0] - 0.8461) < 5e-4, "the sweep's weight-1 goodput is not 0.8461")
+    _check(max(mean for mean, _ in sweep_goodput.values()) - min(mean for mean, _ in sweep_goodput.values()) < 0.01,
+           "the starvation sweep is no longer flat")
+
+    costs = _cpu_costs()
+    _check(abs(costs["m4_mkb"] - 813.4) < 0.05, "the 4-D trigger CPU cost is not 813.4 us")
+    _check(abs(costs["m3_surgical_1d"] - 6.0) < 0.05, "the 1-D limiter CPU cost is not 6.0 us")
+
+    figure, axes = plt.subplots(2, 2, figsize=(7.0, 5.5))
+    figure.subplots_adjust(hspace=0.52, wspace=0.30)
+
+    # (a) the four baselines: goodput against p95 latency ------------------
+    ax = axes[0][0]
+    marks = {"A": (GREY, "s"), "B": (GREY, "s"), "C": (AMBER, "^"), "D": (BLUE, "o")}
+    for baseline in ("B", "A", "C", "D"):
+        gp, gp_ci, lat, lat_ci = baselines[baseline]
+        colour, marker = marks[baseline]
+        filled = baseline != "B"
+        ax.errorbar(
+            [lat], [gp], xerr=[lat_ci], yerr=[gp_ci], fmt=marker, color=colour,
+            markersize=10 if baseline == "D" else 5.5,
+            markerfacecolor=colour if filled else "white",
+            markeredgecolor=colour, capsize=2.5, linewidth=0.8, zorder=4 if filled else 3,
+        )
+        offset = {"A": (7, 10), "B": (7, -14), "C": (7, 8), "D": (9, 5)}[baseline]
+        ax.annotate(baseline, xy=(lat, gp), xytext=offset, textcoords="offset points",
+                    fontsize=7.4, color=colour, fontweight="bold")
+    ax.set_xlim(0.276, 0.366)
+    ax.set_ylim(0.55, 0.90)
+    ax.set_xlabel("p95 latency over the shock window (s)")
+    ax.set_ylabel("Legitimate goodput")
+    ax.set_title("(a) Reference campaign: the four baselines", loc="left", fontsize=8.4)
+    ax.text(
+        0.02, 0.03,
+        "A static roles · B spatial field\nC global pressure · D 1-D limiter\n"
+        "A and B coincide to four decimals",
+        transform=ax.transAxes, ha="left", va="bottom", fontsize=6.1, color="#444444",
+    )
+
+    # (b) goodput by arm, controller campaign ------------------------------
+    ax = axes[0][1]
+    x = list(range(len(arms)))
+    means = [goodput[arm][0] for arm, _, _ in arms]
+    cis = [goodput[arm][1] for arm, _, _ in arms]
+    bars = ax.bar(x, means, width=0.6, yerr=cis, capsize=3, color=[c for _, _, c in arms],
+                  edgecolor=INK, linewidth=0.7, error_kw={"elinewidth": 0.8, "ecolor": INK})
+    for bar, mean, ci in zip(bars, means, cis):
+        ax.text(bar.get_x() + bar.get_width() / 2, mean + ci + 0.022, f"{100 * mean:.1f}",
+                ha="center", va="bottom", fontsize=6.6)
+    ax.axhline(means[0], color=GREY, linewidth=0.8, linestyle=(0, (4, 2)), zorder=0)
+    ax.set_xticks(x)
+    ax.set_xticklabels([label for _, label, _ in arms], fontsize=6.6)
+    ax.set_ylim(0, 1.20)
+    ax.set_ylabel("Legitimate goodput (CMRO$_2$)")
+    ax.set_title("(b) Controller campaign: goodput by arm", loc="left", fontsize=8.4)
+    ax.text(
+        0.02, 0.99,
+        f"OEF − static = {100 * (means[2] - means[0]):+.2f} pp, p = {p_oef:.3f}\n"
+        f"combined − 1-D = {100 * (means[4] - means[1]):+.1f} pp, p < 0.0001",
+        transform=ax.transAxes, ha="left", va="top", fontsize=6.3, color=RED,
+    )
+
+    # (c) starvation sweep -------------------------------------------------
+    ax = axes[1][0]
+    positions = list(range(len(multipliers)))
+    gp_means = [sweep_goodput[w][0] for w in multipliers]
+    gp_cis = [sweep_goodput[w][1] for w in multipliers]
+    drop_means = [sweep_drop[w][0] for w in multipliers]
+    drop_cis = [sweep_drop[w][1] for w in multipliers]
+    ax.plot(positions, gp_means, color=BLUE, marker="o", markersize=4, linewidth=1.1,
+            label="legitimate goodput")
+    ax.fill_between(positions, [m - c for m, c in zip(gp_means, gp_cis)],
+                    [m + c for m, c in zip(gp_means, gp_cis)], color=BLUE, alpha=0.16, linewidth=0)
+    ax.set_xticks(positions)
+    ax.set_xticklabels([f"{w:g}×" for w in multipliers])
+    ax.set_xlabel("Weight multiplier on the legitimate class")
+    ax.set_ylabel("Legitimate goodput", color=BLUE)
+    ax.set_ylim(0.60, 1.00)
+    ax.tick_params(axis="y", colors=BLUE)
+    twin = ax.twinx()
+    twin.plot(positions, drop_means, color=RED, marker="s", markersize=4, linewidth=1.1,
+              linestyle=(0, (3, 1.4)), label="transit drop")
+    twin.fill_between(positions, [m - c for m, c in zip(drop_means, drop_cis)],
+                      [m + c for m, c in zip(drop_means, drop_cis)], color=RED, alpha=0.14, linewidth=0)
+    twin.set_ylabel("Transit drop rate", color=RED)
+    twin.set_ylim(0.0, 0.30)
+    twin.tick_params(axis="y", colors=RED)
+    twin.spines["top"].set_visible(False)
+    ax.set_title("(c) Extraction forced to maximum: 16× weight sweep", loc="left", fontsize=8.4)
+    ax.text(0.03, 0.96, "flat across a 16× range: no operating\npoint trades transit for delivery",
+            transform=ax.transAxes, ha="left", va="top", fontsize=6.3, color="#444444")
+
+    # (d) per-tick CPU -----------------------------------------------------
+    ax = axes[1][1]
+    order = ("static_isolation", "m3_surgical_1d", "m4_oef", "m4_mkb", "m4_combined")
+    labels = ("Static isolation", "1-D limiter", "OEF (Fick)", "4-D trigger", "OEF + 4-D")
+    colours = (GREY, MID_BLUE, RED, AMBER, INK)
+    values = [costs[arm] for arm in order]
+    y = list(range(len(order)))[::-1]
+    ax.barh(y, values, height=0.58, color=colours, edgecolor=INK, linewidth=0.7)
+    ax.set_xscale("log")
+    ax.set_xlim(0.2, 6000)
+    reference = costs["m3_surgical_1d"]
+    for row, value in zip(y, values):
+        ax.text(value * 1.25, row, f"{value:,.1f} µs" + ("" if value == reference else
+                f"  ({value / reference:.0f}×)"), va="center", fontsize=6.6)
+    ax.set_yticks(y)
+    ax.set_yticklabels(labels, fontsize=6.8)
+    ax.set_ylim(-0.55, 5.05)
+    ax.set_xlabel("Controller CPU per control tick (µs, log scale)")
+    ax.set_title("(d) Price of the trigger: CPU per tick", loc="left", fontsize=8.4)
+    ax.text(0.02, 0.985, "136× the 1-D limiter for a difference that is indistinguishable from noise",
+            transform=ax.transAxes, ha="left", va="top", fontsize=6.3, color=RED)
+
+    for row in axes:
+        for panel in row:
+            for spine in ("top", "right"):
+                panel.spines[spine].set_visible(False)
+    axes[1][0].spines["right"].set_visible(True)
+    axes[1][0].spines["right"].set_linewidth(0.7)
+    figure.tight_layout(pad=0.6)
+
+    for baseline in ("A", "B", "C", "D"):
+        gp, gp_ci, lat, lat_ci = baselines[baseline]
+        record("B-8", "(a)", f"goodput baseline {baseline} (mean ± 95 % CI)", f"{gp:.4f} ± {gp_ci:.4f}",
+               "results/m3/exp1_<A-D>_*.csv")
+        record("B-8", "(a)", f"p95 latency baseline {baseline} (mean ± 95 % CI)",
+               f"{lat:.4f} ± {lat_ci:.4f}", "results/m3/exp1_<A-D>_*.csv")
+    for arm, _, _ in arms:
+        mean, ci = goodput[arm]
+        record("B-8", "(b)", f"goodput {arm} (mean ± 95 % CI)", f"{mean:.4f} ± {ci:.4f}",
+               "results/m4/final_benchmark_raw.csv")
+    record("B-8", "(b)", "paired p, OEF vs static", f"{p_oef:.4f}", "results/m4/final_benchmark_raw.csv")
+    record("B-8", "(b)", "paired p, combined vs 1-D limiter", f"{p_combined:.2e}",
+           "results/m4/final_benchmark_raw.csv")
+    for weight in multipliers:
+        record("B-8", "(c)", f"goodput at weight {weight:g}x (mean ± 95 % CI)",
+               f"{sweep_goodput[weight][0]:.4f} ± {sweep_goodput[weight][1]:.4f}",
+               "results/m4/starvation_sweep_raw.csv")
+        record("B-8", "(c)", f"transit drop at weight {weight:g}x (mean ± 95 % CI)",
+               f"{sweep_drop[weight][0]:.4f} ± {sweep_drop[weight][1]:.4f}",
+               "results/m4/starvation_sweep_raw.csv")
+    for arm, label in zip(order, labels):
+        record("B-8", "(d)", f"CPU per tick, {label}", f"{costs[arm]:.1f} us", "results/m4/m4_summary.md")
+    _save(figure, output_dir, "paperB_fig8_results_overview")
+
+
+# ---------------------------------------------------------------------------
 # Manifest
 # ---------------------------------------------------------------------------
 def write_manifest(output_dir: Path) -> None:
@@ -1503,12 +2080,16 @@ FIGURES = {
     "a2": figure_a2_wire_bytes,
     "a3": figure_a3_verdict_heatmap,
     "a4": figure_a4_integrity_scope,
+    "a5": figure_a5_quantised_sizing,
+    "a6": figure_a6_decapsulation,
+    "a7": figure_a7_replay_window,
     "b1": figure_b1_goodput_timeseries,
     "b2": figure_b2_peak_burst,
     "b3": figure_b3_breakeven,
     "b5": figure_b5_discrete_boundary,
     "b6": figure_b6_energy_audit,
     "b7": figure_b7_detector_tradeoff,
+    "b8": figure_b8_results_overview,
 }
 
 

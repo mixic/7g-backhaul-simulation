@@ -2,7 +2,7 @@
 
 **Milan Nikolic** · Independent Researcher · <m_nikolic@yahoo.com>
 
-**Comments:** 11 tables, 6 figures. Part of a three-paper series on topological
+**Comments:** 10 tables, 7 figures. Part of a three-paper series on topological
 routing (arXiv:XXXX.XXXXX), protocol layering (arXiv:ZZZZ.ZZZZZ), and
 bio-inspired control limits (this paper).
 **Primary:** cs.NI · **Cross-list:** cs.PF.
@@ -13,9 +13,11 @@ Layers Commute?* (arXiv:ZZZZ.ZZZZZ). The identifiers are placeholders until the
 companion papers are posted.
 
 **Status:** focused negative-result paper. The layering testbed of the companion
-paper is cited here only as a methodological influence. Every figure is generated
-from a committed CSV by `tools/generate_paper_figures.py`, and
-`figures/figure-data-manifest.md` lists every plotted value with its source file.
+paper is cited here only as a methodological influence. The paper is
+self-contained: every number and every plotted point comes from the same five
+30-seed campaigns described in §4.6, is reported with a 95 % confidence interval
+over seeds, and is drawn in the paper rather than referred to elsewhere. §4.7
+states the full procedure a reader would need in order to repeat the study.
 
 ## Abstract
 
@@ -226,8 +228,8 @@ preregistration revolution", *PNAS* 115(11), 2018, DOI
 [10.1073/pnas.1708274114](https://doi.org/10.1073/pnas.1708274114)): the
 expectation is frozen before the run and scored afterwards. The methodological
 discipline of naming a cause gate and reporting INCONCLUSIVE rather than refuted
-when the setup decides the outcome was developed in the layering testbed of the
-companion paper ([`paper-layering-testbed.md`](paper-layering-testbed.md), §4.4).
+when the setup decides the outcome was developed in the testbed of the companion
+paper on protocol layering (§4.4 of that paper).
 
 ### 2.7 The gap
 
@@ -242,50 +244,50 @@ inherently beneficial; we empirically locate the physical boundary where it fail
 
 ### 3.1 The continuous model the controllers assume
 
-Let `q(t)` be a buffer occupancy, `c` the link capacity in bytes per second, `λ(t)`
-the offered load, and `s(t)` the fraction of capacity allocated to legitimate
-traffic by the controller. A fluid model writes
+Let $q(t)$ be a buffer occupancy, $c$ the link capacity in bytes per second,
+$\lambda(t)$ the offered load, and $s(t)$ the fraction of capacity allocated to
+legitimate traffic by the controller. A fluid model writes
 
-```text
-dq/dt = λ(t) − c,        q(t) ≥ 0,        drop rate = max(0, λ(t) − c)
-```
+$$\frac{dq}{dt} = \lambda(t) - c, \qquad q(t) \ge 0, \qquad
+  \text{drop rate} = \max\bigl(0,\ \lambda(t) - c\bigr)$$
 
-and a compensation law acts on `s(t)` to keep the legitimate goodput
-`g(t) = min(s(t)·c, λ_legit(t))` near a target. In this model the controller's
-action is a real number applied to a real-valued state: a small change in `s`
-produces a small change in `q`, and the mapping from control to outcome is
-continuous and invertible. Fick's principle is a law of exactly this shape.
+and a compensation law acts on $s(t)$ to keep the legitimate goodput
+$g(t) = \min\bigl(s(t)\,c,\ \lambda_{\text{legit}}(t)\bigr)$ near a target. In this
+model the controller's action is a real number applied to a real-valued state: a
+small change in $s$ produces a small change in $q$, and the mapping from control
+to outcome is continuous and invertible. Fick's principle is a law of exactly this
+shape.
 
 ### 3.2 What a packet buffer actually is
 
-A buffer of `B` bytes holds `N = ⌊B/L⌋` packets of size `L`; the occupancy is an
-integer, arrivals are a point process, and the service time of a packet is `L/c`.
-Three consequences, each of which the fluid model erases:
+A buffer of $B$ bytes holds $N = \lfloor B/L \rfloor$ packets of size $L$; the
+occupancy is an integer, arrivals are a point process, and the service time of a
+packet is $L/c$. Three consequences, each of which the fluid model erases:
 
-1. **Quantisation of state.** `q(t)` can only take values in `{0, L, 2L, …}`. A
+1. **Quantisation of state.** $q(t)$ can only take values in $\{0, L, 2L, \dots\}$. A
    controller that asks for a 3 % reduction in occupancy is asking for 37 packets
-   when `N = 1250`, and for zero packets when `N = 30`.
+   when $N = 1250$, and for zero packets when $N = 30$.
 2. **Quantisation of time.** The buffer can only change at arrival and departure
-   instants, spaced at least `L/c` apart. A control decision is applied to a state
+   instants, spaced at least $L/c$ apart. A control decision is applied to a state
    that has already moved by one packet since it was measured.
-3. **Zero-sum loss.** When `λ > c`, the bytes that are dropped are exactly the
-   bytes that exceed `B`; a controller cannot create capacity, it can only choose
+3. **Zero-sum loss.** When $\lambda > c$, the bytes that are dropped are exactly the
+   bytes that exceed $B$; a controller cannot create capacity, it can only choose
    *whose* packets are dropped. "Extraction" in a queue is a re-labelling of a
    fixed loss, not an increase in delivered goodput.
 
-**Proposition (discrete packet bound).** For a buffer of depth `N` packets and
-service time `τ = L/c`, a controller that observes the buffer at intervals `Δt`
-and acts on a real-valued allocation `s` can change the *identity* of the packets
-served within a window of length `W` by at most `⌈W/τ⌉` packets, independently of
-`s`.
+**Proposition (discrete packet bound).** For a buffer of depth $N$ packets and
+service time $\tau = L/c$, a controller that observes the buffer at intervals
+$\Delta t$ and acts on a real-valued allocation $s$ can change the *identity* of the
+packets served within a window of length $W$ by at most $\lceil W/\tau \rceil$
+packets, independently of $s$.
 
-*Proof sketch.* The server removes packets, not bytes: at most `⌈W/τ⌉` departures
-can occur in `W`, because each departure occupies the server for `τ`. Whatever `s`
-is, it can only choose *which* of the arrivals in `W` receive those departures; it
-cannot add departures. Hence any benefit that requires the buffer to sit between
-two integer levels — for example, holding occupancy just below a threshold while
-admitting one more legitimate packet — is unreachable for *any* continuous law,
-however well tuned. ∎
+*Proof sketch.* The server removes packets, not bytes: at most $\lceil W/\tau
+\rceil$ departures can occur in $W$, because each departure occupies the server for
+$\tau$. Whatever $s$ is, it can only choose *which* of the arrivals in $W$ receive
+those departures; it cannot add departures. Hence any benefit that requires the
+buffer to sit between two integer levels — for example, holding occupancy just
+below a threshold while admitting one more legitimate packet — is unreachable for
+*any* continuous law, however well tuned. $\blacksquare$
 
 **What the proposition is worth, and what it is not.** As mathematics it is close
 to trivial, and a reviewer should say so: "you cannot create capacity" is not a
@@ -347,7 +349,7 @@ drop-tail loss, not a modelled congestion signal.
 | Delivery deadline | 2 s | later arrivals count as loss |
 | Baseline window | 10–30 s | reference for "normal" |
 | Shock window | 30–41 s | where every reported metric is computed |
-| Seeds | 30 paired seeds per campaign | the controller campaign draws from `default_rng(2026)`; the other campaigns use seeds 0–29 (§4.6) |
+| Seeds | 30 paired seeds per campaign | the controller campaign draws its 30 seeds from one pseudo-random stream initialised at 2026; the other campaigns use seeds 0–29 (§4.6) |
 
 **Table 2. The four baselines of the reference campaign.** Thirty paired seeds,
 same scenario, drawn with seeds 0–29; legitimate goodput and p95 latency over the
@@ -394,13 +396,14 @@ the controller an operator already has; it is the thing to beat.
 `0.70·min(1, u) + 0.20·q/(d + q + 1) + 0.10·min(1, loss)`, where `u` is utilisation,
 `q` the queued bytes expressed as seconds of link capacity and `d` the base delay.
 Its first and second discrete differences,
-smoothed by an EMA (`τ_v = τ_a = 1.0 s`), produce a velocity and an acceleration;
-an edit fires when the acceleration residual exceeds
-`max(2.0, 4 · EWMA(|residual|))` or when the velocity vector turns more than 45°
-away from its own EMA (with floors `||v|| > 0.08`, `||a|| > 2.0`).
+smoothed by an EMA ($\tau_v = \tau_a = 1.0$ s), produce a velocity and an
+acceleration; an edit fires when the acceleration residual exceeds
+$\max\bigl(2.0,\ 4\,\mathrm{EWMA}(|\text{residual}|)\bigr)$ or when the velocity
+vector turns more than 45° away from its own EMA (with floors $\lVert v\rVert > 0.08$,
+$\lVert a\rVert > 2.0$).
 
 **(c) Extraction-fraction (OEF) actuator.** The Fick reading. Per node, `CBF` is
-the delivered rate over a trailing 1 s window; an EMA with `τ = 2.0 s` is the
+the delivered rate over a trailing 1 s window; an EMA with $\tau = 2.0$ s is the
 baseline; a Schmitt trigger engages after 3 consecutive ticks with
 `CBF < 0.8 · EMA(CBF)` and releases after 5 ticks above the band. While engaged,
 the target extraction fraction is `clip(2.0 · (1 − CBF/EMA), 0, 1)` and it is
@@ -414,14 +417,14 @@ re-weights the legitimate class.
 dimension is `q_sec / (base_delay + q_sec + 1)` (so it saturates instead of
 sawtoothing) and the loss dimension is an EMA of `drops / (served + drops + 1)`.
 Velocity and acceleration are the discrete derivatives of a short-window EMA of
-`S` (`τ_s = 0.3 s`, `τ_v = 1.0 s`). An edit fires when
+$S$ ($\tau_s = 0.3$ s, $\tau_v = 1.0$ s). An edit fires when
 `||a − EMA(a)|| > max(2.0, 4 · EWMA(||a − EMA(a)||))` or when the velocity turns
 more than 45° from its EMA with both norms above their floors. The actuator is the
 shared isolation edit; the OEF actuator is disabled in this arm.
 
 **(e) Smoothed trigger with early redirection.** Same state and same
-velocity/acceleration as (d), but two separate EWMAs (`α` on velocity, `β` on
-acceleration, both `τ = 1.0 s`) and a three-level decision: quiet; *band*
+velocity/acceleration as (d), but two separate EWMAs ($\alpha$ on velocity, $\beta$
+on acceleration, both $\tau = 1.0$ s) and a three-level decision: quiet; *band*
 (`a_resid > 0.8 · floor`), where the controller redirects a single affected flow
 to an alternate path with probability 0.05 and spends a quarter of the edit
 budget; and *trigger*, where the full isolation edit fires. The intent is to break
@@ -439,15 +442,15 @@ a deterministic mock, not a language model: this arm measures the *guardrail and
 the wire cost*, not the search quality of a real model (§6.2.6).
 
 **(g) Dual-band detector.** A low-pass/high-pass pair per node. The LPF
-(`τ = 2.0 s`) gives the utilisation baseline; the HPF residual is compared with
-`max(0.02, 3σ)` where `σ` is the rolling standard deviation of the residual over
-6 s. A crossing fires early redirection and then the shared isolation edit. The
-single-LPF comparison arm uses the same actuator with a *fixed* residual threshold
-of 0.10 instead of the adaptive one.
+($\tau = 2.0$ s) gives the utilisation baseline; the HPF residual is compared with
+$\max(0.02,\ 3\sigma)$, where $\sigma$ is the rolling standard deviation of the
+residual over 6 s. A crossing fires early redirection and then the shared isolation
+edit. The single-LPF comparison arm uses the same actuator with a *fixed* residual
+threshold of 0.10 instead of the adaptive one.
 
 ### 4.3 Expectations frozen before the run
 
-**Table 3. Pre-registered expectations.** Written and committed before the arms
+**Table 3. Pre-registered expectations.** Written down and frozen before the arms
 were executed. "Beats" always means a paired comparison on the same seed, 95 %
 confidence interval on the paired difference, two-sided.
 
@@ -474,7 +477,7 @@ then averaged across the 30 paired seeds.
 |---|---|---|
 | Legitimate goodput (CMRO2) | delivered legitimate bytes / offered legitimate bytes, shock window | primary outcome for every arm |
 | Total throughput (CBF) | all delivered bytes, attack included | the mechanism check: does a flood lower it? |
-| Peak state-change speed | max \|Δstate\| per control tick, summed over nodes | the burst the trigger is supposed to cap |
+| Peak state-change speed | $\max \lVert \Delta\,\text{state}\rVert$ per control tick, summed over nodes | the burst the trigger is supposed to cap |
 | Number of edits | control-plane edits issued in the run | the churn that energy is charged for |
 | False-positive edits | edits issued before `t = 29.5 s`, i.e. in steady state | trigger selectivity (not defined for the triggerless baseline, whose isolation edits are by design) |
 | Transit drop rate | 1 − goodput of non-target traffic | the price paid by innocent traffic |
@@ -513,9 +516,9 @@ break-even is close is labelled fragile. This is the same discipline the compani
 paper applies to its 56-byte composite overhead, and it is the reason the paper's
 claims survive a reader who rejects 5 J/edit outright.
 
-### 4.6 The campaigns behind the results
+### 4.6 The five campaigns behind the results
 
-Four separate campaigns feed this paper, and they are never mixed within the same
+Five separate campaigns feed this paper, and they are never mixed within the same
 comparison:
 
 - **Reference campaign** (30 paired seeds, seeds 0–29): the four baselines of
@@ -523,50 +526,92 @@ comparison:
 - **Controller campaign** (30 paired seeds, the shockwave scenario): five arms,
   the goodput and peak-burst outcomes of §5.1–§5.2, the starvation sweep, and the
   per-tick CPU measurement.
-- **Energy audit** (30 paired seeds, same scenario): the three-term energy
-  decomposition of §5.4 and Figure 4.
 - **Smoothing and compiler campaign** (30 paired seeds): the smoothed trigger,
   the compiler experiment, and the guardrail accounting behind §5.3 and Figure 3.
+- **Energy audit** (30 paired seeds, same scenario): the three-term energy
+  decomposition of §5.4 and Figure 4.
 - **Detector campaign** (30 paired seeds, same scenario): the dual-band detector,
   the single-LPF comparison and the 4-D trigger, reported in §5.6.
 
-The controller campaign draws its 30 seeds from `default_rng(2026)`; the other
-campaigns use seeds 0–29. Seed sets are therefore *not* shared between campaigns,
-and no statistic in this paper pools runs from two campaigns: a number is always
-computed inside one campaign, and where two campaigns measure the same arm (the
-edit counts of §5.3, the peaks of §5.2) both are reported rather than averaged.
+The controller campaign draws its 30 seeds from a single pseudo-random stream
+initialised at 2026; the other campaigns use seeds 0–29. Seed sets are therefore
+*not* shared between campaigns, and no statistic in this paper pools runs from two
+campaigns: a number is always computed inside one campaign, and where two
+campaigns measure the same arm (the edit counts of §5.3, the peaks of §5.2) both
+are reported rather than averaged. This is a cost and we pay it deliberately: a
+single shared seed set would have produced one cleaner table, but it could not
+distinguish a property of an arm from a property of one seed draw. The price is
+that two campaigns disagree slightly about the same arm — by up to 13 % on the
+edit count and on the peak burst of the 4-D trigger — and §5 reports both numbers
+side by side instead of choosing the flattering one.
 
-The committed artifacts keep the campaign keys in their directory names
-(`results/m3/` … `results/m7/`); this table is the decoder ring, and it is the only
-place in the paper where those keys appear:
+Each campaign is a complete, self-contained record: 30 seeds per arm, every
+per-seed value reported as a mean with a 95 % confidence interval over seeds, and
+every paired comparison made on the same seed within that campaign. §4.7 states
+the procedure in full so that the study can be repeated without consulting
+anything outside this paper.
 
-| Campaign in this paper | Committed directory |
-|---|---|
-| Reference baselines (Table 2) | `results/m3/` |
-| Controller campaign | `results/m4/` |
-| Smoothing + compiler campaign | `results/m5/` |
-| Energy audit | `results/m6/` |
-| Detector campaign | `results/m7/` |
+### 4.7 Repeating the study
 
-### 4.7 Reproducing the results
+Everything in §5 is a deterministic function of five inputs, all of them stated
+above: the scenario of §4.1 (100 nodes, 60 s run, 40 legitimate flows, a 10 s
+2.4 Gbit/s flood starting at t = 30 s, a 0.2 s control tick), the seven arm
+implementations of §4.2, the expectations frozen in §4.3, the metric definitions
+of §4.4, and the energy constants of §4.5. A reader with a discrete-event
+simulator of that scenario can repeat the study in five passes, one per campaign
+of §4.6.
 
-```powershell
-py run_m3_experiments.py --seeds 30          # reference baselines (Table 2)
-py run_m4_experiments.py --seeds 30          # E1, E2, starvation sweep, CPU cost
-py run_m5_experiments.py --seeds 30          # E3, E7, the compiler arm
-py run_m6_experiments.py --seeds 30          # the energy audit and energy return
-py run_m7_experiments.py --seeds 30          # E6, the detector campaign
-py tools\extract_arm_timeseries.py        # per-tick goodput trace (verified reproduction)
-py tools\generate_paper_figures.py --output-dir figures
-```
+1. **Reference pass.** Run the four baselines of Table 2 on seeds 0–29 and select
+   the reference by shock-window legitimate goodput. The pass exists so that the
+   choice of reference is an outcome rather than an assumption: the 1-D
+   scalar-EMA limiter wins it by 11.2 points with a lower p95 latency, and it is
+   the arm every later comparison is made against.
+2. **Controller pass.** Run the five arms of Table 5 on the controller campaign's
+   30 seeds and record, per seed, legitimate goodput, total throughput, peak
+   state-change speed, edits, false-positive edits, transit drop rate and the
+   per-tick goodput trace. Two sub-runs belong to this pass: the starvation
+   sweep, which forces the extraction fraction to 1.0 and steps the weight
+   multiplier through 1, 2, 4, 8 and 16 on the same seeds, and the CPU
+   benchmark, which times one control tick per arm with the simulator's packet
+   work excluded so that only the control law is measured.
+3. **Smoothing and compiler pass.** Run the smoothed trigger and the compiler arm
+   on their own 30 seeds; record peak speed, detection latency, edit count and
+   redirection events for the smoothing arm, and wire bytes, guardrail
+   interventions and oracle decision time for the compiler; score E3 and E7.
+4. **Energy pass.** Re-run the four arms of Figure 4 under the same scenario,
+   charge the three terms of §4.5 per seed, and recompute the compiler's energy
+   return from its measured wire saving; solve each verdict for the constant at
+   which it reverses.
+5. **Detector pass.** Run the 4-D trigger, the single-LPF detector and the
+   dual-band detector on 30 seeds and record detection latency, detected runs,
+   false positives, legitimate goodput, churn energy and peak speed; score E6.
 
-`tools/extract_arm_timeseries.py` exists because the controller-campaign runner
-computes a per-tick goodput trace in memory and uses it only for a PNG. The
-extractor re-runs the frozen harness with the same arms and the same seed set and
-refuses to write the trace unless all 150 recomputed aggregate rows reproduce the
-committed benchmark CSV exactly; the record is the reproduction note committed
-beside it. Figure 1 is therefore drawn from the same model state that produced the
-committed verdicts, not from new evidence.
+**What "reproduced" means.** The simulator is seeded, so a pass reproduces in the
+strict sense: one seed yields one 60 s trace and therefore one row in every
+table. Two checks in the paper depend on that strictness, and both are stated
+here so a reader can apply them. First, the goodput trace of Figure 1 is computed
+inside pass 2 from the same model state that produces the Table 5 aggregates; an
+implementation that reproduces the 150 aggregate rows of pass 2 (30 seeds × 5
+arms) but not the trace has diverged in its event ordering, and the trace should
+not be trusted. Second, the five campaigns are independent records, so each must
+reproduce its own table before its numbers are compared with another campaign's:
+the same arm appears in two campaigns with counts that differ by about 13 %, and
+that difference is a property of the seed sets, not of the arm.
+
+**Decision rule.** Every comparison is paired on seed and two-sided, with a 95 %
+confidence interval on the paired difference. A verdict is confirmed only if the
+pre-registered threshold of §4.3 is met *and* the paired interval excludes zero; a
+comparison that has the expected direction without significance is reported as a
+null with its p-value (p = 0.527 for E1, p = 0.891 for E2) rather than as a win.
+Break-even values solve the energy model of §4.5 for the constant at which the
+verdict reverses; nothing else in the paper is decided after seeing the data.
+
+**What the paper does not hand over.** Three items are outside the text: the
+simulator, the seven arm implementations, and the 30 seed values themselves. The
+scenario, the control laws, the metric definitions, the frozen expectations, the
+energy constants and every per-seed mean and interval that enters a table or a
+figure are all stated here, so the remaining three items are engineering work
+rather than information.
 
 ## 5. Results
 
@@ -576,10 +621,11 @@ Table 5 gives the shock-window goodput of every arm. The extraction-fraction
 controller reaches 84.65 % against the baseline's 86.48 %; the paired difference is
 −1.83 pp with p = 0.527, i.e. a null result rather than a demonstrated harm. The
 4-D trigger is lower at 80.83 %, and running both actuators together collapses
-goodput to 48.23 %.
+goodput to 48.23 %. Figure 7(b) draws the same column of numbers.
 
 **Table 5. Legitimate goodput over the shock window, 30 paired seeds (mean ± 95 %
-CI).** From the controller campaign's committed per-seed benchmark.
+CI).** Computed on the controller campaign's own 30 seeds; the differences in the
+last column are paired within those seeds.
 
 | Arm | Legitimate goodput (CMRO2) | vs static isolation |
 |---|---|---|
@@ -603,12 +649,12 @@ total delivered throughput — *rises* during the flood.
 2 s trailing window sampled every 0.5 s). (a) The full 60 s run: the three arms are
 indistinguishable outside the shockwave, which is the null result stated as a
 picture. (b) A zoom on the shock window, where the differences the text reports are
-actually visible — the kinematic arm dips to about 58 % at t ≈ 32 s while static
+actually visible — the kinematic arm dips to about 58 % at $t \approx 32$ s while static
 isolation stays above 80 %, and the extraction arm sits between them, inside the
 static confidence band for most of the window. The DDoS shockwave (30–40 s) is
 shaded in both panels, and the annotation in (a) gives the shock-window means and
-the paired difference. Data: the committed per-tick trace, produced by
-`tools/extract_arm_timeseries.py` and verified against the benchmark CSV.
+the paired difference. Data: the same 30 paired seeds and the same model state as
+Table 5, sampled every 0.5 s with a 2 s trailing window.
 
 **The mechanism.** The extraction controller's CBF monitor tracks *total delivered
 throughput*, which a DDoS flood does not lower — the attack's bytes are served
@@ -622,7 +668,8 @@ tuned, its *input* is miscalibrated by a physical fact about floods.
 
 The starvation sweep confirms the null and rules out the "it was tuned too
 gently" objection: forcing the extraction fraction to its maximum across a 16×
-weight range leaves goodput and transit drop flat (Table 6).
+weight range leaves goodput and transit drop flat (Table 6, plotted in
+Figure 7(c)).
 
 **Table 6. Extraction fraction forced to maximum, WFQ weight swept.**
 
@@ -674,18 +721,19 @@ per-seed peaks of the same campaign and the same seeds; the tick labels give the
 mean ± 95 % CI, the dashed line is the 1-D worst case (256.2), and three 4-D seeds
 exceed it, the worst reaching 402.6. The smoothing campaign repeats the pattern on
 its own seeds (worst case 311.1 against 256.2) and is quoted here rather than
-plotted, so that panel (b) shares its seeds with panel (a). Data: the two committed
-per-seed CSVs.
+plotted, so that panel (b) shares its seeds with panel (a). Data: 30 per-seed
+peaks per arm, from the controller campaign in both panels.
 
 **The cost side.** The 4-D trigger keeps steady-state edits at exactly zero,
 satisfying that clause of E2 (the triggerless baseline is exempt: its isolation
 edits are by design). It also costs 813.4 µs per control tick against 6.0 µs for
 the 1-D limiter — 136× the compute for a difference that is indistinguishable from
-noise. On the data available, the correct engineering statement is that the vector
-trigger is a more expensive way to compute the same edit.
+noise, drawn on a log scale in Figure 7(d). On the data available, the correct
+engineering statement is that the vector trigger is a more expensive way to
+compute the same edit.
 
-**Table 8. Controller CPU cost per tick** (best of repeated runs, wrapping the
-controller's `on_tick` so that only the control law is timed).
+**Table 8. Controller CPU cost per tick** (best of repeated runs, timing the
+control law alone and excluding the simulator's own packet processing).
 
 | Arm | µs/tick | vs 1-D limiter |
 |---|---|---|
@@ -742,16 +790,37 @@ do not claim otherwise.
 The energy verdicts depend on two constants, and a hostile reader is entitled to
 reject both. Table 9 restates each verdict as the threshold at which it reverses.
 
-**Table 9. Break-even thresholds.** Computed from the two committed energy CSVs
-and the constants of §4.5.
+**Table 9. Break-even thresholds.** Each verdict is solved for the value of the
+constant at which it reverses, using the per-seed records of the smoothing,
+compiler and energy campaigns and the constants of §4.5.
 
 | Verdict | Break-even | Distance from the stipulation | Robustness |
 |---|---|---|---|
 | E3 smoothing energy | any `E_churn > 0` (ratio) | the constant cancels | **robust** |
-| E4 compiler repayment | `Δwire > 600 MB` per 3 calls, or inference < 0.198 mJ | ~5 orders of magnitude | robust to ordinary changes |
+| E4 compiler repayment | $\Delta\text{wire} > 600$ MB per 3 calls, or inference < 0.198 mJ | ~5 orders of magnitude | robust to ordinary changes |
 | E5 static cheapest | `E_churn > 0.186 J` | 27× below the 5 J stipulation | **robust** |
 | E7 compiler vs greedy | must beat the canonical order | the mock never does | property of the mock |
 | E6 detector | any churn cost | worse on both axes | **robust** |
+
+**E4: the compiler does not repay its inference.** The arm cuts wire bytes by 42 %
+(4,650 B → 2,673.9 B), saving $1.976\times10^{-4}$ J of transmission energy per three-call
+transition, against a stipulated `3 × 20 J = 60 J` of inference. The energy return
+is $3.29\times10^{-6}$. Restated as a threshold, the compiler pays off iff it saves more
+than 600 MB per three-call transition *or* inference falls below 0.2 mJ total
+(0.066 mJ per call) — about five orders of magnitude away from the stipulation.
+Figure 3 draws the curve: the break-even is at $E_{llm} = 1.976\times10^{-4}$ J, and the
+stipulated operating point sits at the flat, hopeless end of the axis.
+
+![Figure 3](../figures/paperB_fig3_breakeven.pdf){width=100%}
+
+**Figure 3.** Net energy ROI of the stack compiler against inference cost, for one
+three-call transition. The curve is `(E_tx,saved − E_llm)/E_llm` with
+$E_{tx,saved} = 1.976\times10^{-4}$ J, the saving measured in the compiler campaign; it
+crosses zero at 0.198 mJ (the break-even) and the red dot is the stipulated
+operating point (3 × 20 J = 60 J, net ROI −1.0000, EROI $3.29\times10^{-6}$). The shaded
+region is where inference is cheaper than the transmission it saves. The x-axis is
+logarithmic and the y-axis is symmetric-log, so both the crossing and the
+five-decade gap are visible in one frame.
 
 **E5: static isolation is cheapest.** Per seed, static isolation transmits 918.2 J
 and the 4-D trigger 909.3 J with 47.9 edits; static wins iff the churn cost
@@ -770,27 +839,8 @@ of its advantage. The bars show the summed `E_tx + E_cpu + E_churn`; the one-tim
 setup term is charged to the static arm only (1,071 ± 27 J, 208 setup edits × 5 J)
 and is excluded from these totals, because the dynamic arms have no setup edits to
 charge. This figure is drawn from a different seed set than Table 5 (§4.6); the two
-are never combined into a single statistic. Data: the committed energy-audit CSV.
-
-**E4: the compiler does not repay its inference.** The arm cuts wire bytes by 42 %
-(4,650 B → 2,673.9 B), saving $1.976\times10^{-4}$ J of transmission energy per three-call
-transition, against a stipulated `3 × 20 J = 60 J` of inference. The energy return
-is $3.29\times10^{-6}$. Restated as a threshold, the compiler pays off iff it saves more
-than 600 MB per three-call transition *or* inference falls below 0.2 mJ total
-(0.066 mJ per call) — about five orders of magnitude away from the stipulation.
-Figure 3 draws the curve: the break-even is at $E_{llm} = 1.976\times10^{-4}$ J, and the
-stipulated operating point sits at the flat, hopeless end of the axis.
-
-![Figure 3](../figures/paperB_fig3_breakeven.pdf){width=100%}
-
-**Figure 3.** Net energy ROI of the stack compiler against inference cost, for one
-three-call transition. The curve is `(E_tx,saved − E_llm)/E_llm` with
-$E_{tx,saved} = 1.976\times10^{-4}$ J read from the committed compiler CSV; it crosses zero
-at 0.198 mJ (the break-even) and the red dot is the stipulated operating point
-(3 × 20 J = 60 J, net ROI −1.0000, EROI $3.29\times10^{-6}$). The shaded region is where
-inference is cheaper than the transmission it saves. The x-axis is logarithmic and
-the y-axis is symmetric-log, so both the crossing and the five-decade gap are
-visible in one frame.
+are never combined into a single statistic. Data: 30 paired seeds per arm, charged
+term by term.
 
 **The mocked oracle, stated plainly.** The compiler's installed stack is the
 canonical `C→E→F`, forced by the guardrail on every hallucination; its
@@ -813,11 +863,11 @@ the decision was being applied.
 
 **Figure 5.** Schematic of the discrete packet bound, not a measurement. The same
 offered load is drawn as a continuous fluid (a) and as packet arrivals into a real
-buffer (b), using parameters imported from the simulation configuration: microwave
-link, 100 Mbps, MTU 1,500 B (0.12 ms per packet), 0.15 s of buffering (1.88 MB =
-1,250 packets), and a 12 % isolation limit (150 packets). The quantisation delays
-the threshold crossing by 0.116 ms — small in isolation, decisive when every
-control decision and every drop decision is quantised the same way.
+buffer (b), using the microwave link of §4.1: 100 Mbps, MTU 1,500 B (0.12 ms per
+packet), 0.15 s of buffering (1.88 MB = 1,250 packets), and a 12 % isolation limit
+(150 packets). The quantisation delays the threshold crossing by 0.116 ms — small
+in isolation, decisive when every control decision and every drop decision is
+quantised the same way.
 
 The figure is not offered as evidence about the measured arms; it is offered as
 the reason for the pattern they share. A controller can only act on the *identity*
@@ -849,12 +899,12 @@ cost: latency against false alarms over the 30 seeds (error bars are 95 % CIs on
 latency); the 4-D trigger is quiet but slow, the dual-band detector is fast but
 raises 115 alarms for 6 for the single-LPF arm. (b) Protection cost: legitimate
 goodput against churn energy; down-and-right is better, and the dual-band arm is
-up-and-right. Data: the committed detector-campaign CSVs.
+up-and-right. Data: 30 paired seeds per detector, from the detector campaign.
 
 **E6, detection.** The dual-band detector is faster by 20 ms (0.200 against
 0.220 s) and costs 115 false positives against 6 — a 19× increase for a 9 %
 latency improvement. The mechanism is a property of the design, not a tuning
-error: the HPF's dynamic *k·σ* threshold adapts down during quiet periods and is
+error: the HPF's dynamic $k\sigma$ threshold adapts down during quiet periods and is
 crossed by isolated batch arrivals, so the high-pass band does not separate attack
 energy from Poisson jitter. The single-LPF comparison achieves essentially the same
 latency with a fixed 0.10 utilisation threshold and an order of magnitude fewer
@@ -871,6 +921,41 @@ The pattern is the same one §5.1 and §5.2 report for the metabolic arms: an
 additional continuous signal (here a high-pass band) is added to a controller whose
 actuator is already discrete, the signal fires on noise, and the resulting extra
 edits cost delivery rather than buying protection.
+
+### 5.7 The results in one view
+
+Seven tables carry the campaign numbers, and every one of them is drawn in this
+section as well, so that no verdict rests on a figure the reader has to assemble
+mentally. Figure 1 plots the shock-window goodput of the three principal arms over
+time; Figure 2 the peak state-change speed, as bars and per seed; Figure 3 the
+compiler's energy return against inference cost; Figure 4 the energy decomposition;
+Figure 6 the detector comparison. Figure 7 collects the four remaining tables on
+one plate: the reference campaign (Table 2), the goodput of all five arms
+(Table 5), the starvation sweep (Table 6) and the per-tick CPU price (Table 8).
+
+![Figure 7](../figures/paperB_fig8_results_overview.pdf){width=100%}
+
+**Figure 7.** The campaign results on one plate; every bar, point and line is a
+mean over 30 paired seeds, and whiskers and bands are 95 % confidence intervals
+over seeds. (a) The four baselines of the reference campaign, goodput against p95
+latency, with the 1-D limiter (D) as the selected reference; A and B coincide
+exactly, so one marker stands for two baselines. (b) Shock-window legitimate
+goodput for the five arms of the controller campaign; the dashed line is the static
+baseline, and the paired differences and their p-values are printed above the bars.
+(c) The extraction fraction forced to 1.0 while the weight multiplier on the
+legitimate class is swept over 16×: goodput and transit drop both stay inside their
+confidence bands, which is the "it was tuned too gently" objection measured and
+rejected. (d) Controller CPU per control tick on a log scale; the multiplier
+against the 1-D limiter is printed beside each bar, and the 136× that the 4-D
+trigger costs buys no measurable change in (b) or Figure 2.
+
+Two things about the plate are worth stating, because they are the paper's
+argument in visual form. First, panels (b) and (c) contradict the metabolic
+prediction: the extraction arm does not separate from the plain limiter, and
+forcing it to its maximum does not trade transit for delivery. Second, panel (d)
+is the only axis on which the arms separate cleanly, and it separates against the
+biological arms: the mechanism that is supposed to be cheap self-regulation costs
+two orders of magnitude more computation than the scalar limiter it fails to beat.
 
 ## 6. Discussion and Threats to Validity
 
@@ -924,14 +1009,14 @@ least likely to be manufactured by event-ordering artefacts.
 
 #### 6.2.2 The stipulated energy constants
 
-`E_TX_PER_BYTE = 1e-7 J`, `E_CHURN_PER_EDIT = 5 J`, `E_LLM_PER_CALL = 20 J` are
-modelling choices, not measurements. Section 5.4 is the mitigation, and it is a
-real one: the smoothing verdict is a *ratio* and cancels the constant entirely; the
-static-isolation verdict survives down to 0.186 J/edit, 27× below the stipulation;
-the compiler verdict is five orders of magnitude from its threshold. The verdict
-that is *not* protected is any claim about absolute energy in joules — 918.2 J for
-static isolation is a number produced by a formula, and a reader should treat it as
-a comparison, not as a measurement of a deployed system.
+The three constants of §4.5 — 1e-7 J per byte, 5 J per edit and 20 J per call of
+inference — are modelling choices, not measurements. Section 5.4 is the mitigation,
+and it is a real one: the smoothing verdict is a *ratio* and cancels the constant
+entirely; the static-isolation verdict survives down to 0.186 J/edit, 27× below the
+stipulation; the compiler verdict is five orders of magnitude from its threshold.
+The verdict that is *not* protected is any claim about absolute energy in joules —
+918.2 J for static isolation is a number produced by a formula, and a reader should
+treat it as a comparison, not as a measurement of a deployed system.
 
 #### 6.2.3 No real-world ISP traffic traces
 
