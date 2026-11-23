@@ -65,8 +65,9 @@ external-referee report on both papers, with the disposition of every point, is
   sustained CDR gap, zero-dimensional H₀ isolation rather than H₁ holes, and
   the burst-duration boundary that separates sustained attacks from flapping.
 - **Paper D — [`Markdown`](docs/paper-common-mode.md) · [`PDF`](docs/paper-common-mode.pdf) · [`short position`](docs/paper-common-mode-short.md) · [`short PDF`](docs/paper-common-mode-short.pdf)**:
-  *Beyond Tenant Isolation: A Monte Carlo Study of Common-Mode Resilience in
-  Cloud-Dependent Backhaul.* Nine architectures over ten incident classes, 2,000
+  *Stochastic Modeling of Common-Mode Failures in Multi-Tenant Cloud
+  Architectures: A Monte-Carlo Break-Even Analysis Anchored in 15 Public
+  Postmortems.* Nine architectures over ten incident classes, 2,000
   paired replications per cell (180,000 arm-runs) and 500 thirty-day campaigns,
   with the stochastic model, thresholds and decision rule frozen before the engine
   existed. Tenant isolation contains a tenant gateway fault (99.20 %) but not a

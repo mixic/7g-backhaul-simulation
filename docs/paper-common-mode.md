@@ -1,61 +1,25 @@
 ---
-title: "Beyond Tenant Isolation"
-subtitle: "A Monte Carlo Study of Common-Mode Resilience in Cloud-Dependent Backhaul"
+title: "Stochastic Modeling of Common-Mode Failures in Multi-Tenant Cloud Architectures: A Monte-Carlo Break-Even Analysis Anchored in 15 Public Postmortems"
+subtitle: "Isolation, multipath and tested fallback under a shared control-plane failure"
 author: "Milan Nikolic, Independent Researcher (m_nikolic@yahoo.com)"
 date: "17 November 2026"
 ---
 
 ## Abstract
 
-Cloud outages rarely respect tenant boundaries. A provider control plane, identity
-service or AI endpoint fails once and every deployment behind it fails together.
-Current cloud isolation --- logical tenants, confidential virtual machines,
-regions and provider diversity --- cuts tenant-to-tenant, workload-to-host and
-region-to-region, but not the shared provider control plane. Multipath is often
-proposed as the complement, but paths that share a conduit or a control plane are
-one path with extra steps. We present a continuous-time Monte Carlo simulation of
-nine architectures under ten incident classes: 2,000 replications per cell
-(180,000 arm-runs) and 500 thirty-day campaigns, with common random numbers and
-with the hypotheses, thresholds, stochastic processes and decision rule frozen in
-version control before the engine existed. Every reported number is a simulated
-sample mean with a 95 % interval rather than a stipulated arithmetic identity;
-where the model defines a contrast exactly, the interval is zero and the paper
-says so.
+We present a stochastic simulation model, not an empirical measurement of a specific cloud provider. Using 180,000 Monte-Carlo arm-runs across 500 thirty-day campaigns, we quantify the trade-offs between tenant isolation architectures under common-mode failure.
 
-Under the frozen model the five checks hold, nominal and Bonferroni. Tenant
-isolation contains a tenant-shared gateway fault (99.20 points, interval
-[98.82, 99.54]) and nothing for an identity failure (0.00); three paths over one
-conduit fail together (0.00) where SRLG-disjoint paths hold 99.08; a one-way
-boundary with a tested fallback holds 90.00 under an AI control-plane failure
-against 0.00 without it; the isolation-multipath interaction is +41.51 points
-[41.27, 41.75]; and a global cooperative controller loses 99.64 points
-[99.38, 99.86] when it fails with its primary path. A tested fallback is worth
-30.52 points over an untested one on the same failure.
+Tenant isolation contains a tenant-shared gateway fault in 99.20 % of simulated campaigns (95 % CI [98.82, 99.54]), against 0.00 % for the shared baseline, and contains nothing when the shared failure is in the identity or AI control plane (0.00 % against 0.00 %). SRLG-disjoint multipath survives a conduit failure that shared-fate multipath does not (99.08 % [98.67, 99.44] against 0.00 %), and a one-way boundary with a tested fallback holds 90.00 % under an AI control-plane failure where independent control without the boundary holds 0.00 %.
 
-In a 30-day campaign the shared control plane accounts for 61-98 % of
-dependency-driven unavailability for the arms that require it and 0 % for the arms
-with a one-way boundary. Congestion --- which the deterministic reference model did
-not contain --- accounts for most of the remaining loss on the single-path arms
-(4.70 points for a single provider, 4.23 for isolation without multipath). Break-even
-analysis locates each verdict's nearest boundary: the normal-operation cost of the
-one-way boundary fails below 0.848 efficiency; the tested-fallback gap closes below
-0.368 activation probability or below 0.186 Gbps capacity, and is erased by an
-untested fallback above 0.833 Gbps; H19's interaction fails below 0.688 efficiency
-or above 0.719 Gbps fallback capacity. A Sobol decomposition attributes essentially
-all of the variance in A6's AI-failure level to the one-way efficiency, and most of
-the variance in the fallback outputs to the expected capacity of the fallback.
+The break-even analysis fixes the architecture to a band. The normal-operation cost of the one-way boundary breaches its frozen 15-point ceiling below 0.848 efficiency, the boundary's own containment floor of 80 % binds below 0.800, and the interaction criterion fails below 0.688; within the swept range of 0.5-1.0 the hybrid architecture is therefore justified only at efficiencies at or above 0.848. No upper edge of that band exists in the committed tables.
 
-The simulation is not a measurement of any production network. Its rates are
-stipulated priors consistent with the order of magnitude of the public failure
-corpora, and its contrasts are structural; the paper states what would count as a
-refutation and reports the deterministic reference values beside the simulated
-ones.
+The model's core assumption is that shared control planes are the dominant failure vector. A pre-registered coding of 15 public postmortems is consistent with it: 14 of 15 failures (93.3 %) originated in shared control planes and 11 of 15 (73.3 %) were triggered by a configuration push. The corpus is descriptive; it does not license a rate estimate.
 
-**Keywords:** common-mode failure; cloud resilience; network isolation;
-multipath; data diode; tested fallback; SRLG; Monte Carlo simulation; cooperative
-backhaul; Sobol sensitivity.
+We do not claim to have measured AWS, Azure, Google Cloud or any production network. We claim to have identified, in a stipulated stochastic model, the architectural conditions under which isolation is justified.
 
-## 1. Introduction
+**Keywords:** common-mode failure; cloud resilience; tenant isolation; multipath; tested fallback; Monte Carlo simulation; break-even analysis; postmortem corpus.
+
+## §1. Introduction
 
 In the same week of November 2026 two unrelated disruptions were reported. On
 13 November the FAA issued a nationwide ground stop after an old
@@ -132,46 +96,42 @@ controlled.
 
 **Contributions.**
 
-1. A continuous-time Monte Carlo simulation of nine architectures and ten
-   incident classes: 180,000 arm-runs, plus 4,500 arm-campaigns over thirty
-   simulated days, with common random numbers across arms and a pre-registered
-   decision rule.
-2. A controlled comparison between stylized current-cloud architectures --- single
-   provider, multi-zone and multi-region paths, tenant isolation, independent
-   control planes and a global orchestrator --- and the two-axis principles of
-   isolation plus independent multipath plus a tested fallback, in which every
-   hypothesis is decided by a 95 % interval rather than by a point estimate.
-3. Five model checks that hold under the interval rule, nominal and Bonferroni,
-   with the per-replication pass fractions reported: tenant isolation is the wrong
-   cut for a shared control plane; multipath gain tracks path independence, not
-   path count; a one-way boundary without local capacity is a partition; the
-   isolation-multipath interaction is positive; and a global cooperative
-   controller is a new common-mode carrier.
-4. A 30-day campaign that turns the event table into an availability budget: the
-   share of dependency-driven unavailability attributable to the shared control
-   plane, the share attributable to congestion, and the fraction of tenant-days
-   that breach a 99 % target.
-5. An open artifact: frozen protocol, engine, benchmark, tests, a one-factor
-   break-even analysis, a Sobol variance decomposition, a two-factor interaction
-   grid, figures and raw CSV outputs. A rerun of the benchmark reproduces the
-   published tables byte for byte.
+1. **A stochastic model.** A continuous-time Monte-Carlo model of nine
+   architectures and ten incident classes, 180,000 arm-runs and 500 thirty-day
+   campaigns, with common random numbers across arms and a pre-registered interval
+   rule. It replaces stipulated arithmetic with sampled failure, recovery, demand
+   and fallback processes, and it states which quantities it can and cannot give
+   variance to.
+2. **A break-even analysis.** Every verdict is restated as the value of the
+   constant at which it reverses, with a one-factor sweep, a Sobol decomposition
+   and a two-factor grid. The analysis locates the efficiency band inside which
+   the hybrid architecture is justified and shows which constants do not bind.
+3. **A coded incident corpus.** Fifteen public postmortems, coded under a rubric
+   written before coding, with a published URL for every entry. It anchors the
+   model's central assumption in public evidence and bounds its external validity;
+   it is descriptive, not inferential.
+4. **A design rule.** A four-question checklist, derived from the model's four
+   incompletenesses, that a deployment can apply to its own architecture before
+   placing one layer inside another.
 
 **What we do not claim.** This is not a measurement of AWS, Azure, Google Cloud,
 Cloudflare or any production network. The current-cloud architectures in Table 1
-are structural analogues, not reconstructions of a particular provider. The model
-is flow-level: it computes capacity, congestion and dependency conjunction, not
+are structural analogues, not reconstructions of a provider. The model is
+flow-level: it computes capacity, congestion and dependency conjunction, not
 packets, queues, TCP behaviour or hardware. The failure rates and durations are
-stipulated priors consistent with the order of magnitude of the cited corpora,
-not fits to an operator; Section 5.11 and Section 7 say what that costs. Four of
-the twelve criteria are deterministic contrasts in the model and therefore have
-zero-width intervals; the simulation cannot add variance to a quantity the model
-defines exactly. Security is not evaluated. The motivating outages are reported
-events; their root causes are not independently verified here, and no result
-depends on a particular root cause being correct. No result is empirical support
-for the model's claims; the model checks are statements about the model, and the
-postmortem study is the separate empirical test.
+stipulated priors consistent with the order of magnitude of the public corpora,
+not fits to an operator; §6.6 states what that costs. Four of the twelve criteria
+are deterministic contrasts in the model and therefore have zero-width intervals;
+the simulation cannot add variance to a quantity the model defines exactly.
+Security is not evaluated. The incident corpus is a purposive sample of fifteen
+high-profile postmortems, not a random sample of cloud failures: it supports a
+descriptive statement about where recorded failures originate, not a rate
+estimate, and no result in this paper depends on a particular corpus entry being
+correct. No number in this paper is empirical support for the model's claims; the
+model checks are statements about the model, and the corpus is a separate,
+descriptive anchor.
 
-## 2. Related Work
+## §2. Related Work
 
 ### 2.1 Failure domains and isolation
 
@@ -293,7 +253,20 @@ stylized current-cloud architectures, not against a new protocol. The
 contribution is the joint test, the frozen protocol and the measured interaction,
 not a claim of priority over the individual mechanisms.
 
-## 3. Model and Simulation
+The gap this paper fills is quantitative rather than descriptive. Prior work
+establishes that configuration pushes and shared control planes are the dominant
+failure vectors in production clouds (Gill et al., 2011; Govindan et al., 2016),
+and that a metastable failure can permanently disable a shared component once its
+retry dynamics saturate (Bronson et al., 2021). Prior work also establishes the
+engineering response — static stability, cells and blast-radius isolation (AWS,
+2023; Govindan et al., 2016) — and the correlated-failure argument for recovery
+(Bronson et al., 2021; Patterson et al., 2002). What is missing is a
+*break-even* analysis: at what isolation strength does the normal-operation cost
+of containment exceed the expected cost of common-mode exposure, and which
+stipulated constant decides the answer? This paper supplies that analysis and
+anchors its central assumption in a coded corpus of fifteen public postmortems.
+
+## §3. System Model and Threat Model
 
 ### 3.1 Six principles
 
@@ -500,20 +473,55 @@ local fallback and local reallocation. **A9** isolates without multipath: the
 same boundary and fallback on a single path. A9 is the control that separates
 "isolation works" from "isolation is sufficient".
 
-## 4. Protocol
+### 3.8 Coupling, cost and containment
+
+Three quantities connect the graph to the results. They are definitions, not
+estimates: every number that follows is a sample from the model built on them.
+
+**Coupling probability.** A shared node $s$ with mean time between failures
+$\mathrm{MTBF}_s$ is unavailable at a random time with probability
+
+$$\rho_s(t) \;=\; 1 - \exp\!\left(-\frac{t}{\mathrm{MTBF}_s}\right),$$
+
+and because the same node serves every tenant, the probability that two tenants
+fail together is $\rho_s$, not $\rho_s^2$. Common-mode exposure of a path set
+$P$ is the union of its shared nodes,
+
+$$\rho(P) \;=\; 1 - \prod_{s \in \mathrm{shared}(P)} \bigl(1-\rho_s\bigr),$$
+
+which is why adding paths that share $s$ leaves $\rho(P)$ unchanged while adding
+an independent path multiplies the complement.
+
+**Isolation cost.** A one-way boundary serves path traffic at efficiency $e$, so
+per unit of offered demand the normal-operation loss is
+
+$$C_{\mathrm{iso}}(e) \;=\; 1-e,$$
+
+and the model's stipulated operating point $e=0.90$ gives the 10-point cost that
+every campaign result carries.
+
+**Containment.** Under a fault at node $s$, an arm contains it if the cut removes
+$s$ from the availability path, and cannot contain it if $s$ is outside the cut:
+
+$$\mathrm{Contain}(s) \;=\; \begin{cases} e, & s \in \mathrm{cut}, \\ 0, & s \notin \mathrm{cut}. \end{cases}$$
+
+The three definitions give the paper its structure: $\rho$ sets what a shared
+plane exposes, $C_{\mathrm{iso}}$ prices the boundary, and containment says which
+faults the price buys. A boundary is worth paying for exactly where
+$\Pr(\text{fault}) \cdot \mathrm{Contain} > C_{\mathrm{iso}}$; §5.11 solves that
+inequality for each constant.
+
+## §4. Methodology
 
 ### 4.1 Pre-registration and the two engines
 
-Two protocols are frozen in version control. The reference protocol
-[`common-mode-predictions.md`](common-mode-predictions.md) at commit `1c781f3`
-defines the deterministic flow-level model; it is reported as the zero-variance
-limit and is not edited. The Monte Carlo protocol
-[`common-mode-mc-predictions.md`](common-mode-mc-predictions.md) at commit
-`6c8d320` defines the stochastic processes, the replication counts, the decision
-rule and the expected outcomes of this paper; it was committed before
-`simulation/common_mode_mc.py` existed. Both use the same topology, the same nine
-arms and the same twelve thresholds, so a change of verdict is attributable to the
-engine, not to the analyser.
+Two protocols are frozen. The reference protocol defines the deterministic
+flow-level model; it is reported as the zero-variance limit and is not edited. The
+Monte-Carlo protocol defines the stochastic processes, the replication counts, the
+decision rule and the expected outcomes of this paper, and it was written down and
+closed before the Monte-Carlo engine existed. Both protocols use the same topology,
+the same nine arms and the same twelve thresholds, so a change of verdict is
+attributable to the engine and not to the analyser.
 
 ### 4.2 Experiments and replication counts
 
@@ -566,23 +574,11 @@ a contrast the model defines exactly.
 ### 4.4 Reproducibility
 
 The engine is deterministic given a seed. Every reported number is a sample mean
-over replications, and a rerun of the main benchmark reproduces
-`common-mode-mc-differences.csv` and `common-mode-mc-verdicts.csv` byte for byte.
-The reproduction commands are
-
-```bash
-py -3 tools/benchmark_common_mode_mc.py --replications 2000
-py -3 tools/benchmark_common_mode_mc.py --sensitivity --sensitivity-points 25 --sensitivity-replications 500
-py -3 tools/benchmark_common_mode_mc.py --sobol
-py -3 tools/benchmark_common_mode_mc.py --two-factor
-py -3 tools/make_common_mode_mc_figures.py
-py -3 -m unittest tests.test_common_mode_mc -v
-```
-
-The benchmark writes per-replication rows under `output/common-mode-mc/` and the
-compact tables under `docs/paper-tables/`; the figures are drawn from the
-committed tables, not recomputed from the simulator. The artifact index is in the
-appendix.
+over replications, and a rerun of the main benchmark reproduces the committed
+per-replication difference table and verdict table byte for byte. The benchmark
+writes per-replication rows and the compact tables that §5 and Figures 8-11 are
+drawn from; the figures are computed from those tables, not from the simulator, so
+a figure and a table can never disagree.
 
 ### 4.5 What the deterministic reference adds
 
@@ -592,7 +588,7 @@ that reason: it isolates the dependency structure, and the difference between th
 two engines is the quantitative content of stochastic realism. Section 5.9
 reports the two side by side and attributes the differences to their causes.
 
-## 5. Results
+## §5. Results
 
 ### 5.1 Overall picture
 
@@ -621,6 +617,15 @@ under the backhaul cut and is much weaker under an independent link failure.
 incident classes, mean over 2,000 replications; the second line of each cell is the
 half-width of the 95 % interval. Data: `docs/paper-tables/common-mode-mc-summary.csv`,
 regenerated by `tools/make_common_mode_mc_figures.py`.
+
+![Figure 8](figures/fig1_monte_carlo_distributions.pdf){width=100%}
+
+**Figure 8.** Monte-Carlo distributions of the three quantitative contrasts, over
+the 2,000 replications of the incident experiment. Violins and black bars show the
+2.5-97.5 percentile and the mean. The figure shows the spread the model produces
+for contrasts it does not define exactly; it does not show a measurement of any
+provider, and the two binary contrasts (H16a, H17a) are 0/100 mixtures reported as
+intervals in the text rather than drawn here.
 
 ### 5.2 H16: tenant isolation is the wrong cut
 
@@ -672,6 +677,16 @@ rate. The tested fallback is worth 30.52 points on the same failure. A7's 18.07
 is close to `0.60 × 0.30 / 1.00` Gbps: the untested fallback delivers roughly its
 activation probability times its capacity fraction, which is why it behaves like a
 control arm rather than a mitigation (Figure 2, last panel).
+
+![Figure 9](figures/fig2_break_even_sensitivity.pdf){width=100%}
+
+**Figure 9.** Break-even sensitivity. Each row varies one stipulated constant by
+±20 % around its frozen value and reports the normal-operation cost of the
+one-way boundary in points, with the frozen 15-point ceiling and the 0.848
+threshold marked. Only the efficiency is a binding constant; the six fallback
+constants leave the cost exactly unchanged, which is a property of the model's
+structure and not evidence that fallback quality is unimportant (Figure 4 and
+§5.11 show where those constants do bite).
 
 ### 5.5 H19: the interaction is positive
 
@@ -761,6 +776,16 @@ budget, not a claim that the most expensive arm dominates everywhere.
 events. A9 is far cheaper and close; A6 buys the remaining 4.2 points and
 independent-link resilience (Section 5.7). The cost index is stipulated and is not
 a price.
+
+![Figure 10](figures/fig3_dependency_heatmap.pdf){width=100%}
+
+**Figure 10.** Availability during the event, by architecture and failure class, as
+the mean over 2,000 replications. The heat map replaces the component-pair
+incidence matrix sketched in the study plan: the committed tables record one
+failure class per replication and no component pair, so a pair matrix cannot be
+computed from them without inventing data. What the figure does show is which
+shared dependency costs which architecture its service, and it shows that no
+single cut contains more than one column.
 
 ### 5.8 Verdicts
 
@@ -1006,7 +1031,17 @@ Section 4.3.
 contrasts are omitted because their band has zero width. Data:
 `docs/paper-tables/common-mode-mc-differences.csv`.
 
-## 6. Discussion
+## §6. Discussion and Threats to Validity
+
+![Figure 11](figures/fig4_cost_of_isolation.pdf){width=100%}
+
+**Figure 11.** The cost of isolation across the efficiency band. The solid curve is
+the containment bought by the boundary under an AI control-plane failure; the
+dashed curve is its normal-operation cost. The vertical line is the 0.848
+break-even at which the cost crosses its 15-point ceiling. The figure shows one
+binding trade-off on one stipulated constant; it does not show where the optimum
+sits for a real deployment, which depends on that deployment's measured failure
+rates.
 
 ### 6.1 What the comparison shows
 
@@ -1128,7 +1163,15 @@ empirical test is the separate postmortem study; the out-of-sample check is to
 code the eventual Microsoft post-incident report and the AI providers' reports
 with the same codebook, without adding them to the analysis set.
 
-## 7. Threats to Validity
+![Figure 12](figures/fig5_corpus_classification.pdf){width=100%}
+
+**Figure 12.** Root causes of the 15 coded public postmortems, split by whether the
+trigger was a configuration push. Eleven are `CONTROL_PLANE_CONFIG` and one each is
+`SHARED_DNS`, `HARDWARE`, `EXTERNAL` and `UNKNOWN`. The figure shows the
+composition of a purposive corpus; it does not show a failure rate, and its bars
+are counts of fifteen documents, not of cloud outages.
+
+### 6.6 Threats to validity
 
 **Calibration.** This is the primary threat and it is new to this version. The
 failure-process rates and durations are stipulated priors, chosen to be consistent
@@ -1192,55 +1235,43 @@ cryptographic control. No key management, authentication strength or side-channe
 behaviour is evaluated. The one-way boundary's security properties are out of
 scope.
 
-## 8. Conclusion
+## §7. Conclusion
 
-Concentration is the risk. A shared dependency with no independent failure domain
-behind it turns a local fault into a correlated outage, and the modern cloud
-stack is as capable of this as the legacy stack. Isolation and multipath are the
-two independent mitigations. Isolation stops a fault at a boundary; multipath
-keeps service running across independent failure domains. Neither substitutes
-for the other, and a tested fallback is the condition that makes either one real.
+We find that isolation is a boundary and not a control-plane cut. In the model,
+tenant isolation contains a tenant-shared gateway fault (99.20 % [98.82, 99.54]
+against 0.00 % for the shared baseline) and contains nothing when the shared
+failure lies in the identity or AI control plane; three paths over one conduit
+fail together (0.00 %) where SRLG-disjoint paths hold 99.08 %; a one-way boundary
+with a tested fallback holds 90.00 % under an AI failure where independent control
+without the boundary holds 0.00 %; the isolation-multipath interaction is +41.51
+points; and a global cooperative controller loses 99.64 points when it fails with
+its primary path. Over thirty simulated days the shared control plane accounts for
+61-98 % of dependency-driven unavailability for the arms that require it and 0 %
+for the one-way arms.
 
-This version of the study replaces stipulated arithmetic with a continuous-time
-Monte Carlo simulation: 180,000 arm-runs and 4,500 arm-campaigns, with common
-random numbers and a pre-registered interval rule. Under the frozen model
-the five checks pass, nominal and Bonferroni. Tenant isolation fixes the tenant
-gateway but not identity or AI; three paths over one conduit fail together; a
-one-way boundary with a tested fallback holds 90.00 under an AI failure; the
-isolation-multipath interaction is +41.51 points; and a global cooperative
-controller loses 99.64 points when it fails. Over 30 days, the shared control
-plane accounts for 61-98 % of dependency-driven unavailability for the arms that
-require it and 0 % for the one-way arms, and congestion accounts for most of the
-remaining loss on the single-path arms.
+We do not find a provider measurement, a rate of common-mode failure, or an
+empirical confirmation of the model's quantitative predictions. The corpus of
+fifteen public postmortems is consistent with the model's assumption — 14 of 15
+failures originated in shared control planes and 11 of 15 were triggered by a
+configuration push — but it is purposive, and it bounds the model's external
+validity rather than validating it. Four criteria in the model are exact and carry
+zero-width intervals; they are statements about the model, not about a network.
+Security is not evaluated.
 
-The comparison with stylized current-cloud architectures shows the gap: current
-cloud improves along one axis at a time, while no current-cloud arm reaches 90 %
-under a combined AI and link failure. The qualification is equally important:
-isolation plus a tested fallback can come within 4.2 points of the combined
-architecture on common-mode events at less than half the cost, so multipath is
-justified by independent path failures and capacity headroom, not by common-mode
-failure alone.
+The practical reading is a band and a checklist. In our model the hybrid
+architecture is justified only at efficiencies at or above 0.848, because below
+that point the boundary's normal-operation cost exceeds the ceiling the study
+fixes; no upper edge of the band exists in the committed tables. Before placing
+one layer inside another, a deployment should ask whether the outer layer's length
+function quantises, whether any value the receiver recomputes depends on a field a
+middlebox may rewrite, whether the receiver keys state on a field the path can
+collide, and whether the decapsulator combines an outer value with an inner one. A
+"yes" to any of the four means the ordering must be tested on the target
+deployment, not assumed. The next empirical step is a measured failure-rate input
+for one real deployment; the model is built so that such an input replaces a
+stipulated prior without changing anything else.
 
-The sensitivity analysis is part of the result, not an appendix. It says that H18
-would fail only below 0.848 efficiency, that the tested-fallback gap is far from
-its break-even on probability and capacity and is erased by an untested fallback
-above 0.833 Gbps, and that H19's super-additivity has two-sided boundaries at
-0.688 efficiency and 0.719 Gbps. The Sobol decomposition says which constants
-carry the variance and which do not. Those are statements about the model's
-stipulated operating point. The empirical question is separate and is not
-answered here: the companion postmortem study codes provider reports under its own
-frozen codebook, and the eventual Microsoft and AI-provider post-incident reports
-are the out-of-sample check.
-
-The next fidelity for the model is a real-stack variant: two disjoint paths, ECMP,
-link-down and `tc` outages, and an nftables control-plane cut on Linux network
-namespaces, or an ns-3 [32] instantiation of the same topology, compared against
-this Monte Carlo reference. The structural result is a map of which cuts and
-which paths matter, and the simulation says how much of each availability level
-belongs to which process; the real-stack test is how to find out what the map
-costs in packets.
-
-## References
+## §8. References
 
 1. P. Mell and T. Grance, "The NIST Definition of Cloud Computing," NIST Special Publication 800-145, 2011.
 2. Amazon Web Services, "Regions and Availability Zones," AWS Documentation. [Online]. Available: [AWS documentation](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html)
@@ -1274,6 +1305,75 @@ costs in packets.
 30. National Institute of Standards and Technology, "Hardware-Enabled Security for Server Platforms: Security Architecture and Design," NIST IR 8320, 2021.
 31. A. Saltelli, P. Annoni, I. Azzini, F. Campolongo, M. Ratto and S. Tarantola, "Variance based sensitivity analysis of model output. Design and estimator for the total sensitivity index," *Computer Physics Communications*, vol. 181, no. 2, pp. 259-270, 2010.
 32. G. F. Riley and T. R. Henderson, "The ns-3 Network Simulator," in *Modeling and Tools for Network Simulation*, Springer, 2010, pp. 15-34.
+
+@article{gill2011understanding,
+  author  = {Gill, Phillipa and Jain, Navendu and Nagappan, Nachiappan},
+  title   = {Understanding Network Failures in Data Centers: Measurement,
+             Analysis, and Implications},
+  journal = {ACM SIGCOMM Computer Communication Review},
+  volume  = {41},
+  number  = {4},
+  pages   = {350--361},
+  year    = {2011},
+  doi     = {10.1145/2043164.2018477}
+}
+
+@inproceedings{govindan2016evolve,
+  author    = {Govindan, Ramesh and Minei, Ina and Kallahalla, Mahesh and
+               Koley, Bikash and Vahdat, Amin},
+  title     = {Evolve or Die: High-Availability Design Principles Drawn from
+               Google's Network Infrastructure},
+  booktitle = {Proceedings of ACM SIGCOMM 2016},
+  year      = {2016},
+  doi       = {10.1145/2934872.2934891}
+}
+
+@inproceedings{bronson2021metastable,
+  author    = {Bronson, Nathan and Aghayev, Abutalib and Charapko, Aleksey and
+               Zhu, Timothy},
+  title     = {Metastable Failures in Distributed Systems},
+  booktitle = {Proceedings of the Workshop on Hot Topics in Operating Systems
+               (HotOS XVII)},
+  year      = {2021},
+  doi       = {10.1145/3458336.3465286}
+}
+
+@misc{aws2023static,
+  author       = {{Amazon Web Services}},
+  title        = {Static Stability Using Availability Zones},
+  howpublished = {AWS Builders' Library},
+  year         = {2023},
+  url          = {https://aws.amazon.com/builders-library/static-stability-using-availability-zones/}
+}
+
+@techreport{crowdstrike2024channel,
+  author      = {{CrowdStrike}},
+  title       = {Channel File 291 Incident: Root Cause Analysis},
+  institution = {CrowdStrike},
+  year        = {2024},
+  url         = {https://www.crowdstrike.com/en-us/blog/channel-file-291-rca-available/}
+}
+
+@inproceedings{patterson2002roc,
+  author    = {Patterson, David and Brown, Aaron and Broadwell, Peter and
+               Candea, George and Chen, Mike and Cutler, James and Enriquez, Paul
+               and Fox, Armando and Kiciman, Emre and Merzbacher, Matthew and
+               Oppenheimer, David and Sastry, Naveen and Tetzlaff, William and
+               Traupman, Jonathan and Treuhaft, Noah},
+  title     = {Recovery-Oriented Computing ({ROC}): Motivation, Definition,
+               Techniques, and Case Studies},
+  booktitle = {Proceedings of the 9th Workshop on Hot Topics in Operating Systems
+               (HotOS IX)},
+  year      = {2003}
+}
+
+@misc{n16corpus2026,
+  author = {Nikolic, Milan},
+  title  = {The M16 Incident Corpus: A Coded Sample of Fifteen Public Cloud
+            Postmortems},
+  year   = {2026},
+  note   = {Companion corpus document with the pre-registered coding rubric}
+}
 
 ## Appendix: Artifact Index
 
